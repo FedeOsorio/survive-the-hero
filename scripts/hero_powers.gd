@@ -40,9 +40,7 @@ func rank(id: String) -> int:
 
 
 ## Elige un poder al subir de nivel. Devuelve el id, o "" si ya tiene todo al máximo.
-## "start": sus poderes de inicio, que pesan más hasta rango HERO_START_POWER_MAX_RANK
-## (los niveles con los que llega). "quiet": sin banner.
-func level_up(start: Array = [], quiet := false) -> String:
+func level_up() -> String:
 	var pool: Array = []
 	for id in LIST:
 		var r := rank(id)
@@ -61,8 +59,6 @@ func level_up(start: Array = [], quiet := false) -> String:
 	var total := 0.0
 	for id in options:
 		var w: float = B.ADAPT_WEIGHT if favored.has(id) else 1.0
-		if start.has(id) and rank(id) < B.HERO_START_POWER_MAX_RANK:
-			w *= B.HERO_START_POWER_WEIGHT
 		weights.append(w)
 		total += w
 	var roll := _rng.randf() * total
@@ -73,8 +69,6 @@ func level_up(start: Array = [], quiet := false) -> String:
 			pick = options[i]
 			break
 	ranks[pick] = rank(pick) + 1
-	if quiet:
-		return pick
 	if favored.has(pick):
 		world.hud.banner("El héroe se adapta: %s" % LIST[pick].name)
 	elif ranks[pick] == 1:

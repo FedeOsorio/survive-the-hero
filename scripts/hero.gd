@@ -64,8 +64,9 @@ func _ready() -> void:
 	add_child(status)
 
 
-## Tipo de héroe (una fila de B.HEROES) y nivel de llegada, eligiendo un poder
-## por nivel. Se llama después de agregarlo al árbol.
+## Tipo de héroe (una fila de B.HEROES) y nivel de llegada. Los niveles de llegada
+## suben los números sin elegir poder: llega solo con sus poderes de inicio.
+## Se llama después de agregarlo al árbol.
 func setup(cfg: Dictionary, start_level: int) -> void:
 	title = cfg.name
 	article = cfg.article
@@ -74,7 +75,7 @@ func setup(cfg: Dictionary, start_level: int) -> void:
 	for id in cfg.powers:
 		powers.ranks[id] = 1
 	for i in start_level - 1:
-		_level_up(cfg.powers)
+		_level_up(false)
 	max_hp *= cfg.hp
 	hp = max_hp
 	damage *= cfg.damage
@@ -416,18 +417,15 @@ func _gain_xp(amount: float) -> void:
 		_level_up()
 
 
-## "arrival_powers": al subir los niveles de llegada, sus poderes de inicio pesan más
-## y no hay banner.
-func _level_up(arrival_powers = null) -> void:
+## "pick_power" en false: sube los números del nivel sin elegir poder.
+func _level_up(pick_power := true) -> void:
 	level += 1
 	max_hp += B.HERO_HP_PER_LEVEL
 	hp = minf(max_hp, hp + B.HERO_HP_PER_LEVEL + max_hp * B.HERO_LEVEL_HEAL)
 	damage *= B.HERO_DAMAGE_PER_LEVEL
 	cooldown = maxf(cooldown * B.HERO_COOLDOWN_PER_LEVEL, B.HERO_MIN_COOLDOWN)
-	if arrival_powers == null:
+	if pick_power:
 		powers.level_up()
-	else:
-		powers.level_up(arrival_powers, true)
 	_apply_ranks()
 	_level_fx = 0.6
 

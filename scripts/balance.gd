@@ -175,12 +175,10 @@ const HERO_ENRAGE_SPEED_MULT := 1.2
 # Ganás matando a los tres. "hp", "speed" y "damage" multiplican la vida, la velocidad
 # y el daño de las flechas; "powers" son los poderes con los que llega (rango 1).
 # "level_bonus": llega en máx(nivel más alto de los héroes anteriores, tu nivel) + esto,
-# eligiendo un poder por cada nivel (sus poderes de inicio pesan más hasta rango 3).
+# solo con sus poderes de inicio (los poderes por nivel los define un plan aparte).
 const MATCH_MINUTES := 15.0
 const HORDE_IDLE_DIST := 120.0 # sin héroes vivos, la horda te sigue a esta distancia
 const HERO_ARRIVAL_WARNING := 5.0 # banner y portal antes de que llegue
-const HERO_START_POWER_WEIGHT := 3.0 # peso de sus poderes de inicio al elegir los niveles de llegada
-const HERO_START_POWER_MAX_RANK := 3
 const HERO_NEXT_AFTER_KILL := 60.0 # si matás a uno, el siguiente llega a más tardar en estos segundos
 const HERO_PORTAL_MIN := 600.0 # distancia del portal a vos
 const HERO_PORTAL_MAX := 900.0
