@@ -176,7 +176,8 @@ const HERO_GEM_CLUSTER_RADIUS := 100.0
 const HERO_GEM_DIST_BIAS := 150.0
 const HERO_GEM_SEEK_RADIUS := 600.0 # libre
 const HERO_GEM_PULL := 2.6 # libre, sin peligro
-const HERO_GEM_PULL_DANGER := 1.6 # libre, con horda encima (peligro >= 3)
+const HERO_GEM_PULL_DANGER := 1.6 # libre, con horda encima
+const HERO_GEM_DANGER := 3.0 # libre: con este peligro o más usa HERO_GEM_PULL_DANGER
 const ALARM_GEM_RADIUS := 300.0 # yendo a un grito
 const ALARM_GEM_PULL := 1.8
 const HUNT_ESCAPE_RADIUS := 80.0 # con tantos creeps así de cerca, primero zafa

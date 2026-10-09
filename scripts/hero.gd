@@ -262,7 +262,7 @@ func _think() -> void:
 	#    a un grito mira más cerca y tira menos, pero igual se desvía por un montón.
 	if not low_hp:
 		var seek := B.HERO_GEM_SEEK_RADIUS
-		var pull := B.HERO_GEM_PULL if danger < 3.0 else B.HERO_GEM_PULL_DANGER
+		var pull := B.HERO_GEM_PULL if danger < B.HERO_GEM_DANGER else B.HERO_GEM_PULL_DANGER
 		if hunting:
 			seek = B.HUNT_GEM_RADIUS
 			pull = B.HUNT_GEM_PULL
