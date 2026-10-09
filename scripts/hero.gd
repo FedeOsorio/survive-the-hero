@@ -176,7 +176,7 @@ func _target_valid() -> bool:
 		return false
 	if target == world.player:
 		return world.player.stealth_t <= 0.0
-	return world.minions.has(target)
+	return world.minions.has(target) or world.civilians.has(target)
 
 
 # --- Decisiones --------------------------------------------------------------
@@ -219,7 +219,7 @@ func _think() -> void:
 		if best_heart != null:
 			steer += (best_heart.position - position).normalized() * B.HERO_HEART_PULL
 
-	# 2b. si un civil gritó, va a investigar el lugar
+	# 2b. si un civil gritó, va hacia ahí a matar civiles
 	if world.alarm_t > 0.0 and not low_hp and not world.detected:
 		var to_alarm: Vector2 = world.alarm_pos - position
 		if to_alarm.length() > 40.0:
@@ -254,6 +254,7 @@ func _pick_target():
 	var candidates: Array = world.minions.duplicate()
 	if world.player.stealth_t <= 0.0:
 		candidates.append(world.player)
+	candidates.append_array(world.civilians)
 	for c in candidates:
 		var d := position.distance_to(c.position)
 		if d > reach and not (c == world.player and world.detected):
@@ -263,6 +264,8 @@ func _pick_target():
 			score += 60.0 # prefiere lo que mata de un golpe
 		if c == world.player and world.detected:
 			score += B.HERO_DETECTED_TARGET_BONUS
+		elif world.alarm_t > 0.0 and world.civilians.has(c):
+			score += B.HERO_CIVILIAN_TARGET_BONUS
 		if score > best_score:
 			best_score = score
 			best = c

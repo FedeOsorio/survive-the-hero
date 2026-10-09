@@ -11,8 +11,8 @@ const ARENA_SIZE := Vector2(3000, 3000)
 # para pasar a la siguiente etapa (-1 = etapa final).
 const CREEP_STAGES := [
 	{"name": "Slime", "hp": 30.0, "speed": 170.0, "bite": 6.0, "radius": 10.0, "cost": 60.0, "color": Color(0.45, 0.85, 0.35)},
-	{"name": "Esqueleto", "hp": 75.0, "speed": 180.0, "bite": 15.0, "radius": 13.0, "cost": 220.0, "color": Color(0.9, 0.88, 0.75)},
-	{"name": "Cultista", "hp": 190.0, "speed": 190.0, "bite": 38.0, "radius": 17.0, "cost": 550.0, "color": Color(0.6, 0.35, 0.8)},
+	{"name": "Esqueleto", "hp": 75.0, "speed": 180.0, "bite": 15.0, "radius": 13.0, "cost": 280.0, "color": Color(0.9, 0.88, 0.75)},
+	{"name": "Cultista", "hp": 190.0, "speed": 190.0, "bite": 38.0, "radius": 17.0, "cost": 800.0, "color": Color(0.6, 0.35, 0.8)},
 	{"name": "Demonio", "hp": 470.0, "speed": 200.0, "bite": 90.0, "radius": 23.0, "cost": -1.0, "color": Color(0.9, 0.2, 0.15)},
 ]
 const BITE_COOLDOWN := 0.6
@@ -59,8 +59,12 @@ const CIVILIAN_FLEE_RADIUS := 220.0
 const CIVILIAN_BIOMASS := 4.0
 # Comer civiles hace ruido: suma amenaza y el héroe va a investigar el lugar.
 const THREAT_PER_CIVILIAN := 5.0
-const ALARM_TIME := 8.0 # segundos que el héroe busca en el lugar del grito
-const ALARM_PULL := 1.6 # qué tanto le importa ir a investigar frente a farmear
+# El grito empieza apenas un civil sale corriendo de vos, no cuando muere.
+const ALARM_TIME := 10.0 # segundos que el héroe busca en el lugar del grito
+const ALARM_PULL := 3.0 # qué tanto le importa ir a investigar (las gemas pesan 2.2)
+const CIVILIAN_SCREAM_COOLDOWN := 3.0 # cada civil grita como mucho cada tantos segundos
+# El héroe también mata civiles para dejarte sin comida: los que mata él no dejan cadáver.
+const HERO_CIVILIAN_TARGET_BONUS := 120.0 # durante la alarma, prefiere civiles a la horda
 
 # Camuflaje (Q): te saca del radar del héroe. Una vez por minuto.
 const STEALTH_COOLDOWN := 60.0
@@ -92,7 +96,7 @@ const HERO_HEART_SEEK_RADIUS := 700.0
 
 # --- Héroe -------------------------------------------------------------------
 const HERO_HP := 200.0
-const HERO_HP_PER_LEVEL := 20.0
+const HERO_HP_PER_LEVEL := 30.0
 const HERO_LEVEL_HEAL := 0.25 # al subir de nivel recupera este % de su vida máxima (no tiene regeneración)
 const HERO_SPEED := 150.0
 const HERO_RADIUS := 14.0
@@ -161,7 +165,16 @@ const SPAWN_MAX_DIST := 900.0
 
 
 static func minion_hp_mult(minute: float) -> float:
-	return 1.0 + minute * 0.25
+	return 1.0 + minute * 0.3
+
+
+# Como en Vampire Survivors, tus compañeros se vuelven más fuertes con el tiempo.
+static func minion_dps_mult(minute: float) -> float:
+	return 1.0 + minute * 0.15
+
+
+static func minion_speed_mult(minute: float) -> float:
+	return minf(1.0 + minute * 0.04, 1.4)
 
 
 static func spawns_per_second(minute: float) -> float:
@@ -170,7 +183,7 @@ static func spawns_per_second(minute: float) -> float:
 
 static func pick_minion_type(minute: float, rng: RandomNumberGenerator) -> String:
 	var r := rng.randf()
-	if minute > 3.0 and r < minf(0.05 + minute * 0.02, 0.25):
+	if minute > 2.0 and r < minf(0.05 + minute * 0.025, 0.3):
 		return "bruto"
 	if minute > 1.0 and r < 0.4 and r >= 0.25:
 		return "arquero"

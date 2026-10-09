@@ -1,6 +1,6 @@
 extends Node2D
 ## Civil que deambula por el mapa. Huye del creep; comerlo da mucha biomasa.
-## El héroe y la horda lo ignoran.
+## Al empezar a huir grita y atrae al héroe, que lo mata sin dejar comida.
 
 const B := preload("res://scripts/balance.gd")
 
@@ -10,6 +10,8 @@ var radius := 7.0
 var _wander := Vector2.ZERO
 var _wander_t := 0.0
 var _flash := 0.0
+var _fleeing := false
+var _scream_cd := 0.0
 
 
 func _ready() -> void:
@@ -23,7 +25,13 @@ func _process(delta: float) -> void:
 	var d := away.length()
 	var dir := Vector2.ZERO
 	var spd := B.CIVILIAN_SPEED
-	if d < B.CIVILIAN_FLEE_RADIUS and d > 0.01:
+	_scream_cd = maxf(_scream_cd - delta, 0.0)
+	var flee := d < B.CIVILIAN_FLEE_RADIUS and d > 0.01
+	if flee and not _fleeing and _scream_cd <= 0.0:
+		_scream_cd = B.CIVILIAN_SCREAM_COOLDOWN
+		world.raise_alarm(position)
+	_fleeing = flee
+	if flee:
 		dir = away / d
 	else:
 		_wander_t -= delta
@@ -38,11 +46,13 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, by_hero := false) -> void:
+	if hp <= 0.0:
+		return
 	hp -= amount
 	_flash = 0.08
 	if hp <= 0.0:
-		world.on_civilian_killed(self)
+		world.on_civilian_killed(self, by_hero)
 
 
 func _draw() -> void:

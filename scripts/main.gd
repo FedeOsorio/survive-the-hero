@@ -132,7 +132,7 @@ func spawn_minion(type_name: String, elite := false) -> void:
 	pos = pos.clamp(Vector2(20, 20), B.ARENA_SIZE - Vector2(20, 20))
 	var m = Minion.new()
 	m.world = self
-	m.setup(type_name, B.minion_hp_mult(elapsed / 60.0), elite)
+	m.setup(type_name, elapsed / 60.0, elite)
 	m.position = pos
 	minions.append(m)
 	_entities.add_child(m)
@@ -152,11 +152,19 @@ func spawn_civilian() -> void:
 	_entities.add_child(c)
 
 
-func on_civilian_killed(c) -> void:
-	civilians.erase(c)
-	add_threat(B.THREAT_PER_CIVILIAN)
-	alarm_pos = c.position
+## Un civil que huye grita: el héroe va hacia ahí a matar civiles.
+func raise_alarm(pos: Vector2) -> void:
+	alarm_pos = pos
 	alarm_t = B.ALARM_TIME
+
+
+func on_civilian_killed(c, by_hero := false) -> void:
+	civilians.erase(c)
+	if by_hero:
+		c.queue_free() # el héroe no deja comida
+		return
+	add_threat(B.THREAT_PER_CIVILIAN)
+	raise_alarm(c.position)
 	var corpse = Corpse.new()
 	corpse.world = self
 	corpse.position = c.position

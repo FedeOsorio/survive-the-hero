@@ -23,14 +23,14 @@ var elite := false
 var led := false # cerca del jugador: más rápido y más fuerte
 
 
-func setup(t: String, hp_mult: float, is_elite := false) -> void:
+func setup(t: String, minute: float, is_elite := false) -> void:
 	var d: Dictionary = B.MINION_TYPES[t]
 	type_name = t
 	elite = is_elite
-	max_hp = d.hp * hp_mult * (B.ELITE_HP_MULT if elite else 1.0)
+	max_hp = d.hp * B.minion_hp_mult(minute) * (B.ELITE_HP_MULT if elite else 1.0)
 	hp = max_hp
-	speed = d.speed * randf_range(0.9, 1.1)
-	dps = d.dps
+	speed = d.speed * B.minion_speed_mult(minute) * randf_range(0.9, 1.1)
+	dps = d.dps * B.minion_dps_mult(minute)
 	radius = d.radius
 	xp = d.xp
 	biomass = d.biomass
@@ -39,7 +39,7 @@ func setup(t: String, hp_mult: float, is_elite := false) -> void:
 		radius *= 1.4
 	shot_range = d.get("range", 0.0)
 	shot_cooldown = d.get("shot_cooldown", 0.0)
-	shot_damage = d.get("shot_damage", 0.0)
+	shot_damage = d.get("shot_damage", 0.0) * B.minion_dps_mult(minute)
 	_shot_t = randf() * shot_cooldown
 	z_index = 1
 

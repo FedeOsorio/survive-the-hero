@@ -25,7 +25,7 @@ La mordida y el escupitajo son automáticos: salen solos cuando el héroe o un c
 
 - **Vos:** el círculo verde con anillo.
 - **El héroe:** el cuadrado azul. Cuando sale de pantalla, una flecha azul te marca dónde está.
-- **La horda:** los círculos marrones, verdes y rojos. Caminan hacia el héroe.
+- **La horda:** los círculos marrones, verdes y rojos. Caminan hacia el héroe y cada minuto son más duros, más rápidos y pegan más.
 - **Al morir, cada creep deja:**
   - un cadáver: pasá por encima para absorberlo y ganar biomasa y vida;
   - una gema celeste: es la única forma en que el héroe sube de nivel. No te alimenta, pero si la pisás antes que él, se la destruís.
@@ -37,7 +37,7 @@ La mordida y el escupitajo son automáticos: salen solos cuando el héroe o un c
 - **Arqueros:** los creeps violetas atacan al héroe a distancia.
 - **Mutaciones:** la biomasa también llena tu barra de nivel. Cada vez que subís, el juego se pausa y elegís 1 de 3 mejoras (las opciones están en `scripts/mutations.gd`).
 - **Liderazgo:** los compañeros dentro de tu círculo verde se vuelven más rápidos y pegan más fuerte (se ven con borde verde).
-- **Civiles:** los muñequitos amarillos deambulan lejos del héroe y huyen de vos. Comerlos da mucha biomasa, pero gritan: suben tu amenaza y el héroe va a investigar el lugar.
+- **Civiles:** los muñequitos amarillos deambulan lejos del héroe y huyen de vos. Comerlos da mucha biomasa, pero gritan apenas empiezan a huir y el héroe va hacia ahí a matarlos (los que mata él no dejan cadáver). Comerlos además sube tu amenaza.
 
 Todos los números de balance están en `scripts/balance.gd`. El diseño está en `docs/diseno-mvp.md`.
 

@@ -1,5 +1,5 @@
 extends Node2D
-## Flecha del héroe. Le pega al primer creep que toca, incluido el jugador.
+## Flecha del héroe. Le pega al primer creep que toca, incluido el jugador, y a los civiles.
 
 const B := preload("res://scripts/balance.gd")
 
@@ -31,6 +31,11 @@ func _process(delta: float) -> void:
 		player.take_damage(damage)
 		queue_free()
 		return
+	for c in world.civilians:
+		if position.distance_to(c.position) < c.radius + 3.0:
+			c.take_damage(damage, true)
+			queue_free()
+			return
 	for m in world.minions_near(position):
 		if _hit.has(m):
 			continue
