@@ -3,7 +3,7 @@ extends Node2D
 ## Martillazo con aviso (arco), carga en línea recta con aviso (línea dorada)
 ## y aura que cura al héroe si están cerca. Tu horda le pega; el héroe no.
 ## Al morir deja un corazón celestial. Cada 3.º soldado es un Capitán: más grande,
-## más fuerte y su martillazo deja una onda alrededor.
+## más fuerte y su martillazo deja una onda alrededor. Aplasta a la horda chica que toca.
 
 const B := preload("res://scripts/balance.gd")
 
@@ -70,6 +70,7 @@ func _process(delta: float) -> void:
 	# aura: la cura la aplica infamy.gd una sola vez aunque haya varios cerca
 	_healing = world.heroes.any_within(position, B.PALADIN_HEAL_RADIUS)
 
+	_crush()
 	if _charge_left > 0.0:
 		var step := B.PALADIN_CHARGE_SPEED * delta
 		position += _charge_dir * step
@@ -99,6 +100,16 @@ func _process(delta: float) -> void:
 			position += to_p / d * speed * delta
 	position = position.clamp(Vector2(radius, radius), B.ARENA_SIZE - Vector2(radius, radius))
 	queue_redraw()
+
+
+## Aplasta a la horda chica que toca (ratas, zombis y arqueros), también en la carga.
+## Mueren normal: dejan cadáver y gema. Brutos y élites lo frenan como siempre.
+func _crush() -> void:
+	for m in world.minions_near(position):
+		if m.elite or m.type_name == "bruto":
+			continue
+		if position.distance_to(m.position) < radius + m.radius:
+			m.take_damage(m.hp + 1.0)
 
 
 func _hammer() -> void:

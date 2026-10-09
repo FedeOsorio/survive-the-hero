@@ -64,16 +64,17 @@ func _ready() -> void:
 	add_child(status)
 
 
-## Tipo de héroe (una fila de B.HEROES). Se llama después de agregarlo al árbol.
-func setup(cfg: Dictionary) -> void:
+## Tipo de héroe (una fila de B.HEROES) y nivel de llegada, eligiendo un poder
+## por nivel. Se llama después de agregarlo al árbol.
+func setup(cfg: Dictionary, start_level: int) -> void:
 	title = cfg.name
 	article = cfg.article
 	color = cfg.color
 	speed_mult = cfg.speed
 	for id in cfg.powers:
 		powers.ranks[id] = 1
-	for i in cfg.level - 1:
-		_level_up(false)
+	for i in start_level - 1:
+		_level_up(cfg.powers)
 	max_hp *= cfg.hp
 	hp = max_hp
 	damage *= cfg.damage
@@ -102,12 +103,16 @@ func _process(delta: float) -> void:
 		position += _move_dir * speed * status.speed_mult() * delta
 	position = position.clamp(Vector2(radius, radius), B.ARENA_SIZE - Vector2(radius, radius))
 
+	# las gemas dentro del radio vuelan hacia él; las junta al tocarlas
 	for g in world.gems.duplicate():
-		if position.distance_to(g.position) < pickup_radius():
+		var gd := position.distance_to(g.position)
+		if gd < radius + 6.0:
 			_gain_xp(g.xp)
 			world.remove_gem(g)
+		elif gd < pickup_radius():
+			g.position = g.position.move_toward(position, B.HERO_GEM_PULL_SPEED * delta)
 	for c in world.corpses.duplicate():
-		if c.heart and position.distance_to(c.position) < pickup_radius() + c.radius:
+		if c.heart and position.distance_to(c.position) < B.HERO_HEART_PICKUP + level * B.HERO_HEART_PICKUP_PER_LEVEL + c.radius:
 			_level_up()
 			hp = minf(max_hp, hp + max_hp * B.ELITE_HEART_HERO_HEAL)
 			world.remove_corpse(c)
@@ -411,16 +416,18 @@ func _gain_xp(amount: float) -> void:
 		_level_up()
 
 
-## "pick_power" en false: sube los números del nivel sin elegir poder (los héroes
-## que llegan en nivel alto traen solo sus poderes de inicio).
-func _level_up(pick_power := true) -> void:
+## "arrival_powers": al subir los niveles de llegada, sus poderes de inicio pesan más
+## y no hay banner.
+func _level_up(arrival_powers = null) -> void:
 	level += 1
 	max_hp += B.HERO_HP_PER_LEVEL
 	hp = minf(max_hp, hp + B.HERO_HP_PER_LEVEL + max_hp * B.HERO_LEVEL_HEAL)
 	damage *= B.HERO_DAMAGE_PER_LEVEL
 	cooldown = maxf(cooldown * B.HERO_COOLDOWN_PER_LEVEL, B.HERO_MIN_COOLDOWN)
-	if pick_power:
+	if arrival_powers == null:
 		powers.level_up()
+	else:
+		powers.level_up(arrival_powers, true)
 	_apply_ranks()
 	_level_fx = 0.6
 

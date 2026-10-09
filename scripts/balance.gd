@@ -109,9 +109,9 @@ const HERO_HEART_PULL := 2.8 # prioridad de ir a buscar un corazón (más que la
 const HERO_HEART_SEEK_RADIUS := 700.0
 
 # --- Héroe -------------------------------------------------------------------
-const HERO_HP := 200.0
-const HERO_HP_PER_LEVEL := 30.0
-const HERO_LEVEL_HEAL := 0.25 # al subir de nivel recupera este % de su vida máxima (no tiene regeneración)
+const HERO_HP := 320.0
+const HERO_HP_PER_LEVEL := 40.0
+const HERO_LEVEL_HEAL := 0.3 # al subir de nivel recupera este % de su vida máxima (no tiene regeneración)
 const HERO_SPEED := 150.0
 const HERO_RADIUS := 14.0
 const HERO_ARROW_DAMAGE := 20.0
@@ -119,8 +119,11 @@ const HERO_ARROW_COOLDOWN := 0.45
 const HERO_ARROW_SPEED := 520.0
 const HERO_RANGE := 420.0
 # El héroe sube de nivel SOLO juntando gemas: tiene que caminar hasta ellas.
-const HERO_PICKUP_RADIUS := 35.0
-const HERO_PICKUP_PER_LEVEL := 1.0
+const HERO_PICKUP_RADIUS := 90.0 # las gemas dentro de este radio vuelan hacia él
+const HERO_PICKUP_PER_LEVEL := 3.0
+const HERO_GEM_PULL_SPEED := 350.0
+const HERO_HEART_PICKUP := 35.0 # los corazones de élite los tiene que pisar (más el radio del corazón)
+const HERO_HEART_PICKUP_PER_LEVEL := 1.0
 const GEM_SCATTER := 30.0 # las gemas saltan un poco al caer, lejos del cadáver
 const HERO_DAMAGE_PER_LEVEL := 1.10
 const HERO_COOLDOWN_PER_LEVEL := 0.95
@@ -171,17 +174,22 @@ const HERO_ENRAGE_SPEED_MULT := 1.2
 # Tres héroes en 15 minutos: llegan a horario fijo, haya muerto o no el anterior.
 # Ganás matando a los tres. "hp", "speed" y "damage" multiplican la vida, la velocidad
 # y el daño de las flechas; "powers" son los poderes con los que llega (rango 1).
+# "level_bonus": llega en máx(nivel más alto de los héroes anteriores, tu nivel) + esto,
+# eligiendo un poder por cada nivel (sus poderes de inicio pesan más hasta rango 3).
 const MATCH_MINUTES := 15.0
 const HORDE_IDLE_DIST := 120.0 # sin héroes vivos, la horda te sigue a esta distancia
 const HERO_ARRIVAL_WARNING := 5.0 # banner y portal antes de que llegue
+const HERO_START_POWER_WEIGHT := 3.0 # peso de sus poderes de inicio al elegir los niveles de llegada
+const HERO_START_POWER_MAX_RANK := 3
+const HERO_NEXT_AFTER_KILL := 60.0 # si matás a uno, el siguiente llega a más tardar en estos segundos
 const HERO_PORTAL_MIN := 600.0 # distancia del portal a vos
 const HERO_PORTAL_MAX := 900.0
 const HEROES := [
 	{"name": "Arquero", "article": "el", "minute": 0.0, "level": 1, "hp": 1.0, "speed": 1.0, "damage": 1.0,
 		"powers": [], "color": Color(0.3, 0.55, 1.0)},
-	{"name": "Caballero", "article": "el", "minute": 5.0, "level": 6, "hp": 1.5, "speed": 0.9, "damage": 0.8,
+	{"name": "Caballero", "article": "el", "minute": 5.0, "level_bonus": 2, "hp": 1.5, "speed": 0.9, "damage": 0.8,
 		"powers": ["aura", "nova"], "color": Color(0.78, 0.8, 0.88)},
-	{"name": "Maga", "article": "la", "minute": 10.0, "level": 11, "hp": 0.8, "speed": 1.05, "damage": 1.15,
+	{"name": "Maga", "article": "la", "minute": 10.0, "level_bonus": 4, "hp": 0.8, "speed": 1.05, "damage": 1.15,
 		"powers": ["rayo", "orbes"], "color": Color(0.72, 0.4, 0.95)},
 ]
 
@@ -230,11 +238,11 @@ static func xp_for_level(level: int) -> float:
 
 # --- Horda -------------------------------------------------------------------
 const MINION_TYPES := {
-	"rata": {"hp": 6.0, "speed": 120.0, "dps": 4.0, "radius": 7.0, "xp": 1.0, "biomass": 0.8, "color": Color(0.6, 0.5, 0.4)},
-	"zombi": {"hp": 16.0, "speed": 80.0, "dps": 7.0, "radius": 10.0, "xp": 2.0, "biomass": 1.5, "color": Color(0.4, 0.6, 0.45)},
-	"arquero": {"hp": 10.0, "speed": 70.0, "dps": 0.0, "radius": 9.0, "xp": 2.0, "biomass": 1.5, "color": Color(0.55, 0.4, 0.75),
+	"rata": {"hp": 6.0, "speed": 120.0, "dps": 4.0, "radius": 7.0, "xp": 2.0, "biomass": 0.8, "color": Color(0.6, 0.5, 0.4)},
+	"zombi": {"hp": 16.0, "speed": 80.0, "dps": 7.0, "radius": 10.0, "xp": 4.0, "biomass": 1.5, "color": Color(0.4, 0.6, 0.45)},
+	"arquero": {"hp": 10.0, "speed": 70.0, "dps": 0.0, "radius": 9.0, "xp": 4.0, "biomass": 1.5, "color": Color(0.55, 0.4, 0.75),
 		"range": 260.0, "shot_cooldown": 2.2, "shot_damage": 4.0},
-	"bruto": {"hp": 60.0, "speed": 60.0, "dps": 14.0, "radius": 16.0, "xp": 5.0, "biomass": 5.0, "color": Color(0.6, 0.3, 0.3)},
+	"bruto": {"hp": 60.0, "speed": 60.0, "dps": 14.0, "radius": 16.0, "xp": 10.0, "biomass": 5.0, "color": Color(0.6, 0.3, 0.3)},
 }
 const MAX_MINIONS := 300
 const CORPSE_LIFETIME := 20.0
