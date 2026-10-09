@@ -244,7 +244,6 @@ func _level_up() -> void:
 	damage *= B.HERO_DAMAGE_PER_LEVEL
 	cooldown = maxf(cooldown * B.HERO_COOLDOWN_PER_LEVEL, B.HERO_MIN_COOLDOWN)
 	arrows = 1 + level / B.HERO_LEVELS_PER_EXTRA_ARROW
-	pierce = B.HERO_ARROW_PIERCE + level / B.HERO_LEVELS_PER_PIERCE
 	_level_fx = 0.6
 
 

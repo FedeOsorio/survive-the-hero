@@ -10,10 +10,10 @@ const ARENA_SIZE := Vector2(3000, 3000)
 # Cada etapa reemplaza los stats de la anterior. "cost" es la biomasa necesaria
 # para pasar a la siguiente etapa (-1 = etapa final).
 const CREEP_STAGES := [
-	{"name": "Slime", "hp": 30.0, "speed": 170.0, "bite": 4.0, "radius": 10.0, "cost": 60.0, "color": Color(0.45, 0.85, 0.35)},
-	{"name": "Esqueleto", "hp": 75.0, "speed": 180.0, "bite": 10.0, "radius": 13.0, "cost": 220.0, "color": Color(0.9, 0.88, 0.75)},
-	{"name": "Cultista", "hp": 190.0, "speed": 190.0, "bite": 25.0, "radius": 17.0, "cost": 550.0, "color": Color(0.6, 0.35, 0.8)},
-	{"name": "Demonio", "hp": 470.0, "speed": 200.0, "bite": 62.0, "radius": 23.0, "cost": -1.0, "color": Color(0.9, 0.2, 0.15)},
+	{"name": "Slime", "hp": 30.0, "speed": 170.0, "bite": 6.0, "radius": 10.0, "cost": 60.0, "color": Color(0.45, 0.85, 0.35)},
+	{"name": "Esqueleto", "hp": 75.0, "speed": 180.0, "bite": 15.0, "radius": 13.0, "cost": 220.0, "color": Color(0.9, 0.88, 0.75)},
+	{"name": "Cultista", "hp": 190.0, "speed": 190.0, "bite": 38.0, "radius": 17.0, "cost": 550.0, "color": Color(0.6, 0.35, 0.8)},
+	{"name": "Demonio", "hp": 470.0, "speed": 200.0, "bite": 90.0, "radius": 23.0, "cost": -1.0, "color": Color(0.9, 0.2, 0.15)},
 ]
 const BITE_COOLDOWN := 0.6
 const BITE_RANGE := 26.0 # se suma a los radios del creep y del héroe
@@ -21,7 +21,7 @@ const DASH_SPEED := 650.0
 const DASH_TIME := 0.18
 const DASH_COOLDOWN := 2.5
 const DASH_HIT_MULT := 1.5 # daño de la embestida = mordida * esto
-const SPIT_DAMAGE_MULT := 0.4 # daño del escupitajo = mordida * esto
+const SPIT_DAMAGE_MULT := 0.8 # daño del escupitajo = mordida * esto
 const SPIT_COOLDOWN := 1.2
 const SPIT_SPEED := 420.0
 const SPIT_RANGE := 380.0
@@ -54,7 +54,7 @@ const CIVILIANS_START := 14
 const CIVILIANS_MAX := 24
 const CIVILIAN_RESPAWN := 6.0
 const CIVILIAN_HP := 8.0
-const CIVILIAN_SPEED := 115.0
+const CIVILIAN_SPEED := 85.0
 const CIVILIAN_FLEE_RADIUS := 220.0
 const CIVILIAN_BIOMASS := 4.0
 const GEM_BIOMASS := 0.5
@@ -67,7 +67,7 @@ const STEAL_RADIUS := 300.0 # robar una gema cerca del héroe suma amenaza
 const THREAT_PER_STAGE := 20.0
 
 # --- Héroe -------------------------------------------------------------------
-const HERO_HP := 400.0
+const HERO_HP := 200.0
 const HERO_HP_PER_LEVEL := 20.0
 const HERO_LEVEL_HEAL := 0.25 # al subir de nivel recupera este % de su vida máxima (no tiene regeneración)
 const HERO_SPEED := 150.0
@@ -82,8 +82,8 @@ const HERO_DAMAGE_PER_LEVEL := 1.07
 const HERO_COOLDOWN_PER_LEVEL := 0.97
 const HERO_MIN_COOLDOWN := 0.18
 const HERO_LEVELS_PER_EXTRA_ARROW := 6
-const HERO_ARROW_PIERCE := 1 # enemigos extra que atraviesa cada flecha
-const HERO_LEVELS_PER_PIERCE := 6
+# Las flechas no atraviesan: eso será una mejora que el héroe elija (hito 2).
+const HERO_ARROW_PIERCE := 0
 # Tajo de espada: ataque cuerpo a cuerpo en arco, con aviso previo para poder esquivarlo.
 # Apagado por ahora: los poderes extra del héroe se definen cuando el creep
 # tenga habilidades para contrarrestarlos.
