@@ -27,7 +27,7 @@ func _process(delta: float) -> void:
 		world.remove_spit(self)
 		return
 	var hero = world.hero
-	if position.distance_to(hero.position) < hero.radius + 5.0:
+	if not hero.rolling() and position.distance_to(hero.position) < hero.radius + 5.0:
 		hero.take_damage(damage, from_player)
 		world.remove_spit(self)
 		return

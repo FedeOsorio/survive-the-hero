@@ -44,10 +44,10 @@ const COMBO_MAX := 2.5
 
 # Liderazgo: los compañeros cerca tuyo se potencian.
 const LEAD_RADIUS := 170.0
-const LEAD_RADIUS_PER_RANK := 50.0
+const LEAD_RADIUS_PER_RANK := 30.0
 const LEAD_SPEED_MULT := 1.4
 const LEAD_DAMAGE_MULT := 2.0
-const LEAD_DAMAGE_PER_RANK := 0.5
+const LEAD_DAMAGE_PER_RANK := 0.25
 
 # Civiles: comida que huye de vos, lejos del héroe.
 const CIVILIANS_START := 14
@@ -95,8 +95,14 @@ const HERO_SLASH_RADIUS := 75.0
 const HERO_SLASH_RADIUS_PER_LEVEL := 1.0
 const HERO_SLASH_ARC_DEG := 130.0
 const HERO_SLASH_DAMAGE_MULT := 1.5 # daño del tajo = daño de flecha * esto
-# Esquivar proyectiles del jugador
-const HERO_DODGE_CHANCE := 0.6
+# Rodada: el héroe esquiva tus escupitajos rodando (invulnerable mientras rueda).
+# Con la rodada en cooldown no puede esquivar: ese es el momento de castigarlo.
+const HERO_DODGE_CHANCE := 0.8
+const HERO_ROLL_SPEED := 520.0
+const HERO_ROLL_TIME := 0.25
+const HERO_ROLL_COOLDOWN := 3.0
+# Aviso de disparo: con el jugador detectado, apunta (línea de mira) antes de tirarle.
+const HERO_AIM_WINDUP := 0.35
 const HERO_DODGE_LOOKAHEAD := 260.0
 const HERO_REACTION_MIN := 0.15
 const HERO_REACTION_MAX := 0.3

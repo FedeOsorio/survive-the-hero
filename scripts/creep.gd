@@ -244,7 +244,7 @@ func _eat(value: float) -> void:
 
 func _offer_mutation() -> void:
 	_queued_levels -= 1
-	pending_choices = Mutations.roll(ranks, _rng)
+	pending_choices = Mutations.roll(ranks, stage, _rng)
 	if pending_choices.is_empty():
 		return
 	if world.sim_mode:
@@ -270,7 +270,7 @@ func choose_mutation(index: int) -> void:
 
 
 func take_damage(amount: float) -> void:
-	if invulnerable:
+	if invulnerable or _dash_t > 0.0: # la embestida te hace invulnerable
 		return
 	hp -= amount
 	_flash = 0.1
@@ -324,5 +324,8 @@ func _draw() -> void:
 	if _bite_fx > 0.0:
 		var reach := radius + B.BITE_RANGE
 		draw_arc(Vector2.ZERO, reach, _bite_dir.angle() - 0.9, _bite_dir.angle() + 0.9, 12, Color(1, 1, 1, 0.8), 3.0)
+	# cooldown de la embestida
+	if _dash_cd > 0.0:
+		draw_arc(Vector2.ZERO, radius + 9.0, -PI / 2, -PI / 2 + TAU * (1.0 - _dash_cd / B.DASH_COOLDOWN), 24, Color(1, 1, 1, 0.35), 2.0)
 	# anillo indicador para encontrarse en la horda
 	draw_arc(Vector2.ZERO, radius + 6.0, 0.0, TAU, 24, Color(0.4, 1.0, 0.5, 0.5), 1.5)

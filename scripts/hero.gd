@@ -30,6 +30,11 @@ var _slash_cd := 0.0
 var _slash_windup := 0.0
 var _slash_dir := Vector2.RIGHT
 var _slash_fx := 0.0
+var _roll_t := 0.0
+var _roll_cd := 0.0
+var _roll_dir := Vector2.ZERO
+var _aim_windup := 0.0
+var _aim_locked := Vector2.RIGHT
 var _rng := RandomNumberGenerator.new()
 var damage_taken := {"jugador": 0.0, "horda": 0.0} # para los reportes de --sim
 
@@ -47,7 +52,13 @@ func _process(delta: float) -> void:
 		_think_t = _rng.randf_range(B.HERO_REACTION_MIN, B.HERO_REACTION_MAX)
 		_think()
 
-	position += _move_dir * speed * delta
+	_roll_cd = maxf(_roll_cd - delta, 0.0)
+	if _roll_t > 0.0:
+		_roll_t -= delta
+		position += _roll_dir * B.HERO_ROLL_SPEED * delta
+	else:
+		_check_roll()
+		position += _move_dir * speed * delta
 	position = position.clamp(Vector2(radius, radius), B.ARENA_SIZE - Vector2(radius, radius))
 
 	for g in world.gems.duplicate():
@@ -56,9 +67,20 @@ func _process(delta: float) -> void:
 			world.remove_gem(g)
 
 	_fire_t -= delta
-	if _fire_t <= 0.0 and _target_valid() and position.distance_to(target.position) <= B.HERO_RANGE:
-		_fire_t = cooldown
-		_fire()
+	if _aim_windup > 0.0:
+		_aim_windup -= delta
+		if _aim_windup <= 0.0:
+			_fire_t = cooldown
+			_fire_dir(_aim_locked)
+	elif _fire_t <= 0.0 and _roll_t <= 0.0 and _target_valid() and position.distance_to(target.position) <= B.HERO_RANGE:
+		if target == world.player and world.detected:
+			# contra el jugador apunta primero y avisa: se puede esquivar
+			_aim_windup = B.HERO_AIM_WINDUP
+			_aim_locked = (target.position - position).normalized()
+			_aim = _aim_locked
+		else:
+			_fire_t = cooldown
+			_fire()
 
 	if B.HERO_SLASH_ENABLED and level >= B.HERO_SLASH_LEVEL:
 		_update_slash(delta)
@@ -67,6 +89,30 @@ func _process(delta: float) -> void:
 	_hurt = maxf(_hurt - delta, 0.0)
 	_level_fx = maxf(_level_fx - delta, 0.0)
 	queue_redraw()
+
+
+func rolling() -> bool:
+	return _roll_t > 0.0
+
+
+## Si un escupitajo del jugador viene directo hacia él y tiene la rodada lista, rueda.
+func _check_roll() -> void:
+	if _roll_cd > 0.0:
+		return
+	for s in world.spits:
+		if not s.from_player or s.dodge_roll > B.HERO_DODGE_CHANCE:
+			continue
+		var rel: Vector2 = position - s.position
+		var along: float = rel.dot(s.direction)
+		if along <= 0.0 or along > B.HERO_DODGE_LOOKAHEAD:
+			continue
+		var lateral: Vector2 = rel - s.direction * along
+		if lateral.length() < radius + 14.0:
+			_roll_dir = lateral.normalized() if lateral.length() > 0.5 else s.direction.orthogonal()
+			_roll_t = B.HERO_ROLL_TIME
+			_roll_cd = B.HERO_ROLL_COOLDOWN
+			_aim_windup = 0.0
+			return
 
 
 func pickup_radius() -> float:
@@ -164,20 +210,7 @@ func _think() -> void:
 		elif d < ideal - 60.0:
 			steer -= to_t / d * 0.8
 
-	# 4. esquivar proyectiles que vienen hacia él (no siempre lo logra)
-	for s in world.spits:
-		if s.dodge_roll > B.HERO_DODGE_CHANCE:
-			continue
-		var rel: Vector2 = position - s.position
-		var along: float = rel.dot(s.direction)
-		if along <= 0.0 or along > B.HERO_DODGE_LOOKAHEAD:
-			continue
-		var lateral: Vector2 = rel - s.direction * along
-		if lateral.length() < radius + 14.0:
-			var side: Vector2 = lateral.normalized() if lateral.length() > 0.5 else s.direction.orthogonal()
-			steer += side * 4.0
-
-	# 5. no quedarse contra la pared
+	# 4. no quedarse contra la pared
 	var margin := 200.0
 	var center := B.ARENA_SIZE * 0.5
 	if position.x < margin or position.y < margin or position.x > B.ARENA_SIZE.x - margin or position.y > B.ARENA_SIZE.y - margin:
@@ -221,8 +254,11 @@ func _nearest(list: Array, max_dist: float):
 # --- Combate -----------------------------------------------------------------
 
 func _fire() -> void:
-	var dir: Vector2 = (target.position - position).normalized()
-	dir = dir.rotated(deg_to_rad(_rng.randf_range(-B.HERO_AIM_ERROR_DEG, B.HERO_AIM_ERROR_DEG)))
+	_fire_dir((target.position - position).normalized())
+
+
+func _fire_dir(base: Vector2) -> void:
+	var dir := base.rotated(deg_to_rad(_rng.randf_range(-B.HERO_AIM_ERROR_DEG, B.HERO_AIM_ERROR_DEG)))
 	_aim = dir
 	var spread := deg_to_rad(12.0)
 	for i in arrows:
@@ -286,6 +322,13 @@ func _draw() -> void:
 		draw_colored_polygon(pts, Color(1.0, 0.3, 0.2, 0.18))
 	if _slash_fx > 0.0:
 		draw_arc(Vector2.ZERO, slash_radius() * 0.85, a - half, a + half, 16, Color(1, 1, 0.85, 0.9), 6.0)
+	if _aim_windup > 0.0:
+		draw_line(Vector2.ZERO, _aim_locked * B.HERO_RANGE, Color(1, 0.25, 0.2, 0.55), 2.0)
+	if _roll_t > 0.0:
+		body = Color(body, 0.45)
+	# cooldown de la rodada: arco completo = rodada lista
+	var roll_ready := 1.0 - _roll_cd / B.HERO_ROLL_COOLDOWN
+	draw_arc(Vector2.ZERO, radius + 7.0, -PI / 2, -PI / 2 + TAU * roll_ready, 24, Color(0.6, 0.85, 1.0, 0.7 if _roll_cd <= 0.0 else 0.3), 2.0)
 	draw_rect(Rect2(Vector2(-radius, -radius), Vector2(radius, radius) * 2.0), Color(0.05, 0.05, 0.1))
 	draw_rect(Rect2(Vector2(-radius + 2, -radius + 2), Vector2(radius - 2, radius - 2) * 2.0), body)
 	draw_line(Vector2.ZERO, _aim * (radius + 10.0), Color(1, 0.95, 0.7), 3.0)

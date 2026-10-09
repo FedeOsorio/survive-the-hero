@@ -27,7 +27,7 @@ func _process(delta: float) -> void:
 		return
 
 	var player = world.player
-	if not player.invulnerable and position.distance_to(player.position) < player.radius + 3.0:
+	if not player.invulnerable and player._dash_t <= 0.0 and position.distance_to(player.position) < player.radius + 3.0:
 		player.take_damage(damage)
 		queue_free()
 		return
