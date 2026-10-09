@@ -67,8 +67,8 @@ func summary() -> String:
 	return ", ".join(parts)
 
 
-func _power_damage(id: String, mult: float) -> float:
-	return hero.damage * mult * (1.0 + (rank(id) - 1) * B.HERO_POWER_RANK_BONUS)
+func _power_damage(id: String, base: float, per_rank: float) -> float:
+	return base + per_rank * (rank(id) - 1)
 
 
 func _process(delta: float) -> void:
@@ -78,7 +78,7 @@ func _process(delta: float) -> void:
 		_update_orbs(delta)
 	if rank("aura") > 0:
 		var r := aura_radius()
-		_hit_area(hero.position, r, _power_damage("aura", B.AURA_DPS) * delta)
+		_hit_area(hero.position, r, _power_damage("aura", B.AURA_DPS, B.AURA_DPS_PER_RANK) * delta)
 	if rank("rayo") > 0:
 		_update_bolts(delta)
 	if rank("nova") > 0:
@@ -89,7 +89,7 @@ func _process(delta: float) -> void:
 # --- Orbes -------------------------------------------------------------------
 
 func orb_count() -> int:
-	return rank("orbes") + 1
+	return rank("orbes")
 
 
 func orb_orbit() -> float:
@@ -106,7 +106,7 @@ func _update_orbs(delta: float) -> void:
 		_orb_hits[k] -= delta
 		if _orb_hits[k] <= 0.0:
 			_orb_hits.erase(k)
-	var dmg := _power_damage("orbes", B.ORB_DAMAGE)
+	var dmg := _power_damage("orbes", B.ORB_DAMAGE, B.ORB_DAMAGE_PER_RANK)
 	for i in orb_count():
 		var p: Vector2 = hero.position + _orb_pos(i)
 		var victims: Array = world.minions_near(p)
@@ -165,7 +165,7 @@ func _update_bolts(delta: float) -> void:
 		b.t -= delta
 		if b.t <= 0.0:
 			_bolts.erase(b)
-			_hit_area(b.pos, B.BOLT_RADIUS, _power_damage("rayo", B.BOLT_DAMAGE))
+			_hit_area(b.pos, B.BOLT_RADIUS, _power_damage("rayo", B.BOLT_DAMAGE, B.BOLT_DAMAGE_PER_RANK))
 			_bolt_fx.append({"pos": b.pos, "t": 0.15})
 	for f in _bolt_fx.duplicate():
 		f.t -= delta
@@ -184,7 +184,7 @@ func _update_nova(delta: float) -> void:
 	if _nova_warn > 0.0:
 		_nova_warn -= delta
 		if _nova_warn <= 0.0:
-			_hit_area(hero.position, nova_radius(), _power_damage("nova", B.NOVA_DAMAGE), B.NOVA_PUSH)
+			_hit_area(hero.position, nova_radius(), _power_damage("nova", B.NOVA_DAMAGE, B.NOVA_DAMAGE_PER_RANK), B.NOVA_PUSH)
 			_nova_fx = 0.2
 		return
 	_nova_t -= delta
