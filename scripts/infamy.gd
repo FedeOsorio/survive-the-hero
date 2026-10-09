@@ -13,7 +13,6 @@ var paladins: Array = []
 var _spawned := 0
 var _arrival_t := 0.0 # columna de luz: el Paladín está por llegar
 var arrival_pos := Vector2.ZERO
-var _hero_was_low := false
 
 
 func arriving() -> bool:
@@ -32,15 +31,17 @@ func _process(delta: float) -> void:
 		return
 	if world.detected:
 		add(B.INFAMY_PER_SECOND_DETECTED * delta)
-	var hero = world.hero
-	var low: bool = hero.hp / hero.max_hp < B.INFAMY_HERO_LOW_HP
-	if low and not _hero_was_low:
-		add(B.INFAMY_HERO_LOW)
-	_hero_was_low = low
+	for h in world.heroes.list:
+		var low: bool = h.hp / h.max_hp < B.INFAMY_HERO_LOW_HP
+		if low and not h.was_low:
+			add(B.INFAMY_HERO_LOW)
+		h.was_low = low
 	if bar >= B.INFAMY_MAX and paladins.size() < B.PALADIN_MAX_ALIVE:
 		bar = 0.0
 		_arrival_t = B.PALADIN_ARRIVAL
-		arrival_pos = (hero.position + Vector2.from_angle(world.rng.randf() * TAU) * B.PALADIN_SPAWN_DIST) \
+		var hero = world.hero
+		var base: Vector2 = hero.position if hero != null else world.player.position
+		arrival_pos = (base + Vector2.from_angle(world.rng.randf() * TAU) * B.PALADIN_SPAWN_DIST) \
 				.clamp(Vector2(30, 30), B.ARENA_SIZE - Vector2(30, 30))
 		if Paladin.is_captain(_spawned):
 			world.hud.banner("El cielo envía a un Capitán")
@@ -54,13 +55,11 @@ func add(amount: float) -> void:
 		bar = minf(bar + amount, B.INFAMY_MAX)
 
 
-## Las auras no se suman: con uno o más Paladines cerca, el héroe se cura una sola vez.
+## Las auras no se suman: con uno o más Paladines cerca, cada héroe se cura una sola vez.
 func _heal_hero(delta: float) -> void:
-	var hero = world.hero
-	for p in paladins:
-		if p.position.distance_to(hero.position) < B.PALADIN_HEAL_RADIUS:
+	for hero in world.heroes.list:
+		if nearest_paladin(hero.position, B.PALADIN_HEAL_RADIUS) != null:
 			hero.hp = minf(hero.max_hp, hero.hp + hero.max_hp * B.PALADIN_HEAL * delta)
-			return
 
 
 func _spawn_paladin() -> void:

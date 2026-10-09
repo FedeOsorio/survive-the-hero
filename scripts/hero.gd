@@ -1,7 +1,7 @@
 extends Node2D
-## El héroe controlado por la IA. Versión del hito 1: farmea la horda,
-## kitea, junta experiencia, sube de nivel, esquiva proyectiles y se retira
-## con poca vida. No se regenera: solo se cura al subir de nivel.
+## Un héroe controlado por la IA (Arquero, Caballero o Maga: ver heroes.gd).
+## Farmea la horda, kitea, junta experiencia, sube de nivel, esquiva proyectiles
+## y se retira con poca vida. No se regenera: solo se cura al subir de nivel.
 ## Al jugador lo trata como un creep más hasta que lo detecta.
 ## En cada nivel gana un poder (ver hero_powers.gd).
 
@@ -43,6 +43,11 @@ var _rng := RandomNumberGenerator.new()
 var powers # hero_powers.gd: orbes, rayo, aura, nova, etc.
 var status # hero_status.gd: sangrado, aturdimiento, lentitud
 var damage_taken := {"jugador": 0.0, "horda": 0.0} # para los reportes de --sim
+var title := "Arquero"
+var article := "el"
+var color := Color(0.3, 0.55, 1.0)
+var speed_mult := 1.0 # del tipo de héroe y del enfurecido
+var was_low := false # para la Infamia: ya sumó por tenerlo con poca vida
 
 
 func _ready() -> void:
@@ -56,6 +61,23 @@ func _ready() -> void:
 	status.hero = self
 	status.world = world
 	add_child(status)
+
+
+## Tipo de héroe (una fila de B.HEROES). Se llama después de agregarlo al árbol.
+func setup(cfg: Dictionary) -> void:
+	title = cfg.name
+	article = cfg.article
+	color = cfg.color
+	speed_mult = cfg.speed
+	for id in cfg.powers:
+		powers.ranks[id] = 1
+	for i in cfg.level - 1:
+		_level_up(false)
+	max_hp *= cfg.hp
+	hp = max_hp
+	damage *= cfg.damage
+	_apply_ranks()
+	_level_fx = 0.0
 
 
 func _process(delta: float) -> void:
@@ -388,25 +410,35 @@ func _gain_xp(amount: float) -> void:
 		_level_up()
 
 
-func _level_up() -> void:
+## "pick_power" en false: sube los números del nivel sin elegir poder (los héroes
+## que llegan en nivel alto traen solo sus poderes de inicio).
+func _level_up(pick_power := true) -> void:
 	level += 1
 	max_hp += B.HERO_HP_PER_LEVEL
 	hp = minf(max_hp, hp + B.HERO_HP_PER_LEVEL + max_hp * B.HERO_LEVEL_HEAL)
 	damage *= B.HERO_DAMAGE_PER_LEVEL
 	cooldown = maxf(cooldown * B.HERO_COOLDOWN_PER_LEVEL, B.HERO_MIN_COOLDOWN)
-	powers.level_up()
+	if pick_power:
+		powers.level_up()
+	_apply_ranks()
+	_level_fx = 0.6
+
+
+func _apply_ranks() -> void:
 	arrows = 1 + level / B.HERO_LEVELS_PER_EXTRA_ARROW + powers.rank("multiple")
 	pierce = B.HERO_ARROW_PIERCE + powers.rank("perforante")
-	speed = B.HERO_SPEED * (1.0 + B.POWER_SPEED * powers.rank("botas"))
-	_level_fx = 0.6
+	speed = B.HERO_SPEED * speed_mult * (1.0 + B.POWER_SPEED * powers.rank("botas"))
 
 
 func enrage() -> void:
 	damage *= B.HERO_ENRAGE_DAMAGE_MULT
-	speed *= B.HERO_ENRAGE_SPEED_MULT
+	speed_mult *= B.HERO_ENRAGE_SPEED_MULT
+	_apply_ranks()
 
 
 func take_damage(amount: float, from_player: bool, melee := false, tick := false) -> void:
+	if hp <= 0.0:
+		return
 	if from_player:
 		status.log_damage(amount, melee)
 		status.show_damage(amount, tick)
@@ -423,18 +455,18 @@ func take_damage(amount: float, from_player: bool, melee := false, tick := false
 		world.add_threat(amount * B.THREAT_PER_DAMAGE)
 	if hp <= 0.0:
 		hp = 0.0
-		world.end_game(true, "Mataste al héroe en el minuto %d." % int(world.elapsed / 60.0))
+		world.heroes.on_hero_killed(self)
 
 
 func _draw() -> void:
-	var body := Color(0.3, 0.55, 1.0)
+	var body := color
 	if _flash > 0.0:
 		body = Color.WHITE
 	elif _hurt > 0.0:
 		body = Color(1.0, 0.5, 0.5)
 	if world.enraged:
 		body = body.lerp(Color(1, 0.3, 0.2), 0.5)
-	draw_circle(Vector2.ZERO, pickup_radius(), Color(0.3, 0.55, 1.0, 0.04))
+	draw_circle(Vector2.ZERO, pickup_radius(), Color(color, 0.04))
 	var half := deg_to_rad(B.HERO_SLASH_ARC_DEG) * 0.5
 	var a := _slash_dir.angle()
 	if _slash_windup > 0.0:

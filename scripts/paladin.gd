@@ -60,7 +60,6 @@ func _process(delta: float) -> void:
 	if not world.running:
 		return
 	var p = world.player
-	var hero = world.hero
 	var to_p: Vector2 = p.position - position
 	var d := to_p.length()
 	_hammer_cd = maxf(_hammer_cd - delta, 0.0)
@@ -69,7 +68,7 @@ func _process(delta: float) -> void:
 	_flash = maxf(_flash - delta, 0.0)
 
 	# aura: la cura la aplica infamy.gd una sola vez aunque haya varios cerca
-	_healing = position.distance_to(hero.position) < B.PALADIN_HEAL_RADIUS
+	_healing = world.heroes.any_within(position, B.PALADIN_HEAL_RADIUS)
 
 	if _charge_left > 0.0:
 		var step := B.PALADIN_CHARGE_SPEED * delta

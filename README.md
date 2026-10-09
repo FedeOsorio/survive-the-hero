@@ -1,6 +1,6 @@
 # Survive the Hero
 
-Un survivor al revés: sos un creep de la horda, el héroe lo controla la IA. Te alimentás de los cadáveres que deja, evolucionás y al final lo matás.
+Un survivor al revés: sos un creep de la horda, los héroes los controla la IA. Te alimentás de los cadáveres que dejan, evolucionás y tenés 15 minutos para matar a los tres.
 
 ## Cómo abrirlo
 
@@ -24,13 +24,13 @@ La mordida y el escupitajo son automáticos: salen solos cuando el héroe o un c
 ## Estado actual: hito 1 (prototipo con formas)
 
 - **Vos:** el círculo verde con anillo.
-- **El héroe:** el cuadrado azul. Cuando sale de pantalla, una flecha azul te marca dónde está.
+- **Los tres héroes:** el Arquero (azul) está desde el principio, el Caballero (plateado) llega a los 5:00 y la Maga (violeta) a los 10:00, haya muerto o no el anterior. Cada llegada se anuncia 5 segundos antes con un portal cerca tuyo. El Caballero arranca en nivel 6 con aura y nova, tiene más vida y es más lento; la Maga arranca en nivel 11 con rayo y orbes, tiene menos vida y pega más fuerte de lejos. Ganás cuando caen los tres. A los 15:00 amanece y los que sigan vivos se enfurecen (pegan el doble y son más rápidos). Arriba a la derecha ves la vida y el nivel de cada uno, y una flecha de su color te marca dónde está si sale de pantalla. Todo lo que apunta "al héroe" (tu mordida, la horda, los Paladines) va al más cercano.
 - **La horda:** los círculos marrones, verdes y rojos. Caminan hacia el héroe y cada 2 minutos son más duros, más rápidos y pegan más.
 - **Al morir, cada creep deja:**
   - un cadáver: pasá por encima para absorberlo y ganar biomasa y vida;
   - una gema celeste: es la única forma en que el héroe sube de nivel. No te alimenta, pero si la pisás antes que él, se la destruís.
 - **Evolución:** con suficiente biomasa apretá E. Hay 4 etapas: Slime, Esqueleto, Cultista y Demonio.
-- **Amenaza:** el héroe te ignora (sos un creep más) hasta que la barra se llena. Suben la amenaza morderlo, pisarle gemas o robarle corazones cerca de él, evolucionar y, de a poco, simplemente ser grande. No hay reloj: la partida dura lo que vos decidas.
+- **Amenaza:** el héroe te ignora (sos un creep más) hasta que la barra se llena. Suben la amenaza morderlo, pisarle gemas o robarle corazones cerca de él, evolucionar y, de a poco, simplemente ser grande. Es una sola para todos: si uno te detecta, te detectan todos.
 - **Hambre:** si vas atrás del héroe en poder, cada bocado rinde más (se ve en el HUD).
 - **Élites dorados:** aparecen cada 45 segundos. Cuando el héroe mata uno, deja un corazón rojo: si lo comés, ganás una mutación al instante. Él también lo va a buscar: si lo agarra primero, sube un nivel y se cura.
 - **El héroe:** ataca con flechas, esquiva tus escupitajos (no siempre) y se cura únicamente al subir de nivel. En cada nivel gana un poder (hasta 5 distintos): orbes de fuego que giran a su alrededor, rayos (marcan un círculo antes de caer), aura sagrada, nova (avisa con un anillo), flechas perforantes, lluvia de flechas o botas. Los poderes de área también te lastiman; la embestida te hace invulnerable. La horda lo desgasta, pero el golpe final lo tenés que dar vos.

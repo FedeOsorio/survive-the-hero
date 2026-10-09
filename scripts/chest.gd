@@ -23,11 +23,11 @@ func _process(delta: float) -> void:
 	if life <= 0.0:
 		world.events.remove_chest()
 		return
-	var hero = world.hero
+	var hero = world.heroes.nearest(position)
 	var player = world.player
-	_hero_prog = _progress(hero, _hero_prog, _hero_hp, delta)
+	_hero_prog = _progress(hero, _hero_prog, _hero_hp, delta) if hero != null else 0.0
 	_creep_prog = _progress(player, _creep_prog, _creep_hp, delta)
-	_hero_hp = hero.hp
+	_hero_hp = hero.hp if hero != null else 0.0
 	_creep_hp = player.hp
 	if _creep_prog >= B.CHEST_OPEN_TIME:
 		world.events.remove_chest()
@@ -38,7 +38,7 @@ func _process(delta: float) -> void:
 		world.events.remove_chest()
 		hero._level_up()
 		hero.hp = minf(hero.max_hp, hero.hp + hero.max_hp * B.CHEST_HERO_HEAL)
-		world.hud.banner("El héroe abrió el cofre y subió de nivel")
+		world.hud.banner("%s abrió el cofre y subió de nivel" % hero.title)
 	queue_redraw()
 
 

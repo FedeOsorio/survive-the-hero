@@ -1,10 +1,11 @@
 extends Node2D
 ## Raíz de la partida: crea el mundo, spawnea la horda, lleva el reloj,
 ## la amenaza del creep y las condiciones de victoria y derrota.
+## Los héroes viven en heroes.gd; "hero" es el vivo más cercano a vos (o null).
 
 const B := preload("res://scripts/balance.gd")
 const Creep := preload("res://scripts/creep.gd")
-const Hero := preload("res://scripts/hero.gd")
+const Heroes := preload("res://scripts/heroes.gd")
 const Minion := preload("res://scripts/minion.gd")
 const Corpse := preload("res://scripts/corpse.gd")
 const Gem := preload("res://scripts/gem.gd")
@@ -33,7 +34,8 @@ var sim_mode := false # --sim: el creep es invulnerable y se imprime un reporte 
 var bot_mode := false # --bot: el creep lo maneja un bot simple, para medir cuánto tarda en ganarse
 
 var player
-var hero
+var heroes # heroes.gd: los tres héroes, sus llegadas y el amanecer
+var hero: get = _nearest_hero
 var minions: Array = []
 var corpses: Array = []
 var gems: Array = []
@@ -72,6 +74,9 @@ func _ready() -> void:
 	infamy = Infamy.new()
 	infamy.world = self
 	add_child(infamy)
+	heroes = Heroes.new()
+	heroes.world = self
+	add_child(heroes)
 	_entities = Node2D.new()
 	_entities.y_sort_enabled = false
 	add_child(_entities)
@@ -83,10 +88,7 @@ func _ready() -> void:
 	player.invulnerable = sim_mode and not bot_mode
 	_entities.add_child(player)
 
-	hero = Hero.new()
-	hero.world = self
-	hero.position = center + Vector2(350, 0)
-	_entities.add_child(hero)
+	heroes.start(center + Vector2(350, 0))
 
 	var cam := Camera2D.new()
 	cam.position_smoothing_enabled = true
@@ -140,9 +142,20 @@ func _process(delta: float) -> void:
 
 	if sim_mode and elapsed >= _next_report:
 		_next_report += 60.0
-		print("[sim] min %d | heroe nv %d vida %d/%d | creep %s biomasa %d | amenaza %d | horda %d | muertes %d" % [
-			int(elapsed / 60.0), hero.level, int(hero.hp), int(hero.max_hp),
-			player.stage_name(), int(player.biomass), int(threat), minions.size(), kills])
+		print("[sim] min %d | heroes %s | creep %s biomasa %d | amenaza %d | horda %d | muertes %d" % [
+			int(elapsed / 60.0), _heroes_report(), player.stage_name(), int(player.biomass), int(threat), minions.size(), kills])
+
+
+func _nearest_hero():
+	return heroes.nearest(player.position) if heroes != null and player != null else null
+
+
+func _heroes_report() -> String:
+	var parts: Array = []
+	for h in heroes.list:
+		parts.append("%s nv %d vida %d/%d" % [h.title, h.level, int(h.hp), int(h.max_hp)])
+	return ", ".join(parts) if not parts.is_empty() else "ninguno vivo"
+
 
 
 # --- Spawning ----------------------------------------------------------------
@@ -150,7 +163,9 @@ func _process(delta: float) -> void:
 func spawn_minion(type_name: String, elite := false, at = null):
 	var angle := rng.randf() * TAU
 	var dist := rng.randf_range(B.SPAWN_MIN_DIST, B.SPAWN_MAX_DIST)
-	var pos: Vector2 = hero.position + Vector2.from_angle(angle) * dist
+	var h = hero
+	var base: Vector2 = h.position if h != null else player.position
+	var pos: Vector2 = base + Vector2.from_angle(angle) * dist
 	if at != null:
 		pos = at
 	pos = pos.clamp(Vector2(20, 20), B.ARENA_SIZE - Vector2(20, 20))
@@ -171,7 +186,7 @@ func spawn_civilian_group() -> void:
 	for i in 15:
 		var dist := rng.randf_range(B.CIVILIAN_RING_MIN, B.CIVILIAN_RING_MAX)
 		center = player.position + Vector2.from_angle(rng.randf() * TAU) * dist
-		if inner.has_point(center) and center.distance_to(hero.position) > B.CIVILIAN_MIN_HERO_DIST:
+		if inner.has_point(center) and not heroes.any_within(center, B.CIVILIAN_MIN_HERO_DIST):
 			break
 	center = center.clamp(inner.position, inner.end)
 	var n := mini(rng.randi_range(B.CIVILIAN_GROUP_MIN, B.CIVILIAN_GROUP_MAX), B.CIVILIANS_MAX - civilians.size())
@@ -196,14 +211,14 @@ func _update_alarm(delta: float) -> void:
 	alarm_t = maxf(alarm_t - delta, 0.0)
 	if alarm_t <= 0.0:
 		return
-	if not _alarm_arrived and hero.position.distance_to(alarm_pos) < B.ALARM_ARRIVE_DIST:
+	if not _alarm_arrived and heroes.any_within(alarm_pos, B.ALARM_ARRIVE_DIST):
 		_alarm_arrived = true
 		alarm_t = minf(alarm_t, B.ALARM_SEARCH_TIME)
 
 
 func on_civilian_killed(c) -> void:
 	civilians.erase(c)
-	var seen: bool = player.stealth_t <= 0.0 and hero.position.distance_to(player.position) < B.HERO_RANGE
+	var seen: bool = player.stealth_t <= 0.0 and heroes.any_within(player.position, B.HERO_RANGE)
 	add_threat(B.THREAT_PER_CIVILIAN_SEEN if seen else B.THREAT_PER_CIVILIAN)
 	infamy.add(B.INFAMY_PER_CIVILIAN)
 	raise_alarm(c.position)
@@ -345,8 +360,8 @@ func end_game(player_won: bool, reason: String) -> void:
 	won = player_won
 	end_reason = reason
 	if sim_mode:
-		print("[sim] fin (%02d:%02d): %s | daño al héroe %s | mutaciones %s | poderes %s" % [
-			int(elapsed) / 60, int(elapsed) % 60, reason, hero.damage_taken, player.ranks, hero.powers.ranks])
+		print("[sim] fin (%02d:%02d): %s | héroes muertos %d/%d | vivos %s | mutaciones %s" % [
+			int(elapsed) / 60, int(elapsed) % 60, reason, heroes.killed, heroes.total(), _heroes_report(), player.ranks])
 
 
 # --- Consulta espacial para la separación de la horda ------------------------

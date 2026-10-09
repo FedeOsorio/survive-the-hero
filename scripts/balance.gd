@@ -165,8 +165,25 @@ const HUNT_GEM_PULL := 1.0
 const HUNT_ESCAPE_RADIUS := 80.0 # con tantos creeps así de cerca, primero zafa
 const HUNT_ESCAPE_COUNT := 2
 const HUNT_SHARE_RADIUS := 150.0 # con creeps así de cerca, alterna un disparo a vos y uno a la horda
-const HERO_ENRAGE_DAMAGE_MULT := 5.0
-const HERO_ENRAGE_SPEED_MULT := 1.3
+const HERO_ENRAGE_DAMAGE_MULT := 2.0 # al amanecer (minuto MATCH_MINUTES) con héroes vivos
+const HERO_ENRAGE_SPEED_MULT := 1.2
+
+# Tres héroes en 15 minutos: llegan a horario fijo, haya muerto o no el anterior.
+# Ganás matando a los tres. "hp", "speed" y "damage" multiplican la vida, la velocidad
+# y el daño de las flechas; "powers" son los poderes con los que llega (rango 1).
+const MATCH_MINUTES := 15.0
+const HORDE_IDLE_DIST := 120.0 # sin héroes vivos, la horda te sigue a esta distancia
+const HERO_ARRIVAL_WARNING := 5.0 # banner y portal antes de que llegue
+const HERO_PORTAL_MIN := 600.0 # distancia del portal a vos
+const HERO_PORTAL_MAX := 900.0
+const HEROES := [
+	{"name": "Arquero", "article": "el", "minute": 0.0, "level": 1, "hp": 1.0, "speed": 1.0, "damage": 1.0,
+		"powers": [], "color": Color(0.3, 0.55, 1.0)},
+	{"name": "Caballero", "article": "el", "minute": 5.0, "level": 6, "hp": 1.5, "speed": 0.9, "damage": 0.8,
+		"powers": ["aura", "nova"], "color": Color(0.78, 0.8, 0.88)},
+	{"name": "Maga", "article": "la", "minute": 10.0, "level": 11, "hp": 0.8, "speed": 1.05, "damage": 1.15,
+		"powers": ["rayo", "orbes"], "color": Color(0.72, 0.4, 0.95)},
+]
 
 # Poderes del héroe: en cada nivel elige 1 de 3 (nuevo o mejora), hasta 5 distintos.
 # Como en Vampire Survivors: rango 1 es débil y cada rango lo mejora bastante.

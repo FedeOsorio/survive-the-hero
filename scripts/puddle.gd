@@ -19,10 +19,10 @@ func _process(delta: float) -> void:
 	if t <= 0.0:
 		world.remove_puddle(self)
 		return
-	var hero = world.hero
-	if position.distance_to(hero.position) < B.ACID_RADIUS + hero.radius:
-		hero.take_damage(dps * delta, true, false, true)
-		hero.status.slow()
+	for hero in world.heroes.list.duplicate():
+		if position.distance_to(hero.position) < B.ACID_RADIUS + hero.radius:
+			hero.take_damage(dps * delta, true, false, true)
+			hero.status.slow()
 	for h in world.infamy.paladins:
 		if position.distance_to(h.position) < B.ACID_RADIUS + h.radius:
 			h.take_damage(dps * delta)

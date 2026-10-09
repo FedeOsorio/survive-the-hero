@@ -111,7 +111,10 @@ func lead_damage_mult() -> float:
 
 ## Multiplicador de biomasa cuando vas atrás del héroe.
 func hunger() -> float:
-	var gap: int = world.hero.level - (level + 3 * stage)
+	var hero = world.hero
+	if hero == null:
+		return 1.0
+	var gap: int = hero.level - (level + 3 * stage)
 	return clampf(1.0 + gap * B.HUNGER_PER_LEVEL, 1.0, B.HUNGER_MAX)
 
 
@@ -144,7 +147,7 @@ func _process(delta: float) -> void:
 	if _dash_t > 0.0:
 		_dash_t -= delta
 		position += _dash_dir * B.DASH_SPEED * delta
-		if not _dash_hit and _in_reach(world.hero, 0.0):
+		if not _dash_hit and world.hero != null and _in_reach(world.hero, 0.0):
 			_dash_hit = true
 			world.hero.take_damage(bite * B.DASH_HIT_MULT, true, true)
 			world.shake()
@@ -183,6 +186,8 @@ func _process(delta: float) -> void:
 
 
 func _in_reach(target, extra: float) -> bool:
+	if target == null:
+		return false
 	return position.distance_to(target.position) <= radius + target.radius + extra
 
 
@@ -236,7 +241,7 @@ func _auto_attack() -> void:
 
 	if _spit_cd <= 0.0:
 		var target = null
-		if position.distance_to(hero.position) <= B.SPIT_RANGE:
+		if hero != null and position.distance_to(hero.position) <= B.SPIT_RANGE:
 			target = hero
 		else:
 			target = _closest(world.infamy.paladins, B.SPIT_RANGE)
@@ -254,13 +259,13 @@ func _auto_attack() -> void:
 ## Coraza viva: onda al terminar la embestida. Daña, empuja y aturde al héroe.
 func _shell_wave() -> void:
 	_wave_fx = 0.25
-	var hero = world.hero
-	var to_h: Vector2 = hero.position - position
-	if to_h.length() < B.SHELL_WAVE_RADIUS + hero.radius and not hero.rolling():
-		hero.take_damage(bite * B.SHELL_WAVE_DAMAGE, true, true)
-		world.shake()
-		hero.position = (hero.position + to_h.normalized() * B.SHELL_WAVE_PUSH).clamp(Vector2(20, 20), B.ARENA_SIZE - Vector2(20, 20))
-		hero.status.stun(B.HERO_STUN_TIME)
+	for hero in world.heroes.list.duplicate():
+		var to_h: Vector2 = hero.position - position
+		if to_h.length() < B.SHELL_WAVE_RADIUS + hero.radius and not hero.rolling():
+			hero.take_damage(bite * B.SHELL_WAVE_DAMAGE, true, true)
+			world.shake()
+			hero.position = (hero.position + to_h.normalized() * B.SHELL_WAVE_PUSH).clamp(Vector2(20, 20), B.ARENA_SIZE - Vector2(20, 20))
+			hero.status.stun(B.HERO_STUN_TIME)
 	for h in world.infamy.paladins:
 		if position.distance_to(h.position) < B.SHELL_WAVE_RADIUS + h.radius:
 			h.take_damage(bite * B.SHELL_WAVE_DAMAGE)
@@ -291,7 +296,7 @@ func _absorb(delta: float) -> void:
 					grant_mutation()
 			if c.heart:
 				_queued_levels += 1
-				if position.distance_to(world.hero.position) < B.STEAL_RADIUS:
+				if world.heroes.any_within(position, B.STEAL_RADIUS):
 					world.add_threat(B.THREAT_PER_STOLEN_GEM * 5.0)
 				world.hud.banner("¡Corazón de élite! Mutación extra")
 			_eat(c.value)
@@ -301,7 +306,7 @@ func _absorb(delta: float) -> void:
 	# las gemas son del héroe: no te alimentan, pero pisarlas se las destruye
 	for g in world.gems.duplicate():
 		if position.distance_to(g.position) < radius + 6.0:
-			if position.distance_to(world.hero.position) < B.STEAL_RADIUS:
+			if world.heroes.any_within(position, B.STEAL_RADIUS):
 				world.add_threat(B.THREAT_PER_STOLEN_GEM)
 			world.remove_gem(g)
 

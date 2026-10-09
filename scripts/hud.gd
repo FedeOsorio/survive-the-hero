@@ -1,6 +1,6 @@
 extends CanvasLayer
-## Interfaz: vida, biomasa, nivel, reloj, amenaza, flecha hacia el héroe,
-## elección de mutaciones y pantalla final. Corre aunque el juego esté en pausa.
+## Interfaz: vida, biomasa, nivel, reloj con la próxima llegada, amenaza,
+## vida y nivel de cada héroe vivo con su flecha, elección de mutaciones y pantalla final. Corre aunque el juego esté en pausa.
 
 const B := preload("res://scripts/balance.gd")
 const Mutations := preload("res://scripts/mutations.gd")
@@ -44,7 +44,6 @@ func _draw_hud() -> void:
 	var font := ThemeDB.fallback_font
 	var size := _view.size
 	var p = world.player
-	var h = world.hero
 
 	# Creep: arriba a la izquierda
 	_text(font, Vector2(20, 30), "%s (etapa %d)" % [p.stage_name(), p.stage + 1], 20, p.color)
@@ -68,6 +67,15 @@ func _draw_hud() -> void:
 	# Reloj: arriba al centro
 	var t := int(world.elapsed)
 	_text_centered(font, Vector2(size.x * 0.5, 34), "%02d:%02d" % [t / 60, t % 60], 28, Color.WHITE)
+	var next: float = world.heroes.next_arrival()
+	var mark := ""
+	if next >= 0.0:
+		var nt := int(next)
+		mark = "%s %02d:%02d" % [world.heroes.next_name(), nt / 60, nt % 60]
+	elif world.elapsed < B.MATCH_MINUTES * 60.0:
+		mark = "Amanece %02d:00" % int(B.MATCH_MINUTES)
+	if mark != "":
+		_text(font, Vector2(size.x * 0.5 + 46, 30), mark, 13, Color(0.75, 0.75, 0.85))
 	if world.detected:
 		_text_centered(font, Vector2(size.x * 0.5, 60), "TE DETECTÓ", 16, Color(1, 0.3, 0.3))
 	else:
@@ -77,15 +85,18 @@ func _draw_hud() -> void:
 	_text_centered(font, Vector2(size.x * 0.5, 106), B.INFAMY_NAME, 12, Color(1.0, 0.88, 0.5))
 	_wing(Vector2(size.x * 0.5 - 116, 85))
 
-	# Héroe: arriba a la derecha
-	_text(font, Vector2(size.x - 280, 30), "Héroe nivel %d" % h.level, 20, Color(0.5, 0.7, 1.0))
-	_bar(Rect2(size.x - 280, 40, 260, 14), h.hp / h.max_hp, Color(0.85, 0.25, 0.25), "Vida %d/%d" % [int(h.hp), int(h.max_hp)])
-	var y := 74.0
-	for id in h.powers.ranks:
-		_text(font, Vector2(size.x - 280, y), "%s %d" % [h.powers.LIST[id].name, h.powers.ranks[id]], 13, Color(1.0, 0.85, 0.5))
-		y += 16.0
-
-	_pointer(h, Color(0.4, 0.65, 1.0, 0.9))
+	# Héroes vivos: arriba a la derecha, uno debajo del otro
+	var y := 30.0
+	_text(font, Vector2(size.x - 280, y - 22), "Héroes caídos %d/%d" % [world.heroes.killed, world.heroes.total()], 12, Color(0.8, 0.8, 0.85))
+	for h in world.heroes.list:
+		_text(font, Vector2(size.x - 280, y), "%s nivel %d" % [h.title, h.level], 18, h.color)
+		_bar(Rect2(size.x - 280, y + 8, 260, 12), h.hp / h.max_hp, Color(0.85, 0.25, 0.25), "Vida %d/%d" % [int(h.hp), int(h.max_hp)])
+		var names: Array = []
+		for id in h.powers.ranks:
+			names.append("%s %d" % [h.powers.LIST[id].name, h.powers.ranks[id]])
+		_view.draw_multiline_string(font, Vector2(size.x - 280, y + 36), ", ".join(names), HORIZONTAL_ALIGNMENT_LEFT, 260, 12, -1, Color(1.0, 0.85, 0.5))
+		y += 74.0
+		_pointer(h, Color(h.color, 0.95))
 	if world.chest != null:
 		_pointer(world.chest, Color(1.0, 0.8, 0.25, 0.95))
 	for pal in world.infamy.paladins:
@@ -109,7 +120,10 @@ func _draw_hud() -> void:
 		var col := Color(0.4, 1, 0.5) if world.won else Color(1, 0.35, 0.3)
 		_text_centered(font, Vector2(size.x * 0.5, size.y * 0.42), title, 56, col)
 		_text_centered(font, Vector2(size.x * 0.5, size.y * 0.52), world.end_reason, 22, Color.WHITE)
-		_text_centered(font, Vector2(size.x * 0.5, size.y * 0.6), "R para jugar de nuevo", 18, Color(0.8, 0.8, 0.8))
+		var et := int(world.elapsed)
+		_text_centered(font, Vector2(size.x * 0.5, size.y * 0.58), "Tiempo %02d:%02d · Héroes muertos %d/%d · Tu nivel %d" % [
+				et / 60, et % 60, world.heroes.killed, world.heroes.total(), p.level], 18, Color(0.9, 0.9, 0.95))
+		_text_centered(font, Vector2(size.x * 0.5, size.y * 0.65), "R para jugar de nuevo", 18, Color(0.8, 0.8, 0.8))
 
 
 func _draw_choices(font: Font, p) -> void:

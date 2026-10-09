@@ -44,12 +44,14 @@ func _process(delta: float) -> void:
 			"estampida":
 				_stampede()
 			"asedio":
-				_siege_t = B.SIEGE_WARNING
-				_siege_pos = world.hero.position
+				if world.hero != null:
+					_siege_t = B.SIEGE_WARNING
+					_siege_pos = world.hero.position
 			"luna":
 				blood_moon_t = B.BLOOD_MOON_TIME
-	if _siege_t > 0.0:
+	if _siege_t > 0.0 and world.hero != null:
 		_siege_pos = world.hero.position
+	if _siege_t > 0.0:
 		_siege_t -= delta
 		if _siege_t <= 0.0:
 			_siege()
@@ -66,9 +68,10 @@ func _update_chest(delta: float) -> void:
 	if world.chest != null:
 		return
 	var pos := Vector2.ZERO
+	var base: Vector2 = world.hero.position if world.hero != null else world.player.position
 	for i in 10:
 		var dist: float = world.rng.randf_range(B.CHEST_MIN_DIST, B.CHEST_MAX_DIST)
-		pos = world.hero.position + Vector2.from_angle(world.rng.randf() * TAU) * dist
+		pos = base + Vector2.from_angle(world.rng.randf() * TAU) * dist
 		if Rect2(Vector2(60, 60), B.ARENA_SIZE - Vector2(120, 120)).has_point(pos):
 			break
 	var c = Chest.new()
@@ -93,7 +96,7 @@ func _room() -> int:
 
 ## Una fila ancha de ratas sale de un costado y corre hacia el héroe.
 func _stampede() -> void:
-	var hero_pos: Vector2 = world.hero.position
+	var hero_pos: Vector2 = world.hero.position if world.hero != null else world.player.position
 	var dir: Vector2 = Vector2.from_angle(world.rng.randf() * TAU)
 	var origin := hero_pos + dir * B.STAMPEDE_DIST
 	var side := dir.orthogonal()

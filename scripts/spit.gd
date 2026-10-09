@@ -26,11 +26,11 @@ func _process(delta: float) -> void:
 	if _travelled > B.SPIT_RANGE:
 		_land()
 		return
-	var hero = world.hero
-	if not hero.rolling() and position.distance_to(hero.position) < hero.radius + 5.0:
-		hero.take_damage(damage, from_player)
-		_land()
-		return
+	for hero in world.heroes.list:
+		if not hero.rolling() and position.distance_to(hero.position) < hero.radius + 5.0:
+			hero.take_damage(damage, from_player)
+			_land()
+			return
 	if from_player:
 		for pal in world.infamy.paladins:
 			if position.distance_to(pal.position) < pal.radius + 5.0:

@@ -50,7 +50,7 @@ func setup(t: String, minute: float, is_elite := false) -> void:
 func _process(delta: float) -> void:
 	if not world.running:
 		return
-	var hero = world.hero
+	var hero = world.heroes.nearest(position)
 	var player = world.player
 	led = position.distance_to(player.position) < player.lead_radius()
 	if raised:
@@ -61,10 +61,17 @@ func _process(delta: float) -> void:
 	boost_t = maxf(boost_t - delta, 0.0)
 	var spd := speed * (B.LEAD_SPEED_MULT if led else 1.0) * (B.STAMPEDE_SPEED_MULT if boost_t > 0.0 else 1.0)
 	var dmg_mult: float = (player.lead_damage_mult() if led else 1.0) * world.events.damage_mult()
+	var move := Vector2.ZERO
+	if hero == null:
+		# sin héroes vivos, la horda te sigue de cerca hasta que llegue el próximo
+		var to_p: Vector2 = player.position - position
+		if to_p.length() > B.HORDE_IDLE_DIST:
+			move = to_p.normalized()
+		_separate_and_move(move, spd, delta)
+		return
 	var to_hero: Vector2 = hero.position - position
 	var dist := to_hero.length()
 	var touch: float = radius + hero.radius
-	var move := Vector2.ZERO
 	if shot_range > 0.0:
 		if dist > shot_range * 0.9:
 			move = to_hero / dist
@@ -82,6 +89,10 @@ func _process(delta: float) -> void:
 		if dps > 0.0 and position.distance_to(pal.position) <= radius + pal.radius + 6.0:
 			pal.take_damage(dps * dmg_mult * delta)
 
+	_separate_and_move(move, spd, delta)
+
+
+func _separate_and_move(move: Vector2, spd: float, delta: float) -> void:
 	# separación barata para que la horda no se apile en un solo punto
 	var push := Vector2.ZERO
 	for other in world.minions_near(position):
