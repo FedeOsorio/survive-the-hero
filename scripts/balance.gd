@@ -353,7 +353,7 @@ const SHAKE_TIME := 0.12
 # Infamia: sube cuando el héroe no puede con vos. Al llenarse llega un Paladín.
 const INFAMY_NAME := "Infamia" # nombre visible de la barra (puede cambiar)
 const INFAMY_MAX := 100.0
-const INFAMY_PER_CIVILIAN := 12.0 # civiles que matás vos
+const INFAMY_PER_CIVILIAN := 6.0 # civiles que matás vos
 const INFAMY_PER_SECOND_DETECTED := 1.0
 const INFAMY_HERO_LOW := 15.0 # cada vez que el héroe baja del umbral de retirada
 const INFAMY_HERO_LOW_HP := 0.3
