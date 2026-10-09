@@ -297,3 +297,12 @@ const BLOOD_MOON_DAMAGE_MULT := 2.0
 const ADAPT_WINDOW := 30.0
 const ADAPT_SHARE := 0.6
 const ADAPT_WEIGHT := 3.0
+
+# Golpe con feedback: números de daño, parpadeo y temblor de pantalla.
+const DMG_NUMBER_TIME := 0.6
+const DMG_NUMBER_RISE := 20.0
+const DMG_NUMBER_BIG := 0.08 # % de la vida máxima del héroe para el número grande
+const DMG_TICK_EVERY := 0.5 # charcos y sangrado: un número sumado cada tanto
+const HERO_HIT_FLASH := 0.08
+const SHAKE_PX := 4.0
+const SHAKE_TIME := 0.12

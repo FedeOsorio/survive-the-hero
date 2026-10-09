@@ -41,6 +41,8 @@ var civilians: Array = []
 var puddles: Array = []
 var chest = null # cofre en disputa (uno a la vez)
 var events # events.gd: cofres y eventos de oleada
+var camera: Camera2D
+var _shake_t := 0.0
 var raised_count := 0 # compañeros levantados por Señor de la carroña
 var _civilian_t := 0.0
 var _elite_t := 0.0
@@ -88,6 +90,7 @@ func _ready() -> void:
 	cam.limit_right = int(B.ARENA_SIZE.x) + 150
 	cam.limit_bottom = int(B.ARENA_SIZE.y) + 150
 	player.add_child(cam)
+	camera = cam
 
 	for i in B.CIVILIANS_START:
 		spawn_civilian()
@@ -125,6 +128,9 @@ func _process(delta: float) -> void:
 		spawn_civilian()
 
 	_rebuild_grid()
+
+	_shake_t = maxf(_shake_t - delta, 0.0)
+	camera.offset = Vector2(rng.randf_range(-1, 1), rng.randf_range(-1, 1)) * B.SHAKE_PX if _shake_t > 0.0 else Vector2.ZERO
 
 	if sim_mode and elapsed >= _next_report:
 		_next_report += 60.0
@@ -279,6 +285,11 @@ func add_entity(n: Node) -> void:
 
 
 # --- Amenaza y fin de partida ------------------------------------------------
+
+## Temblor de pantalla chico (mordidas, embestidas y onda que le pegan al héroe).
+func shake() -> void:
+	_shake_t = B.SHAKE_TIME
+
 
 func add_threat(amount: float) -> void:
 	if detected:

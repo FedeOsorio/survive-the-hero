@@ -13,6 +13,9 @@ var _stun_immune := 0.0
 var _slow_t := 0.0
 var _log: Array = [] # {time, amount, melee}
 var _drip := 0.0
+var _numbers: Array = [] # {amount, t, big}
+var _tick_sum := 0.0
+var _tick_t := 0.0
 
 
 func _ready() -> void:
@@ -59,6 +62,19 @@ func log_damage(amount: float, melee: bool) -> void:
 	_log.append({"time": world.elapsed, "amount": amount, "melee": melee})
 
 
+## Número flotante del daño del jugador. Lo que pega cada frame (charcos,
+## sangrado) se suma y se muestra uno cada DMG_TICK_EVERY.
+func show_damage(amount: float, tick: bool) -> void:
+	if tick:
+		_tick_sum += amount
+		return
+	_add_number(amount)
+
+
+func _add_number(amount: float) -> void:
+	_numbers.append({"amount": amount, "t": B.DMG_NUMBER_TIME, "big": amount > hero.max_hp * B.DMG_NUMBER_BIG})
+
+
 ## Parte del daño reciente del jugador que fue cuerpo a cuerpo (-1 si no hubo daño).
 func melee_share() -> float:
 	var melee := 0.0
@@ -80,14 +96,30 @@ func _process(delta: float) -> void:
 	_slow_t = maxf(_slow_t - delta, 0.0)
 	for b in _bleeds.duplicate():
 		b.t -= delta
-		hero.take_damage(b.dps * delta, true, true)
+		hero.take_damage(b.dps * delta, true, true, true)
 		if b.t <= 0.0:
 			_bleeds.erase(b)
+	_tick_t += delta
+	if _tick_t >= B.DMG_TICK_EVERY:
+		_tick_t = 0.0
+		if _tick_sum >= 1.0:
+			_add_number(_tick_sum)
+			_tick_sum = 0.0
+	for n in _numbers.duplicate():
+		n.t -= delta
+		if n.t <= 0.0:
+			_numbers.erase(n)
 	_drip = fmod(_drip + delta, 0.6)
 	queue_redraw()
 
 
 func _draw() -> void:
+	var font := ThemeDB.fallback_font
+	for n in _numbers:
+		var k: float = 1.0 - n.t / B.DMG_NUMBER_TIME
+		var pos := Vector2(-8.0, -28.0 - B.DMG_NUMBER_RISE * k)
+		var col := Color(1.0, 0.85, 0.2, 1.0 - k * 0.6) if n.big else Color(1, 1, 1, 1.0 - k * 0.6)
+		draw_string(font, pos, str(roundi(n.amount)), HORIZONTAL_ALIGNMENT_LEFT, -1, 20 if n.big else 14, col)
 	if bleeding():
 		for i in _bleeds.size():
 			var x := -8.0 + i * 8.0

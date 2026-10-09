@@ -348,9 +348,10 @@ func enrage() -> void:
 	speed *= B.HERO_ENRAGE_SPEED_MULT
 
 
-func take_damage(amount: float, from_player: bool, melee := false) -> void:
+func take_damage(amount: float, from_player: bool, melee := false, tick := false) -> void:
 	if from_player:
 		status.log_damage(amount, melee)
+		status.show_damage(amount, tick)
 	damage_taken["jugador" if from_player else "horda"] += amount
 	if not from_player:
 		# la horda lo desgasta pero el golpe final solo lo puede dar el jugador
@@ -359,7 +360,8 @@ func take_damage(amount: float, from_player: bool, melee := false) -> void:
 		return
 	hp -= amount
 	if from_player:
-		_flash = 0.1
+		if not tick:
+			_flash = B.HERO_HIT_FLASH
 		world.add_threat(amount * B.THREAT_PER_DAMAGE)
 	if hp <= 0.0:
 		hp = 0.0

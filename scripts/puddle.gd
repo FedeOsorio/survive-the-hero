@@ -21,7 +21,7 @@ func _process(delta: float) -> void:
 		return
 	var hero = world.hero
 	if position.distance_to(hero.position) < B.ACID_RADIUS + hero.radius:
-		hero.take_damage(dps * delta, true, false)
+		hero.take_damage(dps * delta, true, false, true)
 		hero.status.slow()
 	queue_redraw()
 

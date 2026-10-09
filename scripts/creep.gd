@@ -146,6 +146,7 @@ func _process(delta: float) -> void:
 		if not _dash_hit and _in_reach(world.hero, 0.0):
 			_dash_hit = true
 			world.hero.take_damage(bite * B.DASH_HIT_MULT, true, true)
+			world.shake()
 		if _dash_t <= 0.0 and rank("coraza") > 0:
 			_shell_wave()
 	else:
@@ -200,6 +201,7 @@ func _auto_attack() -> void:
 			_bite_dir = (victim.position - position).normalized()
 			if victim == hero:
 				hero.take_damage(bite, true, true)
+				world.shake()
 				if rank("mandibula") > 0:
 					hero.status.bleed(bite * B.BLEED_MULT)
 			else:
@@ -236,6 +238,7 @@ func _shell_wave() -> void:
 	var to_h: Vector2 = hero.position - position
 	if to_h.length() < B.SHELL_WAVE_RADIUS + hero.radius and not hero.rolling():
 		hero.take_damage(bite * B.SHELL_WAVE_DAMAGE, true, true)
+		world.shake()
 		hero.position = (hero.position + to_h.normalized() * B.SHELL_WAVE_PUSH).clamp(Vector2(20, 20), B.ARENA_SIZE - Vector2(20, 20))
 		hero.status.stun(B.HERO_STUN_TIME)
 	for m in world.minions_near(position):
