@@ -74,8 +74,6 @@ const ALARM_TIME := 5.0 # segundos que el héroe busca en el lugar del grito
 const ALARM_PULL := 2.0 # qué tanto le importa ir a investigar (las gemas pesan 2.2)
 const ALARM_COOLDOWN := 8.0 # un grito nuevo dentro de esta ventana no lo mueve otra vez
 const CIVILIAN_SCREAM_COOLDOWN := 3.0 # cada civil grita como mucho cada tantos segundos
-# El héroe también mata civiles para dejarte sin comida: los que mata él no dejan cadáver.
-const HERO_CIVILIAN_TARGET_BONUS := 120.0 # durante la alarma, prefiere civiles a la horda
 
 # Camuflaje (Q): te saca del radar del héroe. Una vez por minuto.
 const STEALTH_COOLDOWN := 60.0

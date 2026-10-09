@@ -1,6 +1,6 @@
 extends Node2D
 ## Civil que deambula por el mapa. Huye del creep; comerlo da mucha biomasa.
-## Al empezar a huir grita y atrae al héroe, que lo mata sin dejar comida.
+## Al empezar a huir grita y atrae al héroe, que viene a buscarte (a los civiles no los toca).
 
 const B := preload("res://scripts/balance.gd")
 
@@ -62,13 +62,13 @@ func _dodge_dir() -> Vector2:
 	return Vector2.ZERO
 
 
-func take_damage(amount: float, by_hero := false) -> void:
+func take_damage(amount: float) -> void:
 	if hp <= 0.0:
 		return
 	hp -= amount
 	_flash = 0.08
 	if hp <= 0.0:
-		world.on_civilian_killed(self, by_hero)
+		world.on_civilian_killed(self)
 
 
 func _draw() -> void:

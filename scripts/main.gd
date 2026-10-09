@@ -193,11 +193,8 @@ func raise_alarm(pos: Vector2) -> void:
 	alarm_t = B.ALARM_TIME
 
 
-func on_civilian_killed(c, by_hero := false) -> void:
+func on_civilian_killed(c) -> void:
 	civilians.erase(c)
-	if by_hero:
-		c.queue_free() # el héroe no deja comida
-		return
 	add_threat(B.THREAT_PER_CIVILIAN)
 	infamy.add(B.INFAMY_PER_CIVILIAN)
 	raise_alarm(c.position)
