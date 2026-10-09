@@ -13,11 +13,12 @@ Un survivor al revés: sos un creep de la horda, el héroe lo controla la IA. Te
 | Acción | Teclado | Joystick |
 |---|---|---|
 | Moverse | WASD o flechas | Stick izquierdo |
-| Morder | Espacio | A |
-| Embestida | Shift | B |
-| Escupitajo (apunta solo al héroe si está a tiro) | Q | X |
+| Embestida | Espacio o Shift | RB |
 | Evolucionar | E | Y |
+| Elegir mutación | 1 / 2 / 3 | X / A / B |
 | Reiniciar | R | Start |
+
+La mordida y el escupitajo son automáticos: salen solos cuando el héroe o un civil está a tiro.
 
 ## Estado actual: hito 1 (prototipo con formas)
 
@@ -32,6 +33,9 @@ Un survivor al revés: sos un creep de la horda, el héroe lo controla la IA. Te
 - **Minuto 15:** el héroe se enfurece.
 - **El héroe:** ataca solo con flechas, esquiva tus escupitajos (no siempre) y se cura únicamente al subir de nivel. La horda lo desgasta, pero el golpe final lo tenés que dar vos.
 - **Arqueros:** los creeps violetas atacan al héroe a distancia.
+- **Mutaciones:** la biomasa también llena tu barra de nivel. Cada vez que subís, el juego se pausa y elegís 1 de 3 mejoras (las opciones están en `scripts/mutations.gd`).
+- **Liderazgo:** los compañeros dentro de tu círculo verde se vuelven más rápidos y pegan más fuerte (se ven con borde verde).
+- **Civiles:** los muñequitos amarillos deambulan lejos del héroe y huyen de vos. Comerlos da mucha biomasa.
 
 Todos los números de balance están en `scripts/balance.gd`. El diseño está en `docs/diseno-mvp.md`.
 

@@ -19,6 +19,7 @@ var shot_cooldown := 0.0
 var shot_damage := 0.0
 var _shot_t := 0.0
 var _flash := 0.0
+var led := false # cerca del jugador: más rápido y más fuerte
 
 
 func setup(t: String, hp_mult: float) -> void:
@@ -43,6 +44,10 @@ func _process(delta: float) -> void:
 	if not world.running:
 		return
 	var hero = world.hero
+	var player = world.player
+	led = position.distance_to(player.position) < player.lead_radius()
+	var spd := speed * (B.LEAD_SPEED_MULT if led else 1.0)
+	var dmg_mult: float = player.lead_damage_mult() if led else 1.0
 	var to_hero: Vector2 = hero.position - position
 	var dist := to_hero.length()
 	var touch: float = radius + hero.radius
@@ -53,12 +58,12 @@ func _process(delta: float) -> void:
 		_shot_t -= delta
 		if _shot_t <= 0.0 and dist <= shot_range:
 			_shot_t = shot_cooldown
-			world.spawn_spit(position, to_hero / dist, shot_damage, false)
+			world.spawn_spit(position, to_hero / dist, shot_damage * dmg_mult, false)
 	elif dist > touch:
 		move = to_hero / dist
 	# margen extra para que la separación de la horda no los deje justo afuera
 	if dps > 0.0 and dist <= touch + 6.0:
-		hero.take_damage(dps * delta, false)
+		hero.take_damage(dps * dmg_mult * delta, false)
 
 	# separación barata para que la horda no se apile en un solo punto
 	var push := Vector2.ZERO
@@ -70,7 +75,7 @@ func _process(delta: float) -> void:
 		var min_d: float = radius + other.radius
 		if d < min_d and d > 0.01:
 			push += away / d * (min_d - d) / min_d
-	position += (move * speed + push * speed * 1.5) * delta
+	position += (move * spd + push * speed * 1.5) * delta
 
 	_flash = maxf(_flash - delta, 0.0)
 	queue_redraw()
@@ -85,7 +90,7 @@ func take_damage(amount: float) -> void:
 
 func _draw() -> void:
 	var c := Color.WHITE if _flash > 0.0 else color
-	draw_circle(Vector2.ZERO, radius, c.darkened(0.4))
+	draw_circle(Vector2.ZERO, radius, Color(0.5, 1.0, 0.55) if led else c.darkened(0.4))
 	draw_circle(Vector2.ZERO, radius - 2.0, c)
 	var eye := radius * 0.35
 	draw_circle(Vector2(-eye, -eye * 0.5), 1.5, Color.BLACK)

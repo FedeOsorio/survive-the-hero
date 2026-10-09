@@ -31,6 +31,7 @@ var _slash_windup := 0.0
 var _slash_dir := Vector2.RIGHT
 var _slash_fx := 0.0
 var _rng := RandomNumberGenerator.new()
+var damage_taken := {"jugador": 0.0, "horda": 0.0} # para los reportes de --sim
 
 
 func _ready() -> void:
@@ -253,6 +254,7 @@ func enrage() -> void:
 
 
 func take_damage(amount: float, from_player: bool) -> void:
+	damage_taken["jugador" if from_player else "horda"] += amount
 	if not from_player:
 		# la horda lo desgasta pero el golpe final solo lo puede dar el jugador
 		hp = maxf(hp - amount, 1.0)

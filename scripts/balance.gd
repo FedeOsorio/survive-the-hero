@@ -21,11 +21,42 @@ const DASH_SPEED := 650.0
 const DASH_TIME := 0.18
 const DASH_COOLDOWN := 2.5
 const DASH_HIT_MULT := 1.5 # daño de la embestida = mordida * esto
-const SPIT_DAMAGE_MULT := 0.6 # daño del escupitajo = mordida * esto
+const SPIT_DAMAGE_MULT := 0.4 # daño del escupitajo = mordida * esto
 const SPIT_COOLDOWN := 1.2
 const SPIT_SPEED := 420.0
 const SPIT_RANGE := 380.0
 const HEAL_PER_BIOMASS := 2.0
+# Mutaciones: la biomasa también llena una barra de nivel; al subir elegís 1 de 3.
+static func mutation_xp_for_level(level: int) -> float:
+	return 15.0 + level * 15.0
+
+const MUT_DAMAGE := 0.25
+const MUT_SPEED := 0.10
+const MUT_HP := 0.25
+const MUT_SPIT_RATE := 0.20
+const MUT_VAMPIRE := 0.20
+const MAGNET_RADIUS_PER_RANK := 60.0
+const MAGNET_PULL_SPEED := 350.0
+const COMBO_WINDOW := 1.5 # segundos entre bocados para mantener el combo
+const COMBO_WINDOW_PER_RANK := 0.75
+const COMBO_STEP := 0.15 # cada bocado en combo suma esto al multiplicador
+const COMBO_MAX := 2.5
+
+# Liderazgo: los compañeros cerca tuyo se potencian.
+const LEAD_RADIUS := 170.0
+const LEAD_RADIUS_PER_RANK := 50.0
+const LEAD_SPEED_MULT := 1.4
+const LEAD_DAMAGE_MULT := 2.0
+const LEAD_DAMAGE_PER_RANK := 0.5
+
+# Civiles: comida que huye de vos, lejos del héroe.
+const CIVILIANS_START := 14
+const CIVILIANS_MAX := 24
+const CIVILIAN_RESPAWN := 6.0
+const CIVILIAN_HP := 8.0
+const CIVILIAN_SPEED := 115.0
+const CIVILIAN_FLEE_RADIUS := 220.0
+const CIVILIAN_BIOMASS := 4.0
 const GEM_BIOMASS := 0.5
 
 # --- Amenaza y detección -----------------------------------------------------
@@ -36,8 +67,8 @@ const STEAL_RADIUS := 300.0 # robar una gema cerca del héroe suma amenaza
 const THREAT_PER_STAGE := 20.0
 
 # --- Héroe -------------------------------------------------------------------
-const HERO_HP := 250.0
-const HERO_HP_PER_LEVEL := 12.0
+const HERO_HP := 400.0
+const HERO_HP_PER_LEVEL := 20.0
 const HERO_LEVEL_HEAL := 0.25 # al subir de nivel recupera este % de su vida máxima (no tiene regeneración)
 const HERO_SPEED := 150.0
 const HERO_RADIUS := 14.0
@@ -83,11 +114,11 @@ static func xp_for_level(level: int) -> float:
 
 # --- Horda -------------------------------------------------------------------
 const MINION_TYPES := {
-	"rata": {"hp": 6.0, "speed": 120.0, "dps": 3.0, "radius": 7.0, "xp": 1.0, "biomass": 0.4, "color": Color(0.6, 0.5, 0.4)},
-	"zombi": {"hp": 16.0, "speed": 80.0, "dps": 5.0, "radius": 10.0, "xp": 2.0, "biomass": 0.8, "color": Color(0.4, 0.6, 0.45)},
+	"rata": {"hp": 6.0, "speed": 120.0, "dps": 4.0, "radius": 7.0, "xp": 1.0, "biomass": 0.4, "color": Color(0.6, 0.5, 0.4)},
+	"zombi": {"hp": 16.0, "speed": 80.0, "dps": 7.0, "radius": 10.0, "xp": 2.0, "biomass": 0.8, "color": Color(0.4, 0.6, 0.45)},
 	"arquero": {"hp": 10.0, "speed": 70.0, "dps": 0.0, "radius": 9.0, "xp": 2.0, "biomass": 0.8, "color": Color(0.55, 0.4, 0.75),
 		"range": 260.0, "shot_cooldown": 2.2, "shot_damage": 4.0},
-	"bruto": {"hp": 60.0, "speed": 60.0, "dps": 10.0, "radius": 16.0, "xp": 5.0, "biomass": 2.5, "color": Color(0.6, 0.3, 0.3)},
+	"bruto": {"hp": 60.0, "speed": 60.0, "dps": 14.0, "radius": 16.0, "xp": 5.0, "biomass": 2.5, "color": Color(0.6, 0.3, 0.3)},
 }
 const MAX_MINIONS := 300
 const CORPSE_LIFETIME := 20.0

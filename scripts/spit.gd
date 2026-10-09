@@ -1,6 +1,6 @@
 extends Node2D
 ## Proyectil de un creep (el escupitajo del jugador o el disparo de un arquero).
-## Solo le hace daño al héroe.
+## Le hace daño al héroe; el del jugador también a los civiles.
 
 const B := preload("res://scripts/balance.gd")
 
@@ -30,6 +30,13 @@ func _process(delta: float) -> void:
 	if position.distance_to(hero.position) < hero.radius + 5.0:
 		hero.take_damage(damage, from_player)
 		world.remove_spit(self)
+		return
+	if from_player:
+		for c in world.civilians:
+			if position.distance_to(c.position) < c.radius + 5.0:
+				c.take_damage(damage)
+				world.remove_spit(self)
+				return
 
 
 func _draw() -> void:

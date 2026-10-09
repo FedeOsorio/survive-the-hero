@@ -1,7 +1,9 @@
 extends CanvasLayer
-## Interfaz: vida, biomasa, reloj, amenaza, flecha hacia el héroe y pantalla final.
+## Interfaz: vida, biomasa, nivel, reloj, amenaza, flecha hacia el héroe,
+## elección de mutaciones y pantalla final. Corre aunque el juego esté en pausa.
 
 const B := preload("res://scripts/balance.gd")
+const Mutations := preload("res://scripts/mutations.gd")
 
 var world
 var _view: Control
@@ -10,6 +12,7 @@ var _banner_t := 0.0
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_view = Control.new()
 	_view.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_view.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -23,6 +26,16 @@ func banner(text: String) -> void:
 
 
 func _process(delta: float) -> void:
+	if Input.is_action_just_pressed("restart"):
+		get_tree().paused = false
+		get_tree().reload_current_scene()
+		return
+	var p = world.player
+	if not p.pending_choices.is_empty():
+		for i in 3:
+			if Input.is_action_just_pressed("pick_%d" % (i + 1)):
+				p.choose_mutation(i)
+				break
 	_banner_t = maxf(_banner_t - delta, 0.0)
 	_view.queue_redraw()
 
@@ -36,13 +49,17 @@ func _draw_hud() -> void:
 	# Creep: arriba a la izquierda
 	_text(font, Vector2(20, 30), "%s (etapa %d)" % [p.stage_name(), p.stage + 1], 20, p.color)
 	_bar(Rect2(20, 40, 260, 14), p.hp / p.max_hp, Color(0.35, 0.85, 0.35), "Vida %d/%d" % [int(p.hp), int(p.max_hp)])
+	_bar(Rect2(20, 60, 260, 10), p.mut_xp / p.mut_xp_needed(), Color(0.3, 0.75, 1.0), "")
+	_text(font, Vector2(286, 70), "Nv %d" % p.level, 13, Color(0.6, 0.85, 1.0))
 	var cost: float = p.evolve_cost()
 	if cost > 0.0:
-		_bar(Rect2(20, 60, 260, 14), p.biomass / cost, Color(0.75, 0.45, 0.9), "Biomasa %d/%d" % [int(p.biomass), int(cost)])
+		_bar(Rect2(20, 76, 260, 14), p.biomass / cost, Color(0.75, 0.45, 0.9), "Evolución %d/%d" % [int(p.biomass), int(cost)])
 		if p.can_evolve():
-			_text(font, Vector2(20, 96), "¡Pulsá E para evolucionar!", 18, Color(1, 0.9, 0.3))
+			_text(font, Vector2(20, 112), "¡Pulsá E para evolucionar!", 18, Color(1, 0.9, 0.3))
 	else:
-		_text(font, Vector2(20, 72), "Forma final", 14, Color(0.9, 0.8, 0.8))
+		_text(font, Vector2(20, 88), "Forma final", 14, Color(0.9, 0.8, 0.8))
+	if p.combo > 1.0:
+		_text(font, Vector2(20, 136), "Combo x%.2f" % p.combo, 18, Color(1, 0.55, 0.3))
 
 	# Reloj: arriba al centro
 	var t := int(world.elapsed)
@@ -60,10 +77,13 @@ func _draw_hud() -> void:
 	_hero_pointer(h)
 
 	_text_centered(font, Vector2(size.x * 0.5, size.y - 16),
-		"WASD mover · Espacio morder · Q escupir · Shift embestida · E evolucionar · R reiniciar", 13, Color(0.7, 0.7, 0.75))
+		"WASD mover · Espacio embestida · E evolucionar · R reiniciar  (mordida y escupitajo son automáticos)", 13, Color(0.7, 0.7, 0.75))
 
 	if _banner_t > 0.0:
 		_text_centered(font, Vector2(size.x * 0.5, size.y * 0.3), _banner_text, 26, Color(1, 1, 1, minf(_banner_t, 1.0)))
+
+	if not p.pending_choices.is_empty():
+		_draw_choices(font, p)
 
 	if not world.running:
 		_view.draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.6))
@@ -72,6 +92,25 @@ func _draw_hud() -> void:
 		_text_centered(font, Vector2(size.x * 0.5, size.y * 0.42), title, 56, col)
 		_text_centered(font, Vector2(size.x * 0.5, size.y * 0.52), world.end_reason, 22, Color.WHITE)
 		_text_centered(font, Vector2(size.x * 0.5, size.y * 0.6), "R para jugar de nuevo", 18, Color(0.8, 0.8, 0.8))
+
+
+func _draw_choices(font: Font, p) -> void:
+	var size := _view.size
+	_view.draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.55))
+	_text_centered(font, Vector2(size.x * 0.5, size.y * 0.25), "¡Mutación! Elegí una (1, 2, 3)", 30, Color(0.6, 0.9, 1.0))
+	var w := 300.0
+	var gap := 24.0
+	var n: int = p.pending_choices.size()
+	var x0 := size.x * 0.5 - (w * n + gap * (n - 1)) * 0.5
+	for i in n:
+		var id: String = p.pending_choices[i]
+		var m: Dictionary = Mutations.LIST[id]
+		var r := Rect2(x0 + i * (w + gap), size.y * 0.33, w, 170)
+		_view.draw_rect(r, Color(0.12, 0.1, 0.16, 0.95))
+		_view.draw_rect(r, Color(0.6, 0.9, 1.0, 0.8), false, 2.0)
+		_text(font, r.position + Vector2(14, 30), "%d. %s" % [i + 1, m.name], 20, Color.WHITE)
+		_text(font, r.position + Vector2(14, 56), "Rango %d/%d" % [p.rank(id) + 1, m.max], 13, Color(0.7, 0.7, 0.8))
+		_view.draw_multiline_string(font, r.position + Vector2(14, 86), m.desc, HORIZONTAL_ALIGNMENT_LEFT, w - 28, 16, -1, Color(0.9, 0.9, 0.95))
 
 
 func _hero_pointer(h) -> void:

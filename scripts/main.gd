@@ -10,6 +10,7 @@ const Corpse := preload("res://scripts/corpse.gd")
 const Gem := preload("res://scripts/gem.gd")
 const Projectile := preload("res://scripts/projectile.gd")
 const Spit := preload("res://scripts/spit.gd")
+const Civilian := preload("res://scripts/civilian.gd")
 const Arena := preload("res://scripts/arena.gd")
 const Hud := preload("res://scripts/hud.gd")
 
@@ -33,6 +34,8 @@ var minions: Array = []
 var corpses: Array = []
 var gems: Array = []
 var spits: Array = []
+var civilians: Array = []
+var _civilian_t := 0.0
 
 var hud
 var _entities: Node2D
@@ -73,6 +76,9 @@ func _ready() -> void:
 	cam.limit_bottom = int(B.ARENA_SIZE.y) + 150
 	player.add_child(cam)
 
+	for i in B.CIVILIANS_START:
+		spawn_civilian()
+
 	hud = Hud.new()
 	hud.world = self
 	add_child(hud)
@@ -80,9 +86,6 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if Input.is_action_just_pressed("restart"):
-		get_tree().reload_current_scene()
-		return
 	if not running:
 		return
 
@@ -101,6 +104,11 @@ func _process(delta: float) -> void:
 		_spawn_accum -= 1.0
 		if minions.size() < B.MAX_MINIONS:
 			spawn_minion(B.pick_minion_type(minute, rng))
+
+	_civilian_t -= delta
+	if _civilian_t <= 0.0 and civilians.size() < B.CIVILIANS_MAX:
+		_civilian_t = B.CIVILIAN_RESPAWN
+		spawn_civilian()
 
 	_rebuild_grid()
 
@@ -124,6 +132,33 @@ func spawn_minion(type_name: String) -> void:
 	m.position = pos
 	minions.append(m)
 	_entities.add_child(m)
+
+
+## Los civiles aparecen lejos del héroe, para que comer sea una alternativa a robarle.
+func spawn_civilian() -> void:
+	var pos := Vector2.ZERO
+	for i in 10:
+		pos = Vector2(rng.randf_range(60, B.ARENA_SIZE.x - 60), rng.randf_range(60, B.ARENA_SIZE.y - 60))
+		if pos.distance_to(hero.position) > 700.0 and pos.distance_to(player.position) > 300.0:
+			break
+	var c = Civilian.new()
+	c.world = self
+	c.position = pos
+	civilians.append(c)
+	_entities.add_child(c)
+
+
+func on_civilian_killed(c) -> void:
+	civilians.erase(c)
+	var corpse = Corpse.new()
+	corpse.world = self
+	corpse.position = c.position
+	corpse.value = B.CIVILIAN_BIOMASS
+	corpse.radius = 9.0
+	corpse.color = Color(0.95, 0.8, 0.6)
+	corpses.append(corpse)
+	_entities.add_child(corpse)
+	c.queue_free()
 
 
 func on_minion_killed(m) -> void:
@@ -208,7 +243,8 @@ func end_game(player_won: bool, reason: String) -> void:
 	won = player_won
 	end_reason = reason
 	if sim_mode:
-		print("[sim] fin (%02d:%02d): %s" % [int(elapsed) / 60, int(elapsed) % 60, reason])
+		print("[sim] fin (%02d:%02d): %s | daño al héroe %s | mutaciones %s" % [
+			int(elapsed) / 60, int(elapsed) % 60, reason, hero.damage_taken, player.ranks])
 
 
 # --- Consulta espacial para la separación de la horda ------------------------
@@ -242,10 +278,11 @@ func _setup_input() -> void:
 	_add_action("move_right", [KEY_D, KEY_RIGHT], [[JOY_AXIS_LEFT_X, 1.0]], [JOY_BUTTON_DPAD_RIGHT])
 	_add_action("move_up", [KEY_W, KEY_UP], [[JOY_AXIS_LEFT_Y, -1.0]], [JOY_BUTTON_DPAD_UP])
 	_add_action("move_down", [KEY_S, KEY_DOWN], [[JOY_AXIS_LEFT_Y, 1.0]], [JOY_BUTTON_DPAD_DOWN])
-	_add_action("bite", [KEY_SPACE, KEY_J], [], [JOY_BUTTON_A])
-	_add_action("dash", [KEY_SHIFT, KEY_K], [], [JOY_BUTTON_B])
+	_add_action("dash", [KEY_SPACE, KEY_SHIFT], [], [JOY_BUTTON_RIGHT_SHOULDER])
 	_add_action("evolve", [KEY_E, KEY_L], [], [JOY_BUTTON_Y])
-	_add_action("spit", [KEY_Q, KEY_I], [], [JOY_BUTTON_X])
+	_add_action("pick_1", [KEY_1, KEY_KP_1], [], [JOY_BUTTON_X])
+	_add_action("pick_2", [KEY_2, KEY_KP_2], [], [JOY_BUTTON_A])
+	_add_action("pick_3", [KEY_3, KEY_KP_3], [], [JOY_BUTTON_B])
 	_add_action("restart", [KEY_R], [], [JOY_BUTTON_START])
 
 
