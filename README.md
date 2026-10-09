@@ -25,7 +25,7 @@ La mordida y el escupitajo son automáticos: salen solos cuando el héroe o un c
 
 - **Vos:** el círculo verde con anillo.
 - **El héroe:** el cuadrado azul. Cuando sale de pantalla, una flecha azul te marca dónde está.
-- **La horda:** los círculos marrones, verdes y rojos. Caminan hacia el héroe y cada minuto son más duros, más rápidos y pegan más.
+- **La horda:** los círculos marrones, verdes y rojos. Caminan hacia el héroe y cada 2 minutos son más duros, más rápidos y pegan más.
 - **Al morir, cada creep deja:**
   - un cadáver: pasá por encima para absorberlo y ganar biomasa y vida;
   - una gema celeste: es la única forma en que el héroe sube de nivel. No te alimenta, pero si la pisás antes que él, se la destruís.

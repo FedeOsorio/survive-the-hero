@@ -164,17 +164,25 @@ const SPAWN_MIN_DIST := 650.0
 const SPAWN_MAX_DIST := 900.0
 
 
+# La horda mejora por escalones: uno cada HORDE_TIER_MINUTES.
+const HORDE_TIER_MINUTES := 2.0
+
+
+static func horde_tier(minute: float) -> float:
+	return floorf(minute / HORDE_TIER_MINUTES)
+
+
 static func minion_hp_mult(minute: float) -> float:
-	return 1.0 + minute * 0.3
+	return 1.0 + horde_tier(minute) * 0.3
 
 
-# Como en Vampire Survivors, tus compañeros se vuelven más fuertes con el tiempo.
+# Como en Vampire Survivors, tus compañeros se vuelven más fuertes con cada escalón.
 static func minion_dps_mult(minute: float) -> float:
-	return 1.0 + minute * 0.15
+	return 1.0 + horde_tier(minute) * 0.15
 
 
 static func minion_speed_mult(minute: float) -> float:
-	return minf(1.0 + minute * 0.04, 1.4)
+	return minf(1.0 + horde_tier(minute) * 0.04, 1.4)
 
 
 static func spawns_per_second(minute: float) -> float:
