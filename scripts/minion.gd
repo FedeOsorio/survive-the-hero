@@ -41,7 +41,8 @@ func _process(delta: float) -> void:
 	var move := Vector2.ZERO
 	if dist > touch:
 		move = to_hero / dist
-	else:
+	# margen extra para que la separación de la horda no los deje justo afuera
+	if dist <= touch + 6.0:
 		hero.take_damage(dps * delta, false)
 
 	# separación barata para que la horda no se apile en un solo punto

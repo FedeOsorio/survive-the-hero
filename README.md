@@ -4,7 +4,7 @@ Un survivor al revés: sos un creep de la horda, el héroe lo controla la IA. Te
 
 ## Cómo abrirlo
 
-1. Instalá [Godot 4](https://godotengine.org/download) (4.4 o más nuevo, versión estándar, no la .NET).
+1. Instalá [Godot 4](https://godotengine.org/download) (4.7, versión estándar, no la .NET).
 2. En Godot: **Importar** → elegí el archivo `project.godot` de esta carpeta.
 3. Apretá **F5** para jugar.
 
@@ -15,6 +15,7 @@ Un survivor al revés: sos un creep de la horda, el héroe lo controla la IA. Te
 | Moverse | WASD o flechas | Stick izquierdo |
 | Morder | Espacio | A |
 | Embestida | Shift | B |
+| Escupitajo (apunta solo al héroe si está a tiro) | Q | X |
 | Evolucionar | E | Y |
 | Reiniciar | R | Start |
 

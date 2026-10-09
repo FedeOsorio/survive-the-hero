@@ -13,6 +13,7 @@ var xp := 0.0
 var damage := B.HERO_ARROW_DAMAGE
 var cooldown := B.HERO_ARROW_COOLDOWN
 var arrows := 1
+var pierce := B.HERO_ARROW_PIERCE
 var speed := B.HERO_SPEED
 var radius := B.HERO_RADIUS
 
@@ -22,6 +23,7 @@ var _aim := Vector2.RIGHT
 var _fire_t := 0.0
 var _think_t := 0.0
 var _flash := 0.0
+var _hurt := 0.0
 var _level_fx := 0.0
 var _rng := RandomNumberGenerator.new()
 
@@ -45,7 +47,7 @@ func _process(delta: float) -> void:
 	position = position.clamp(Vector2(radius, radius), B.ARENA_SIZE - Vector2(radius, radius))
 
 	for g in world.gems.duplicate():
-		if position.distance_to(g.position) < B.HERO_PICKUP_RADIUS:
+		if position.distance_to(g.position) < pickup_radius():
 			_gain_xp(g.xp)
 			world.remove_gem(g)
 
@@ -54,9 +56,32 @@ func _process(delta: float) -> void:
 		_fire_t = cooldown
 		_fire()
 
+	if level >= B.HERO_AURA_LEVEL:
+		_aura(delta)
+
 	_flash = maxf(_flash - delta, 0.0)
+	_hurt = maxf(_hurt - delta, 0.0)
 	_level_fx = maxf(_level_fx - delta, 0.0)
 	queue_redraw()
+
+
+func pickup_radius() -> float:
+	return B.HERO_PICKUP_RADIUS + level * B.HERO_PICKUP_PER_LEVEL
+
+
+func aura_radius() -> float:
+	return B.HERO_AURA_RADIUS + level * B.HERO_AURA_RADIUS_PER_LEVEL
+
+
+func _aura(delta: float) -> void:
+	var r := aura_radius()
+	var dmg := (B.HERO_AURA_DPS + level * B.HERO_AURA_DPS_PER_LEVEL) * delta
+	for m in world.minions.duplicate():
+		if position.distance_to(m.position) < r + m.radius:
+			m.take_damage(dmg)
+	var p = world.player
+	if position.distance_to(p.position) < r + p.radius:
+		p.take_damage(dmg)
 
 
 func _target_valid() -> bool:
@@ -88,19 +113,21 @@ func _think() -> void:
 	elif low_hp:
 		steer *= 2.5
 
-	# 2. juntar experiencia cuando no hay mucho peligro
+	# 2. juntar experiencia: es su prioridad mientras no esté en peligro
 	if not low_hp:
-		var gem = _nearest(world.gems, 350.0)
+		var gem = _nearest(world.gems, 550.0)
 		if gem != null:
-			steer += (gem.position - position).normalized() * (1.2 if danger < 2.0 else 0.5)
+			steer += (gem.position - position).normalized() * (2.2 if danger < 3.0 else 0.8)
 
-	# 3. mantener al objetivo a buena distancia de tiro
+	# 3. con el jugador detectado lo persigue a distancia de tiro; a la horda
+	#    no la busca (ya viene sola), solo se aleja si está muy encima
 	if _target_valid() and not low_hp:
 		var to_t: Vector2 = target.position - position
 		var d := to_t.length()
-		var ideal := 220.0 if (target == world.player and world.detected) else B.HERO_RANGE * 0.7
-		if d > ideal + 60.0:
-			steer += to_t / d * (1.5 if target == world.player else 0.8)
+		var hunting: bool = target == world.player and world.detected
+		var ideal := 220.0 if hunting else B.HERO_RANGE * 0.5
+		if hunting and d > ideal + 60.0:
+			steer += to_t / d * 1.8
 		elif d < ideal - 60.0:
 			steer -= to_t / d * 0.8
 
@@ -154,7 +181,7 @@ func _fire() -> void:
 	var spread := deg_to_rad(12.0)
 	for i in arrows:
 		var offset := (i - (arrows - 1) * 0.5) * spread
-		world.spawn_projectile(position + dir * radius, dir.rotated(offset), damage)
+		world.spawn_projectile(position + dir * radius, dir.rotated(offset), damage, pierce)
 
 
 func _gain_xp(amount: float) -> void:
@@ -171,6 +198,7 @@ func _level_up() -> void:
 	damage *= B.HERO_DAMAGE_PER_LEVEL
 	cooldown = maxf(cooldown * B.HERO_COOLDOWN_PER_LEVEL, B.HERO_MIN_COOLDOWN)
 	arrows = 1 + level / B.HERO_LEVELS_PER_EXTRA_ARROW
+	pierce = B.HERO_ARROW_PIERCE + level / B.HERO_LEVELS_PER_PIERCE
 	_level_fx = 0.6
 
 
@@ -180,6 +208,11 @@ func enrage() -> void:
 
 
 func take_damage(amount: float, from_player: bool) -> void:
+	if not from_player:
+		# la horda lo desgasta pero el golpe final solo lo puede dar el jugador
+		hp = maxf(hp - amount, 1.0)
+		_hurt = 0.05
+		return
 	hp -= amount
 	if from_player:
 		_flash = 0.1
@@ -190,10 +223,17 @@ func take_damage(amount: float, from_player: bool) -> void:
 
 
 func _draw() -> void:
-	var body := Color.WHITE if _flash > 0.0 else Color(0.3, 0.55, 1.0)
+	var body := Color(0.3, 0.55, 1.0)
+	if _flash > 0.0:
+		body = Color.WHITE
+	elif _hurt > 0.0:
+		body = Color(1.0, 0.5, 0.5)
 	if world.enraged:
 		body = body.lerp(Color(1, 0.3, 0.2), 0.5)
-	draw_circle(Vector2.ZERO, B.HERO_PICKUP_RADIUS, Color(0.3, 0.55, 1.0, 0.04))
+	draw_circle(Vector2.ZERO, pickup_radius(), Color(0.3, 0.55, 1.0, 0.04))
+	if level >= B.HERO_AURA_LEVEL:
+		draw_circle(Vector2.ZERO, aura_radius(), Color(1.0, 0.95, 0.5, 0.08))
+		draw_arc(Vector2.ZERO, aura_radius(), 0.0, TAU, 32, Color(1.0, 0.95, 0.5, 0.35), 1.5)
 	draw_rect(Rect2(Vector2(-radius, -radius), Vector2(radius, radius) * 2.0), Color(0.05, 0.05, 0.1))
 	draw_rect(Rect2(Vector2(-radius + 2, -radius + 2), Vector2(radius - 2, radius - 2) * 2.0), body)
 	draw_line(Vector2.ZERO, _aim * (radius + 10.0), Color(1, 0.95, 0.7), 3.0)

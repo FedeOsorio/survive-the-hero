@@ -9,6 +9,7 @@ const Minion := preload("res://scripts/minion.gd")
 const Corpse := preload("res://scripts/corpse.gd")
 const Gem := preload("res://scripts/gem.gd")
 const Projectile := preload("res://scripts/projectile.gd")
+const Spit := preload("res://scripts/spit.gd")
 const Arena := preload("res://scripts/arena.gd")
 const Hud := preload("res://scripts/hud.gd")
 
@@ -24,6 +25,7 @@ var threat := 0.0
 var enraged := false
 var kills := 0
 var sim_mode := false # --sim: el creep es invulnerable y se imprime un reporte por minuto
+var bot_mode := false # --bot: el creep lo maneja un bot simple, para medir cuánto tarda en ganarse
 
 var player
 var hero
@@ -41,7 +43,8 @@ var _next_report := 60.0
 func _ready() -> void:
 	_setup_input()
 	rng.randomize()
-	sim_mode = "--sim" in OS.get_cmdline_user_args()
+	bot_mode = "--bot" in OS.get_cmdline_user_args()
+	sim_mode = bot_mode or "--sim" in OS.get_cmdline_user_args()
 
 	add_child(Arena.new())
 	_entities = Node2D.new()
@@ -52,7 +55,7 @@ func _ready() -> void:
 	player = Creep.new()
 	player.world = self
 	player.position = center + Vector2(-350, 0)
-	player.invulnerable = sim_mode
+	player.invulnerable = sim_mode and not bot_mode
 	_entities.add_child(player)
 
 	hero = Hero.new()
@@ -102,9 +105,9 @@ func _process(delta: float) -> void:
 
 	if sim_mode and elapsed >= _next_report:
 		_next_report += 60.0
-		print("[sim] min %d | heroe nv %d vida %d/%d | horda %d | muertes %d | cadaveres %d gemas %d" % [
+		print("[sim] min %d | heroe nv %d vida %d/%d | creep %s biomasa %d | amenaza %d | horda %d | muertes %d" % [
 			int(elapsed / 60.0), hero.level, int(hero.hp), int(hero.max_hp),
-			minions.size(), kills, corpses.size(), gems.size()])
+			player.stage_name(), int(player.biomass), int(threat), minions.size(), kills])
 
 
 # --- Spawning ----------------------------------------------------------------
@@ -153,13 +156,23 @@ func remove_gem(g) -> void:
 	g.queue_free()
 
 
-func spawn_projectile(from: Vector2, dir: Vector2, damage: float) -> void:
+func spawn_projectile(from: Vector2, dir: Vector2, damage: float, pierce: int) -> void:
 	var p = Projectile.new()
 	p.world = self
 	p.position = from
 	p.direction = dir
 	p.damage = damage
+	p.pierce = pierce
 	_entities.add_child(p)
+
+
+func spawn_spit(from: Vector2, dir: Vector2, damage: float) -> void:
+	var s = Spit.new()
+	s.world = self
+	s.position = from
+	s.direction = dir
+	s.damage = damage
+	_entities.add_child(s)
 
 
 # --- Amenaza y fin de partida ------------------------------------------------
@@ -187,7 +200,7 @@ func end_game(player_won: bool, reason: String) -> void:
 	won = player_won
 	end_reason = reason
 	if sim_mode:
-		print("[sim] fin: ", reason)
+		print("[sim] fin (%02d:%02d): %s" % [int(elapsed) / 60, int(elapsed) % 60, reason])
 
 
 # --- Consulta espacial para la separación de la horda ------------------------
@@ -224,6 +237,7 @@ func _setup_input() -> void:
 	_add_action("bite", [KEY_SPACE, KEY_J], [], [JOY_BUTTON_A])
 	_add_action("dash", [KEY_SHIFT, KEY_K], [], [JOY_BUTTON_B])
 	_add_action("evolve", [KEY_E, KEY_L], [], [JOY_BUTTON_Y])
+	_add_action("spit", [KEY_Q, KEY_I], [], [JOY_BUTTON_X])
 	_add_action("restart", [KEY_R], [], [JOY_BUTTON_START])
 
 

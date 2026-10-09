@@ -6,6 +6,8 @@ const B := preload("res://scripts/balance.gd")
 var world
 var direction := Vector2.RIGHT
 var damage := 10.0
+var pierce := 0
+var _hit := []
 var _travelled := 0.0
 
 
@@ -30,10 +32,15 @@ func _process(delta: float) -> void:
 		queue_free()
 		return
 	for m in world.minions_near(position):
+		if _hit.has(m):
+			continue
 		if position.distance_to(m.position) < m.radius + 3.0:
+			_hit.append(m)
 			m.take_damage(damage)
-			queue_free()
-			return
+			if pierce <= 0:
+				queue_free()
+				return
+			pierce -= 1
 
 
 func _draw() -> void:

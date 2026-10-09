@@ -19,6 +19,7 @@ var _facing := Vector2.RIGHT
 var _bite_cd := 0.0
 var _bite_fx := 0.0
 var _dash_cd := 0.0
+var _spit_cd := 0.0
 var _dash_t := 0.0
 var _dash_dir := Vector2.ZERO
 var _dash_hit := false
@@ -58,8 +59,17 @@ func _process(delta: float) -> void:
 	if not world.running:
 		return
 	var input := Vector2.ZERO
-	if not world.sim_mode:
+	var want := {}
+	if world.bot_mode:
+		input = _bot(want)
+	elif not world.sim_mode:
 		input = Input.get_vector("move_left", "move_right", "move_up", "move_down")
+		want = {
+			"bite": Input.is_action_just_pressed("bite"),
+			"dash": Input.is_action_just_pressed("dash"),
+			"spit": Input.is_action_just_pressed("spit"),
+			"evolve": Input.is_action_just_pressed("evolve"),
+		}
 	if input.length() > 0.1:
 		_facing = input.normalized()
 
@@ -75,17 +85,20 @@ func _process(delta: float) -> void:
 
 	_bite_cd = maxf(_bite_cd - delta, 0.0)
 	_dash_cd = maxf(_dash_cd - delta, 0.0)
+	_spit_cd = maxf(_spit_cd - delta, 0.0)
 	_bite_fx = maxf(_bite_fx - delta, 0.0)
 	_flash = maxf(_flash - delta, 0.0)
 
-	if Input.is_action_just_pressed("bite") and _bite_cd <= 0.0:
+	if want.get("bite", false) and _bite_cd <= 0.0:
 		_do_bite()
-	if Input.is_action_just_pressed("dash") and _dash_cd <= 0.0:
+	if want.get("spit", false) and _spit_cd <= 0.0:
+		_do_spit()
+	if want.get("dash", false) and _dash_cd <= 0.0:
 		_dash_cd = B.DASH_COOLDOWN
 		_dash_t = B.DASH_TIME
 		_dash_dir = _facing
 		_dash_hit = false
-	if Input.is_action_just_pressed("evolve") and can_evolve():
+	if want.get("evolve", false) and can_evolve():
 		_evolve()
 
 	_absorb()
@@ -102,6 +115,42 @@ func _do_bite() -> void:
 	_bite_fx = 0.15
 	if _touching_hero(B.BITE_RANGE):
 		world.hero.take_damage(bite, true)
+
+
+func _do_spit() -> void:
+	_spit_cd = B.SPIT_COOLDOWN
+	# apunta solo al héroe si está a tiro (pensado también para mobile)
+	var dir := _facing
+	var to_hero: Vector2 = world.hero.position - position
+	if to_hero.length() <= B.SPIT_RANGE:
+		dir = to_hero.normalized()
+	world.spawn_spit(position + dir * radius, dir, bite * B.SPIT_DAMAGE_MULT)
+
+
+## Bot muy simple para el modo --bot: come, evoluciona y ataca cuando es fuerte.
+func _bot(want: Dictionary) -> Vector2:
+	var hero = world.hero
+	var to_hero: Vector2 = hero.position - position
+	var d := to_hero.length()
+	want["evolve"] = can_evolve()
+	if stage >= 3 and hp / max_hp > 0.4:
+		want["spit"] = d < B.SPIT_RANGE
+		want["bite"] = d < radius + hero.radius + B.BITE_RANGE
+		want["dash"] = d < 160.0
+		return to_hero / d
+	var best = null
+	var best_d := INF
+	for c in world.corpses:
+		var cd := position.distance_to(c.position)
+		if c.position.distance_to(hero.position) > 350.0 and cd < best_d:
+			best_d = cd
+			best = c
+	var dir := Vector2.ZERO
+	if best != null:
+		dir = (best.position - position).normalized()
+	if d < 380.0:
+		dir -= to_hero / d * 2.0
+	return dir.normalized() if dir.length() > 0.1 else Vector2.ZERO
 
 
 func _evolve() -> void:

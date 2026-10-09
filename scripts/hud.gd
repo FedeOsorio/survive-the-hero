@@ -60,7 +60,7 @@ func _draw_hud() -> void:
 	_hero_pointer(h)
 
 	_text_centered(font, Vector2(size.x * 0.5, size.y - 16),
-		"WASD mover · Espacio morder · Shift embestida · E evolucionar · R reiniciar", 13, Color(0.7, 0.7, 0.75))
+		"WASD mover · Espacio morder · Q escupir · Shift embestida · E evolucionar · R reiniciar", 13, Color(0.7, 0.7, 0.75))
 
 	if _banner_t > 0.0:
 		_text_centered(font, Vector2(size.x * 0.5, size.y * 0.3), _banner_text, 26, Color(1, 1, 1, minf(_banner_t, 1.0)))
