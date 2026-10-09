@@ -89,6 +89,12 @@ const STEALTH_THREAT_LEFT := 0.4 # la amenaza queda en este % del umbral
 const DETECTION_THRESHOLD := 150.0
 const THREAT_PER_DAMAGE := 0.15
 const THREAT_PER_STOLEN_GEM := 3.0
+const GEM_BIOMASS := 0.5 # pisar una gema te alimenta: biomasa por punto de XP (el imán no las atrae)
+const GEM_EAT_RANGE := 12.0 # se suma a tu radio
+# Detectado, si el héroe más cercano está lejos la amenaza baja; a la mitad del umbral te pierde.
+const THREAT_ESCAPE_DISTANCE := 600.0
+const THREAT_ESCAPE_DECAY := 6.0 # por segundo
+const THREAT_ESCAPE_LOSE := 0.5 # x DETECTION_THRESHOLD
 const STEAL_RADIUS := 300.0 # pisar una gema cerca del héroe suma amenaza
 const THREAT_PER_STAGE := 20.0
 const THREAT_PASSIVE_PER_STAGE := 0.15 # por segundo y por etapa: crecer te vuelve visible
@@ -240,11 +246,11 @@ static func xp_for_level(level: int) -> float:
 
 # --- Horda -------------------------------------------------------------------
 const MINION_TYPES := {
-	"rata": {"hp": 6.0, "speed": 120.0, "dps": 4.0, "radius": 7.0, "xp": 2.0, "biomass": 0.8, "color": Color(0.6, 0.5, 0.4)},
-	"zombi": {"hp": 16.0, "speed": 80.0, "dps": 7.0, "radius": 10.0, "xp": 4.0, "biomass": 1.5, "color": Color(0.4, 0.6, 0.45)},
-	"arquero": {"hp": 10.0, "speed": 70.0, "dps": 0.0, "radius": 9.0, "xp": 4.0, "biomass": 1.5, "color": Color(0.55, 0.4, 0.75),
+	"rata": {"hp": 6.0, "speed": 120.0, "dps": 4.0, "radius": 7.0, "xp": 1.0, "biomass": 0.8, "color": Color(0.6, 0.5, 0.4)},
+	"zombi": {"hp": 16.0, "speed": 80.0, "dps": 7.0, "radius": 10.0, "xp": 2.0, "biomass": 1.5, "color": Color(0.4, 0.6, 0.45)},
+	"arquero": {"hp": 10.0, "speed": 70.0, "dps": 0.0, "radius": 9.0, "xp": 2.0, "biomass": 1.5, "color": Color(0.55, 0.4, 0.75),
 		"range": 260.0, "shot_cooldown": 2.2, "shot_damage": 4.0},
-	"bruto": {"hp": 60.0, "speed": 60.0, "dps": 14.0, "radius": 16.0, "xp": 10.0, "biomass": 5.0, "color": Color(0.6, 0.3, 0.3)},
+	"bruto": {"hp": 60.0, "speed": 60.0, "dps": 14.0, "radius": 16.0, "xp": 5.0, "biomass": 5.0, "color": Color(0.6, 0.3, 0.3)},
 }
 const MAX_MINIONS := 300
 const CORPSE_LIFETIME := 20.0

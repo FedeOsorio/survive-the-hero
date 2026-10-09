@@ -303,11 +303,12 @@ func _absorb(delta: float) -> void:
 			world.remove_corpse(c)
 		elif d < radius + magnet:
 			c.position = c.position.move_toward(position, B.MAGNET_PULL_SPEED * delta)
-	# las gemas son del héroe: no te alimentan, pero pisarlas se las destruye
+	# las gemas son la XP del héroe: pisarlas se las roba y te alimenta (el imán no las atrae)
 	for g in world.gems.duplicate():
-		if position.distance_to(g.position) < radius + 6.0:
+		if position.distance_to(g.position) < radius + B.GEM_EAT_RANGE:
 			if world.heroes.any_within(position, B.STEAL_RADIUS):
 				world.add_threat(B.THREAT_PER_STOLEN_GEM)
+			_eat(g.xp * B.GEM_BIOMASS)
 			world.remove_gem(g)
 
 

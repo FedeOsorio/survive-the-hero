@@ -28,6 +28,7 @@ var won := false
 var end_reason := ""
 var detected := false
 var threat := 0.0
+var losing_aggro := false # detectado y lejos de los héroes: la amenaza baja
 var escaping := false # amanecer: los héroes vivos escapan y todo lo demás queda quieto
 var result := "" # derrota, escape, victoria o total
 var kills := 0
@@ -124,6 +125,7 @@ func _process(delta: float) -> void:
 		stats_rows.append(_stats_row(str(int(elapsed / 60.0))))
 
 	add_threat(player.stage * B.THREAT_PASSIVE_PER_STAGE * delta)
+	_update_escape_aggro(delta)
 	_update_alarm(delta)
 	_elite_t += delta
 	if _elite_t >= B.ELITE_EVERY:
@@ -343,6 +345,22 @@ func add_threat(amount: float) -> void:
 	threat += amount
 	if threat >= B.DETECTION_THRESHOLD:
 		set_detected()
+
+
+## Detectado y con el héroe más cercano a más de THREAT_ESCAPE_DISTANCE, la amenaza
+## baja; al llegar a THREAT_ESCAPE_LOSE del umbral te deja de cazar.
+func _update_escape_aggro(delta: float) -> void:
+	var h = hero
+	losing_aggro = detected and (h == null or h.position.distance_to(player.position) > B.THREAT_ESCAPE_DISTANCE)
+	if not losing_aggro:
+		return
+	threat -= B.THREAT_ESCAPE_DECAY * delta
+	var lose := B.DETECTION_THRESHOLD * B.THREAT_ESCAPE_LOSE
+	if threat <= lose:
+		threat = lose
+		detected = false
+		losing_aggro = false
+		hud.banner("Lo perdiste: el héroe dejó de cazarte")
 
 
 ## Camuflaje del jugador: vuelve a no estar detectado y borra el rastro.

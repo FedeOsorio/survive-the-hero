@@ -100,7 +100,11 @@ func _draw_hud() -> void:
 	if mark != "":
 		_text(font, Vector2(size.x * 0.5 + 46, 30), mark, 13, Color(0.75, 0.75, 0.85))
 	if world.detected:
-		_text_centered(font, Vector2(size.x * 0.5, 60), "TE DETECTÓ", 16, Color(1, 0.3, 0.3))
+		if world.losing_aggro:
+			_bar(Rect2(size.x * 0.5 - 100, 46, 200, 10), world.threat / B.DETECTION_THRESHOLD, Color(1, 0.3, 0.3), "")
+			_text_centered(font, Vector2(size.x * 0.5, 72), "Escapando…", 12, Color(1, 0.6, 0.5))
+		else:
+			_text_centered(font, Vector2(size.x * 0.5, 60), "TE DETECTÓ", 16, Color(1, 0.3, 0.3))
 	else:
 		_bar(Rect2(size.x * 0.5 - 100, 46, 200, 10), world.threat / B.DETECTION_THRESHOLD, Color(1, 0.6, 0.2), "")
 		_text_centered(font, Vector2(size.x * 0.5, 72), "Amenaza", 12, Color(0.9, 0.8, 0.7))

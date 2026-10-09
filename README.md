@@ -28,9 +28,9 @@ La mordida y el escupitajo son automáticos: salen solos cuando el héroe o un c
 - **La horda:** los círculos marrones, verdes y rojos. Caminan hacia el héroe y cada 2 minutos son más duros, más rápidos y pegan más.
 - **Al morir, cada creep deja:**
   - un cadáver: pasá por encima para absorberlo y ganar biomasa y vida;
-  - una gema celeste: es la única forma en que el héroe sube de nivel. Las que caen cerca suyo vuelan hacia él. No te alimenta, pero si la pisás antes que él, se la destruís.
+  - una gema celeste: es la única forma en que el héroe sube de nivel. Las que caen cerca suyo vuelan hacia él. Si la pisás antes que él, te la comés: te da un poco de biomasa (tu imán no las atrae).
 - **Evolución:** con suficiente biomasa apretá E. Hay 4 etapas: Slime, Esqueleto, Cultista y Demonio.
-- **Amenaza:** el héroe te ignora (sos un creep más) hasta que la barra se llena. Suben la amenaza morderlo, pisarle gemas o robarle corazones cerca de él, evolucionar y, de a poco, simplemente ser grande. Es una sola para todos: si uno te detecta, te detectan todos.
+- **Amenaza:** el héroe te ignora (sos un creep más) hasta que la barra se llena. Suben la amenaza morderlo, pisarle gemas o robarle corazones cerca de él, evolucionar y, de a poco, simplemente ser grande. Es una sola para todos: si uno te detecta, te detectan todos. Detectado, si te alejás a más de 600 del héroe más cercano la amenaza baja de a poco; a la mitad te pierde y deja de cazarte. El camuflaje sigue siendo la salida instantánea.
 - **Hambre:** si vas atrás del héroe en poder, cada bocado rinde más (se ve en el HUD).
 - **Élites dorados:** aparecen cada 45 segundos. Cuando el héroe mata uno, deja un corazón rojo: si lo comés, ganás una mutación al instante. Él también lo va a buscar: si lo agarra primero, sube un nivel y se cura.
 - **El héroe:** ataca con flechas, esquiva tus escupitajos (no siempre) y se cura únicamente al subir de nivel. Cada héroe sube sus poderes siguiendo una tabla fija por nivel (termina con 5 distintos): orbes de fuego que giran a su alrededor, rayos (marcan un círculo antes de caer), aura sagrada, nova (avisa con un anillo), flechas perforantes, lluvia de flechas o botas. Los poderes de área también te lastiman; la embestida te hace invulnerable. La horda lo desgasta, pero el golpe final lo tenés que dar vos.
