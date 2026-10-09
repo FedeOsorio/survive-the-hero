@@ -28,7 +28,7 @@ const SPIT_RANGE := 380.0
 const HEAL_PER_BIOMASS := 2.0
 # Mutaciones: la biomasa también llena una barra de nivel; al subir elegís 1 de 3.
 static func mutation_xp_for_level(level: int) -> float:
-	return 10.0 + level * 10.0
+	return 12.0 + level * 14.0
 
 const MUT_DAMAGE := 0.25
 const MUT_SPEED := 0.10
@@ -66,12 +66,13 @@ const CIVILIAN_DODGE_SPEED := 0.6
 const CIVILIAN_HP := 8.0
 const CIVILIAN_SPEED := 85.0
 const CIVILIAN_FLEE_RADIUS := 220.0
-const CIVILIAN_BIOMASS := 4.0
+const CIVILIAN_BIOMASS := 3.0
 # Comer civiles hace ruido: suma amenaza y el héroe va a investigar el lugar.
 const THREAT_PER_CIVILIAN := 5.0
 # El grito empieza apenas un civil sale corriendo de vos, no cuando muere.
-const ALARM_TIME := 10.0 # segundos que el héroe busca en el lugar del grito
-const ALARM_PULL := 3.0 # qué tanto le importa ir a investigar (las gemas pesan 2.2)
+const ALARM_TIME := 5.0 # segundos que el héroe busca en el lugar del grito
+const ALARM_PULL := 2.0 # qué tanto le importa ir a investigar (las gemas pesan 2.2)
+const ALARM_COOLDOWN := 8.0 # un grito nuevo dentro de esta ventana no lo mueve otra vez
 const CIVILIAN_SCREAM_COOLDOWN := 3.0 # cada civil grita como mucho cada tantos segundos
 # El héroe también mata civiles para dejarte sin comida: los que mata él no dejan cadáver.
 const HERO_CIVILIAN_TARGET_BONUS := 120.0 # durante la alarma, prefiere civiles a la horda
@@ -151,6 +152,15 @@ const HERO_AIM_ERROR_DEG := 6.0
 const HERO_RETREAT_HP := 0.3
 const HERO_MISTAKE_CHANCE := 0.06
 const HERO_DETECTED_TARGET_BONUS := 150.0 # chico: si tiene creeps encima, se defiende primero
+# Cacería: con el jugador detectado, el héroe va por vos.
+const HUNT_PULL := 3.0
+const HUNT_PULL_CROWDED := 1.5 # con mucha horda encima
+const HUNT_CROWDED_DANGER := 5.0
+const HUNT_IDEAL_DIST := 220.0
+const HUNT_GEM_RADIUS := 150.0 # mientras caza, solo junta las gemas del camino
+const HUNT_GEM_PULL := 1.0
+const HUNT_ESCAPE_RADIUS := 60.0 # con tantos creeps así de cerca, primero zafa
+const HUNT_ESCAPE_COUNT := 3
 const HERO_ENRAGE_DAMAGE_MULT := 5.0
 const HERO_ENRAGE_SPEED_MULT := 1.3
 

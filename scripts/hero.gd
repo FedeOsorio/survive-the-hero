@@ -199,7 +199,8 @@ func _target_valid() -> bool:
 # --- Decisiones --------------------------------------------------------------
 
 func _think() -> void:
-	target = _pick_target()
+	var hunting: bool = world.detected and world.player.stealth_t <= 0.0
+	target = _pick_hunt_target() if hunting else _pick_target()
 	var low_hp := hp / max_hp < B.HERO_RETREAT_HP
 	var mistake := _rng.randf() < B.HERO_MISTAKE_CHANCE
 
@@ -219,11 +220,13 @@ func _think() -> void:
 	elif low_hp:
 		steer *= 2.5
 
-	# 2. juntar experiencia: es su prioridad mientras no esté en peligro
+	# 2. juntar experiencia: es su prioridad mientras no esté en peligro.
+	#    Cazándote, solo junta las gemas que le quedan en el camino.
 	if not low_hp:
-		var gem = _nearest(world.gems, 550.0)
+		var gem = _nearest(world.gems, B.HUNT_GEM_RADIUS if hunting else 550.0)
 		if gem != null:
-			steer += (gem.position - position).normalized() * (2.2 if danger < 3.0 else 0.8)
+			var pull := B.HUNT_GEM_PULL if hunting else (2.2 if danger < 3.0 else 0.8)
+			steer += (gem.position - position).normalized() * pull
 
 	# 2a. un corazón de élite vale más que cualquier gema
 	if not low_hp:
@@ -250,17 +253,19 @@ func _think() -> void:
 		if to_alarm.length() > 40.0:
 			steer += to_alarm.normalized() * B.ALARM_PULL
 
-	# 3. con el jugador detectado lo persigue a distancia de tiro; a la horda
-	#    no la busca (ya viene sola), solo se aleja si está muy encima
-	if _target_valid() and not low_hp:
+	# 3. cacería: con el jugador detectado lo persigue a distancia de tiro.
+	#    A la horda no la busca (ya viene sola), solo se aleja si está muy encima.
+	if hunting and not low_hp:
+		var to_p: Vector2 = world.player.position - position
+		var d := to_p.length()
+		if d > B.HUNT_IDEAL_DIST + 60.0:
+			steer += to_p / d * (B.HUNT_PULL_CROWDED if danger > B.HUNT_CROWDED_DANGER else B.HUNT_PULL)
+		elif d < B.HUNT_IDEAL_DIST - 60.0 and d > 0.01:
+			steer -= to_p / d * 0.8
+	elif _target_valid() and not low_hp:
 		var to_t: Vector2 = target.position - position
 		var d := to_t.length()
-		var hunting: bool = target == world.player and world.detected
-		var ideal := 220.0 if hunting else B.HERO_RANGE * 0.5
-		if hunting and d > ideal + 60.0:
-			# con creeps encima prioriza zafar antes que perseguirte
-			steer += to_t / d * 1.8 / (1.0 + danger)
-		elif d < ideal - 60.0:
+		if d < B.HERO_RANGE * 0.5 - 60.0 and d > 0.01:
 			steer -= to_t / d * 0.8
 
 	# 4. no quedarse contra la pared
@@ -295,6 +300,34 @@ func _pick_target():
 			best_score = score
 			best = c
 	return best
+
+
+## Cazando: a vos si estás a tiro; si no, al creep más cerca de la línea hacia vos.
+## Con 3 o más creeps encima, primero zafa tirándole al más cercano.
+func _pick_hunt_target():
+	var close: Array = []
+	for m in world.minions_near(position):
+		if position.distance_to(m.position) < B.HUNT_ESCAPE_RADIUS:
+			close.append(m)
+	if close.size() >= B.HUNT_ESCAPE_COUNT:
+		return _nearest(close, INF)
+	var p = world.player
+	var to_p: Vector2 = p.position - position
+	if to_p.length() <= B.HERO_RANGE:
+		return p
+	var dir := to_p.normalized()
+	var best = null
+	var best_off := INF
+	for m in world.minions:
+		var rel: Vector2 = m.position - position
+		var along := rel.dot(dir)
+		if along <= 0.0 or rel.length() > B.HERO_RANGE:
+			continue
+		var off := absf(rel.cross(dir))
+		if off < best_off:
+			best_off = off
+			best = m
+	return best if best != null else p
 
 
 func _nearest(list: Array, max_dist: float):

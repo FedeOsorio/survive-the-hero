@@ -50,6 +50,7 @@ var _civilian_t := 0.0
 var _elite_t := 0.0
 var alarm_pos := Vector2.ZERO # último grito de un civil; el héroe va a investigar
 var alarm_t := 0.0
+var _alarm_lock := 0.0 # hasta cuándo un grito nuevo no lo mueve
 
 var hud
 var _entities: Node2D
@@ -185,6 +186,9 @@ func spawn_civilian_group() -> void:
 
 ## Un civil que huye grita: el héroe va hacia ahí a matar civiles.
 func raise_alarm(pos: Vector2) -> void:
+	if elapsed < _alarm_lock:
+		return
+	_alarm_lock = elapsed + B.ALARM_COOLDOWN
 	alarm_pos = pos
 	alarm_t = B.ALARM_TIME
 
