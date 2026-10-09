@@ -30,6 +30,8 @@ Un survivor al revés: sos un creep de la horda, el héroe lo controla la IA. Te
 - **Evolución:** con suficiente biomasa apretá E. Hay 4 etapas: Slime, Esqueleto, Cultista y Demonio.
 - **Amenaza:** el héroe te ignora (sos un creep más) hasta que la barra se llena. Suben la amenaza morderlo, evolucionar y robarle gemas cerca de él. En el minuto 10 te detecta sí o sí.
 - **Minuto 15:** el héroe se enfurece.
+- **El héroe:** ataca solo con flechas, esquiva tus escupitajos (no siempre) y se cura únicamente al subir de nivel. La horda lo desgasta, pero el golpe final lo tenés que dar vos.
+- **Arqueros:** los creeps violetas atacan al héroe a distancia.
 
 Todos los números de balance están en `scripts/balance.gd`. El diseño está en `docs/diseno-mvp.md`.
 
@@ -40,3 +42,5 @@ Corre una partida de 15 minutos sin ventana, con el creep invulnerable, e imprim
 ```
 godot --headless --fixed-fps 60 --quit-after 54600 res://scenes/main.tscn -- --sim
 ```
+
+Con `-- --bot`, en vez de `-- --sim`, el creep lo maneja un bot simple que come, evoluciona y ataca. Sirve para medir en qué minuto llega cada evolución.

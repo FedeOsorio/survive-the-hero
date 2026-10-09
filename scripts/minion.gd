@@ -14,6 +14,10 @@ var radius := 10.0
 var xp := 1.0
 var biomass := 1.0
 var color := Color.WHITE
+var shot_range := 0.0 # > 0: ataca a distancia
+var shot_cooldown := 0.0
+var shot_damage := 0.0
+var _shot_t := 0.0
 var _flash := 0.0
 
 
@@ -28,6 +32,10 @@ func setup(t: String, hp_mult: float) -> void:
 	xp = d.xp
 	biomass = d.biomass
 	color = d.color
+	shot_range = d.get("range", 0.0)
+	shot_cooldown = d.get("shot_cooldown", 0.0)
+	shot_damage = d.get("shot_damage", 0.0)
+	_shot_t = randf() * shot_cooldown
 	z_index = 1
 
 
@@ -39,10 +47,17 @@ func _process(delta: float) -> void:
 	var dist := to_hero.length()
 	var touch: float = radius + hero.radius
 	var move := Vector2.ZERO
-	if dist > touch:
+	if shot_range > 0.0:
+		if dist > shot_range * 0.9:
+			move = to_hero / dist
+		_shot_t -= delta
+		if _shot_t <= 0.0 and dist <= shot_range:
+			_shot_t = shot_cooldown
+			world.spawn_spit(position, to_hero / dist, shot_damage, false)
+	elif dist > touch:
 		move = to_hero / dist
 	# margen extra para que la separación de la horda no los deje justo afuera
-	if dist <= touch + 6.0:
+	if dps > 0.0 and dist <= touch + 6.0:
 		hero.take_damage(dps * delta, false)
 
 	# separación barata para que la horda no se apile en un solo punto

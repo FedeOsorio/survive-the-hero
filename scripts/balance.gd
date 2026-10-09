@@ -10,9 +10,9 @@ const ARENA_SIZE := Vector2(3000, 3000)
 # Cada etapa reemplaza los stats de la anterior. "cost" es la biomasa necesaria
 # para pasar a la siguiente etapa (-1 = etapa final).
 const CREEP_STAGES := [
-	{"name": "Slime", "hp": 30.0, "speed": 170.0, "bite": 4.0, "radius": 10.0, "cost": 80.0, "color": Color(0.45, 0.85, 0.35)},
-	{"name": "Esqueleto", "hp": 75.0, "speed": 180.0, "bite": 10.0, "radius": 13.0, "cost": 350.0, "color": Color(0.9, 0.88, 0.75)},
-	{"name": "Cultista", "hp": 190.0, "speed": 190.0, "bite": 25.0, "radius": 17.0, "cost": 900.0, "color": Color(0.6, 0.35, 0.8)},
+	{"name": "Slime", "hp": 30.0, "speed": 170.0, "bite": 4.0, "radius": 10.0, "cost": 60.0, "color": Color(0.45, 0.85, 0.35)},
+	{"name": "Esqueleto", "hp": 75.0, "speed": 180.0, "bite": 10.0, "radius": 13.0, "cost": 220.0, "color": Color(0.9, 0.88, 0.75)},
+	{"name": "Cultista", "hp": 190.0, "speed": 190.0, "bite": 25.0, "radius": 17.0, "cost": 550.0, "color": Color(0.6, 0.35, 0.8)},
 	{"name": "Demonio", "hp": 470.0, "speed": 200.0, "bite": 62.0, "radius": 23.0, "cost": -1.0, "color": Color(0.9, 0.2, 0.15)},
 ]
 const BITE_COOLDOWN := 0.6
@@ -38,7 +38,7 @@ const THREAT_PER_STAGE := 20.0
 # --- Héroe -------------------------------------------------------------------
 const HERO_HP := 250.0
 const HERO_HP_PER_LEVEL := 12.0
-const HERO_REGEN := 1.5
+const HERO_LEVEL_HEAL := 0.25 # al subir de nivel recupera este % de su vida máxima (no tiene regeneración)
 const HERO_SPEED := 150.0
 const HERO_RADIUS := 14.0
 const HERO_ARROW_DAMAGE := 16.0
@@ -53,12 +53,20 @@ const HERO_MIN_COOLDOWN := 0.18
 const HERO_LEVELS_PER_EXTRA_ARROW := 6
 const HERO_ARROW_PIERCE := 1 # enemigos extra que atraviesa cada flecha
 const HERO_LEVELS_PER_PIERCE := 6
-# Aura sagrada: daño pasivo alrededor del héroe. También le pega al jugador.
-const HERO_AURA_LEVEL := 4
-const HERO_AURA_RADIUS := 70.0
-const HERO_AURA_RADIUS_PER_LEVEL := 1.5
-const HERO_AURA_DPS := 4.0
-const HERO_AURA_DPS_PER_LEVEL := 0.6
+# Tajo de espada: ataque cuerpo a cuerpo en arco, con aviso previo para poder esquivarlo.
+# Apagado por ahora: los poderes extra del héroe se definen cuando el creep
+# tenga habilidades para contrarrestarlos.
+const HERO_SLASH_ENABLED := false
+const HERO_SLASH_LEVEL := 3
+const HERO_SLASH_COOLDOWN := 1.4
+const HERO_SLASH_WINDUP := 0.25
+const HERO_SLASH_RADIUS := 75.0
+const HERO_SLASH_RADIUS_PER_LEVEL := 1.0
+const HERO_SLASH_ARC_DEG := 130.0
+const HERO_SLASH_DAMAGE_MULT := 1.5 # daño del tajo = daño de flecha * esto
+# Esquivar proyectiles del jugador
+const HERO_DODGE_CHANCE := 0.6
+const HERO_DODGE_LOOKAHEAD := 260.0
 const HERO_REACTION_MIN := 0.15
 const HERO_REACTION_MAX := 0.3
 const HERO_AIM_ERROR_DEG := 6.0
@@ -77,6 +85,8 @@ static func xp_for_level(level: int) -> float:
 const MINION_TYPES := {
 	"rata": {"hp": 6.0, "speed": 120.0, "dps": 3.0, "radius": 7.0, "xp": 1.0, "biomass": 0.4, "color": Color(0.6, 0.5, 0.4)},
 	"zombi": {"hp": 16.0, "speed": 80.0, "dps": 5.0, "radius": 10.0, "xp": 2.0, "biomass": 0.8, "color": Color(0.4, 0.6, 0.45)},
+	"arquero": {"hp": 10.0, "speed": 70.0, "dps": 0.0, "radius": 9.0, "xp": 2.0, "biomass": 0.8, "color": Color(0.55, 0.4, 0.75),
+		"range": 260.0, "shot_cooldown": 2.2, "shot_damage": 4.0},
 	"bruto": {"hp": 60.0, "speed": 60.0, "dps": 10.0, "radius": 16.0, "xp": 5.0, "biomass": 2.5, "color": Color(0.6, 0.3, 0.3)},
 }
 const MAX_MINIONS := 300
@@ -98,6 +108,8 @@ static func pick_minion_type(minute: float, rng: RandomNumberGenerator) -> Strin
 	var r := rng.randf()
 	if minute > 3.0 and r < minf(0.05 + minute * 0.02, 0.25):
 		return "bruto"
+	if minute > 1.0 and r < 0.4 and r >= 0.25:
+		return "arquero"
 	if r < 0.55:
 		return "rata"
 	return "zombi"

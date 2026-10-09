@@ -1,6 +1,7 @@
 extends Node2D
 ## El héroe controlado por la IA. Versión del hito 1: farmea la horda,
-## kitea, junta experiencia, sube de nivel y se retira con poca vida.
+## kitea, junta experiencia, sube de nivel, esquiva proyectiles y se retira
+## con poca vida. No se regenera: solo se cura al subir de nivel.
 ## Al jugador lo trata como un creep más hasta que lo detecta.
 
 const B := preload("res://scripts/balance.gd")
@@ -25,6 +26,10 @@ var _think_t := 0.0
 var _flash := 0.0
 var _hurt := 0.0
 var _level_fx := 0.0
+var _slash_cd := 0.0
+var _slash_windup := 0.0
+var _slash_dir := Vector2.RIGHT
+var _slash_fx := 0.0
 var _rng := RandomNumberGenerator.new()
 
 
@@ -36,8 +41,6 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if not world.running:
 		return
-	hp = minf(max_hp, hp + B.HERO_REGEN * delta)
-
 	_think_t -= delta
 	if _think_t <= 0.0:
 		_think_t = _rng.randf_range(B.HERO_REACTION_MIN, B.HERO_REACTION_MAX)
@@ -56,8 +59,8 @@ func _process(delta: float) -> void:
 		_fire_t = cooldown
 		_fire()
 
-	if level >= B.HERO_AURA_LEVEL:
-		_aura(delta)
+	if B.HERO_SLASH_ENABLED and level >= B.HERO_SLASH_LEVEL:
+		_update_slash(delta)
 
 	_flash = maxf(_flash - delta, 0.0)
 	_hurt = maxf(_hurt - delta, 0.0)
@@ -69,19 +72,48 @@ func pickup_radius() -> float:
 	return B.HERO_PICKUP_RADIUS + level * B.HERO_PICKUP_PER_LEVEL
 
 
-func aura_radius() -> float:
-	return B.HERO_AURA_RADIUS + level * B.HERO_AURA_RADIUS_PER_LEVEL
+func slash_radius() -> float:
+	return B.HERO_SLASH_RADIUS + level * B.HERO_SLASH_RADIUS_PER_LEVEL
 
 
-func _aura(delta: float) -> void:
-	var r := aura_radius()
-	var dmg := (B.HERO_AURA_DPS + level * B.HERO_AURA_DPS_PER_LEVEL) * delta
-	for m in world.minions.duplicate():
-		if position.distance_to(m.position) < r + m.radius:
-			m.take_damage(dmg)
+## Tajo: cuando hay enemigos encima, avisa (windup) y después golpea en arco.
+func _update_slash(delta: float) -> void:
+	_slash_cd = maxf(_slash_cd - delta, 0.0)
+	_slash_fx = maxf(_slash_fx - delta, 0.0)
+	var r := slash_radius()
+	if _slash_windup > 0.0:
+		_slash_windup -= delta
+		if _slash_windup <= 0.0:
+			_do_slash(r)
+		return
+	if _slash_cd > 0.0:
+		return
+	var close = _nearest_enemy(r)
+	if close != null:
+		_slash_dir = (close.position - position).normalized()
+		_slash_windup = B.HERO_SLASH_WINDUP
+		_slash_cd = B.HERO_SLASH_COOLDOWN
+
+
+func _do_slash(r: float) -> void:
+	_slash_fx = 0.15
+	var half := deg_to_rad(B.HERO_SLASH_ARC_DEG) * 0.5
+	var dmg := damage * B.HERO_SLASH_DAMAGE_MULT
+	var victims: Array = world.minions.duplicate()
+	victims.append(world.player)
+	for v in victims:
+		var to_v: Vector2 = v.position - position
+		if to_v.length() < r + v.radius and absf(_slash_dir.angle_to(to_v)) <= half:
+			v.take_damage(dmg)
+
+
+func _nearest_enemy(max_dist: float):
+	var close = _nearest(world.minions, max_dist)
 	var p = world.player
-	if position.distance_to(p.position) < r + p.radius:
-		p.take_damage(dmg)
+	var pd := position.distance_to(p.position)
+	if pd < max_dist and (close == null or pd < position.distance_to(close.position)):
+		return p
+	return close
 
 
 func _target_valid() -> bool:
@@ -131,7 +163,20 @@ func _think() -> void:
 		elif d < ideal - 60.0:
 			steer -= to_t / d * 0.8
 
-	# 4. no quedarse contra la pared
+	# 4. esquivar proyectiles que vienen hacia él (no siempre lo logra)
+	for s in world.spits:
+		if s.dodge_roll > B.HERO_DODGE_CHANCE:
+			continue
+		var rel: Vector2 = position - s.position
+		var along: float = rel.dot(s.direction)
+		if along <= 0.0 or along > B.HERO_DODGE_LOOKAHEAD:
+			continue
+		var lateral: Vector2 = rel - s.direction * along
+		if lateral.length() < radius + 14.0:
+			var side: Vector2 = lateral.normalized() if lateral.length() > 0.5 else s.direction.orthogonal()
+			steer += side * 4.0
+
+	# 5. no quedarse contra la pared
 	var margin := 200.0
 	var center := B.ARENA_SIZE * 0.5
 	if position.x < margin or position.y < margin or position.x > B.ARENA_SIZE.x - margin or position.y > B.ARENA_SIZE.y - margin:
@@ -194,7 +239,7 @@ func _gain_xp(amount: float) -> void:
 func _level_up() -> void:
 	level += 1
 	max_hp += B.HERO_HP_PER_LEVEL
-	hp += B.HERO_HP_PER_LEVEL
+	hp = minf(max_hp, hp + B.HERO_HP_PER_LEVEL + max_hp * B.HERO_LEVEL_HEAL)
 	damage *= B.HERO_DAMAGE_PER_LEVEL
 	cooldown = maxf(cooldown * B.HERO_COOLDOWN_PER_LEVEL, B.HERO_MIN_COOLDOWN)
 	arrows = 1 + level / B.HERO_LEVELS_PER_EXTRA_ARROW
@@ -231,9 +276,15 @@ func _draw() -> void:
 	if world.enraged:
 		body = body.lerp(Color(1, 0.3, 0.2), 0.5)
 	draw_circle(Vector2.ZERO, pickup_radius(), Color(0.3, 0.55, 1.0, 0.04))
-	if level >= B.HERO_AURA_LEVEL:
-		draw_circle(Vector2.ZERO, aura_radius(), Color(1.0, 0.95, 0.5, 0.08))
-		draw_arc(Vector2.ZERO, aura_radius(), 0.0, TAU, 32, Color(1.0, 0.95, 0.5, 0.35), 1.5)
+	var half := deg_to_rad(B.HERO_SLASH_ARC_DEG) * 0.5
+	var a := _slash_dir.angle()
+	if _slash_windup > 0.0:
+		var pts := PackedVector2Array([Vector2.ZERO])
+		for i in 13:
+			pts.append(Vector2.from_angle(a - half + half * 2.0 * i / 12.0) * slash_radius())
+		draw_colored_polygon(pts, Color(1.0, 0.3, 0.2, 0.18))
+	if _slash_fx > 0.0:
+		draw_arc(Vector2.ZERO, slash_radius() * 0.85, a - half, a + half, 16, Color(1, 1, 0.85, 0.9), 6.0)
 	draw_rect(Rect2(Vector2(-radius, -radius), Vector2(radius, radius) * 2.0), Color(0.05, 0.05, 0.1))
 	draw_rect(Rect2(Vector2(-radius + 2, -radius + 2), Vector2(radius - 2, radius - 2) * 2.0), body)
 	draw_line(Vector2.ZERO, _aim * (radius + 10.0), Color(1, 0.95, 0.7), 3.0)

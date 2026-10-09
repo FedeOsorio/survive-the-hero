@@ -32,6 +32,7 @@ var hero
 var minions: Array = []
 var corpses: Array = []
 var gems: Array = []
+var spits: Array = []
 
 var hud
 var _entities: Node2D
@@ -166,13 +167,20 @@ func spawn_projectile(from: Vector2, dir: Vector2, damage: float, pierce: int) -
 	_entities.add_child(p)
 
 
-func spawn_spit(from: Vector2, dir: Vector2, damage: float) -> void:
+func spawn_spit(from: Vector2, dir: Vector2, damage: float, from_player: bool) -> void:
 	var s = Spit.new()
 	s.world = self
 	s.position = from
 	s.direction = dir
 	s.damage = damage
+	s.from_player = from_player
+	spits.append(s)
 	_entities.add_child(s)
+
+
+func remove_spit(s) -> void:
+	spits.erase(s)
+	s.queue_free()
 
 
 # --- Amenaza y fin de partida ------------------------------------------------

@@ -124,7 +124,7 @@ func _do_spit() -> void:
 	var to_hero: Vector2 = world.hero.position - position
 	if to_hero.length() <= B.SPIT_RANGE:
 		dir = to_hero.normalized()
-	world.spawn_spit(position + dir * radius, dir, bite * B.SPIT_DAMAGE_MULT)
+	world.spawn_spit(position + dir * radius, dir, bite * B.SPIT_DAMAGE_MULT, true)
 
 
 ## Bot muy simple para el modo --bot: come, evoluciona y ataca cuando es fuerte.
