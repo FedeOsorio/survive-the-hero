@@ -5,6 +5,7 @@ extends Node2D
 
 const B := preload("res://scripts/balance.gd")
 const Mutations := preload("res://scripts/mutations.gd")
+const CreepBot := preload("res://scripts/creep_bot.gd")
 
 var world
 var invulnerable := false
@@ -37,6 +38,7 @@ var _dash_dir := Vector2.ZERO
 var _dash_hit := false
 var _spit_cd := 0.0
 var _flash := 0.0
+var _wave_fx := 0.0
 var stealth_cd := 0.0
 var stealth_t := 0.0 # mientras dura, el héroe no te puede apuntar
 var _rng := RandomNumberGenerator.new()
@@ -84,6 +86,10 @@ func _recalc_stats() -> void:
 	bite = d.bite * (1.0 + rank("colmillos") * B.MUT_DAMAGE)
 
 
+func bite_range() -> float:
+	return B.BITE_RANGE + (B.JAW_BITE_RANGE if rank("mandibula") > 0 else 0.0)
+
+
 func spit_cooldown() -> float:
 	return B.SPIT_COOLDOWN * pow(1.0 - B.MUT_SPIT_RATE, rank("glandula"))
 
@@ -121,7 +127,7 @@ func _process(delta: float) -> void:
 	var want_dash := false
 	var want_evolve := false
 	if world.bot_mode:
-		input = _bot()
+		input = CreepBot.move(self)
 		want_evolve = can_evolve()
 	elif not world.sim_mode:
 		input = Input.get_vector("move_left", "move_right", "move_up", "move_down")
@@ -139,7 +145,9 @@ func _process(delta: float) -> void:
 		position += _dash_dir * B.DASH_SPEED * delta
 		if not _dash_hit and _in_reach(world.hero, 0.0):
 			_dash_hit = true
-			world.hero.take_damage(bite * B.DASH_HIT_MULT, true)
+			world.hero.take_damage(bite * B.DASH_HIT_MULT, true, true)
+		if _dash_t <= 0.0 and rank("coraza") > 0:
+			_shell_wave()
 	else:
 		position += input * speed * delta
 	position = position.clamp(Vector2(radius, radius), B.ARENA_SIZE - Vector2(radius, radius))
@@ -149,6 +157,7 @@ func _process(delta: float) -> void:
 	_spit_cd = maxf(_spit_cd - delta, 0.0)
 	_bite_fx = maxf(_bite_fx - delta, 0.0)
 	_flash = maxf(_flash - delta, 0.0)
+	_wave_fx = maxf(_wave_fx - delta, 0.0)
 	stealth_cd = maxf(stealth_cd - delta, 0.0)
 	stealth_t = maxf(stealth_t - delta, 0.0)
 	modulate.a = 0.35 if stealth_t > 0.0 else 1.0
@@ -178,11 +187,11 @@ func _auto_attack() -> void:
 	var hero = world.hero
 	if _bite_cd <= 0.0:
 		var victim = null
-		if _in_reach(hero, B.BITE_RANGE):
+		if _in_reach(hero, bite_range()):
 			victim = hero
 		else:
 			for c in world.civilians:
-				if _in_reach(c, B.BITE_RANGE):
+				if _in_reach(c, bite_range()):
 					victim = c
 					break
 		if victim != null:
@@ -190,10 +199,14 @@ func _auto_attack() -> void:
 			_bite_fx = 0.15
 			_bite_dir = (victim.position - position).normalized()
 			if victim == hero:
-				hero.take_damage(bite, true)
+				hero.take_damage(bite, true, true)
+				if rank("mandibula") > 0:
+					hero.status.bleed(bite * B.BLEED_MULT)
 			else:
 				victim.take_damage(bite)
-			if rank("vampiro") > 0:
+			if rank("mandibula") > 0:
+				hp = minf(max_hp, hp + bite * B.JAW_HEAL)
+			elif rank("vampiro") > 0:
 				hp = minf(max_hp, hp + bite * B.MUT_VAMPIRE * rank("vampiro"))
 
 	if _spit_cd <= 0.0:
@@ -214,6 +227,21 @@ func _auto_attack() -> void:
 			for i in shots:
 				var offset := (i - (shots - 1) * 0.5) * deg_to_rad(10.0)
 				world.spawn_spit(position + dir * radius, dir.rotated(offset), bite * B.SPIT_DAMAGE_MULT, true)
+
+
+## Coraza viva: onda al terminar la embestida. Daña, empuja y aturde al héroe.
+func _shell_wave() -> void:
+	_wave_fx = 0.25
+	var hero = world.hero
+	var to_h: Vector2 = hero.position - position
+	if to_h.length() < B.SHELL_WAVE_RADIUS + hero.radius and not hero.rolling():
+		hero.take_damage(bite * B.SHELL_WAVE_DAMAGE, true, true)
+		hero.position = (hero.position + to_h.normalized() * B.SHELL_WAVE_PUSH).clamp(Vector2(20, 20), B.ARENA_SIZE - Vector2(20, 20))
+		hero.status.stun(B.HERO_STUN_TIME)
+	for m in world.minions_near(position):
+		var to_m: Vector2 = m.position - position
+		if to_m.length() < B.SHELL_WAVE_RADIUS and to_m.length() > 0.01:
+			m.position += to_m.normalized() * B.SHELL_WAVE_MINION_PUSH
 
 
 func _evolve() -> void:
@@ -264,6 +292,13 @@ func _eat(value: float) -> void:
 		_offer_mutation()
 
 
+## Mutación gratis (cofre): se suma a la cola de elecciones.
+func grant_mutation() -> void:
+	_queued_levels += 1
+	if pending_choices.is_empty():
+		_offer_mutation()
+
+
 func _offer_mutation() -> void:
 	_queued_levels -= 1
 	pending_choices = Mutations.roll(ranks, stage, _rng)
@@ -301,28 +336,6 @@ func take_damage(amount: float) -> void:
 		world.end_game(false, "El héroe te mató siendo %s nivel %d." % [stage_name(), level])
 
 
-## Bot muy simple para el modo --bot: caza civiles y come; ataca al héroe de Demonio.
-func _bot() -> Vector2:
-	var hero = world.hero
-	var to_hero: Vector2 = hero.position - position
-	var d := to_hero.length()
-	if stage >= 3 and hp / max_hp > 0.4:
-		return to_hero / d
-	var best = null
-	var best_d := INF
-	for c in world.corpses + world.civilians:
-		var cd := position.distance_to(c.position)
-		if c.position.distance_to(hero.position) > 350.0 and cd < best_d:
-			best_d = cd
-			best = c
-	var dir := Vector2.ZERO
-	if best != null:
-		dir = (best.position - position).normalized()
-	if d < 380.0:
-		dir -= to_hero / d * 2.0
-	return dir.normalized() if dir.length() > 0.1 else Vector2.ZERO
-
-
 func _draw() -> void:
 	var c := Color.WHITE if _flash > 0.0 else color
 	if lead_radius() > 0.0:
@@ -345,10 +358,12 @@ func _draw() -> void:
 	draw_circle(eye_off + perp, 2.0, Color.BLACK)
 	draw_circle(eye_off - perp, 2.0, Color.BLACK)
 	if _bite_fx > 0.0:
-		var reach := radius + B.BITE_RANGE
+		var reach := radius + bite_range()
 		draw_arc(Vector2.ZERO, reach, _bite_dir.angle() - 0.9, _bite_dir.angle() + 0.9, 12, Color(1, 1, 1, 0.8), 3.0)
 	# cooldown de la embestida
 	if _dash_cd > 0.0:
 		draw_arc(Vector2.ZERO, radius + 9.0, -PI / 2, -PI / 2 + TAU * (1.0 - _dash_cd / B.DASH_COOLDOWN), 24, Color(1, 1, 1, 0.35), 2.0)
+	if _wave_fx > 0.0:
+		draw_arc(Vector2.ZERO, B.SHELL_WAVE_RADIUS * (1.0 - _wave_fx * 2.0), 0.0, TAU, 32, Color(0.9, 0.85, 0.6, 0.9), 5.0)
 	# anillo indicador para encontrarse en la horda
 	draw_arc(Vector2.ZERO, radius + 6.0, 0.0, TAU, 24, Color(0.4, 1.0, 0.5, 0.5), 1.5)

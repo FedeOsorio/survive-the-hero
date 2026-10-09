@@ -24,19 +24,26 @@ func _process(delta: float) -> void:
 	position += direction * step
 	_travelled += step
 	if _travelled > B.SPIT_RANGE:
-		world.remove_spit(self)
+		_land()
 		return
 	var hero = world.hero
 	if not hero.rolling() and position.distance_to(hero.position) < hero.radius + 5.0:
 		hero.take_damage(damage, from_player)
-		world.remove_spit(self)
+		_land()
 		return
 	if from_player:
 		for c in world.civilians:
 			if position.distance_to(c.position) < c.radius + 5.0:
 				c.take_damage(damage)
-				world.remove_spit(self)
+				_land()
 				return
+
+
+## Termina el escupitajo; con Lluvia ácida deja un charco donde cae.
+func _land() -> void:
+	if from_player and world.player.rank("lluvia") > 0:
+		world.spawn_puddle(position, world.player.bite * B.ACID_DPS_MULT)
+	world.remove_spit(self)
 
 
 func _draw() -> void:

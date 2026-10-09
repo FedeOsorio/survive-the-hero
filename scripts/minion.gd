@@ -21,6 +21,9 @@ var _shot_t := 0.0
 var _flash := 0.0
 var elite := false
 var led := false # cerca del jugador: más rápido y más fuerte
+var raised := false # levantado por Señor de la carroña: dura poco y no deja nada
+var raise_t := 0.0
+var boost_t := 0.0 # estampida: corre más rápido un rato
 
 
 func setup(t: String, minute: float, is_elite := false) -> void:
@@ -50,8 +53,14 @@ func _process(delta: float) -> void:
 	var hero = world.hero
 	var player = world.player
 	led = position.distance_to(player.position) < player.lead_radius()
-	var spd := speed * (B.LEAD_SPEED_MULT if led else 1.0)
-	var dmg_mult: float = player.lead_damage_mult() if led else 1.0
+	if raised:
+		raise_t -= delta
+		if raise_t <= 0.0:
+			world.on_minion_killed(self)
+			return
+	boost_t = maxf(boost_t - delta, 0.0)
+	var spd := speed * (B.LEAD_SPEED_MULT if led else 1.0) * (B.STAMPEDE_SPEED_MULT if boost_t > 0.0 else 1.0)
+	var dmg_mult: float = (player.lead_damage_mult() if led else 1.0) * world.events.damage_mult()
 	var to_hero: Vector2 = hero.position - position
 	var dist := to_hero.length()
 	var touch: float = radius + hero.radius
@@ -83,6 +92,14 @@ func _process(delta: float) -> void:
 
 	_flash = maxf(_flash - delta, 0.0)
 	queue_redraw()
+
+
+## Lo levanta Señor de la carroña: mismo tipo y vida, verdoso, por unos segundos.
+func make_raised() -> void:
+	raised = true
+	raise_t = B.RAISE_TIME
+	hp = max_hp
+	color = B.RAISED_COLOR
 
 
 func take_damage(amount: float) -> void:

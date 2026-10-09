@@ -11,6 +11,9 @@ const Gem := preload("res://scripts/gem.gd")
 const Projectile := preload("res://scripts/projectile.gd")
 const Spit := preload("res://scripts/spit.gd")
 const Civilian := preload("res://scripts/civilian.gd")
+const Puddle := preload("res://scripts/puddle.gd")
+const Chest := preload("res://scripts/chest.gd")
+const Events := preload("res://scripts/events.gd")
 const Arena := preload("res://scripts/arena.gd")
 const Hud := preload("res://scripts/hud.gd")
 
@@ -35,6 +38,10 @@ var corpses: Array = []
 var gems: Array = []
 var spits: Array = []
 var civilians: Array = []
+var puddles: Array = []
+var chest = null # cofre en disputa (uno a la vez)
+var events # events.gd: cofres y eventos de oleada
+var raised_count := 0 # compañeros levantados por Señor de la carroña
 var _civilian_t := 0.0
 var _elite_t := 0.0
 var alarm_pos := Vector2.ZERO # último grito de un civil; el héroe va a investigar
@@ -54,6 +61,9 @@ func _ready() -> void:
 	sim_mode = bot_mode or "--sim" in OS.get_cmdline_user_args()
 
 	add_child(Arena.new())
+	events = Events.new()
+	events.world = self
+	add_child(events)
 	_entities = Node2D.new()
 	_entities.y_sort_enabled = false
 	add_child(_entities)
@@ -125,10 +135,12 @@ func _process(delta: float) -> void:
 
 # --- Spawning ----------------------------------------------------------------
 
-func spawn_minion(type_name: String, elite := false) -> void:
+func spawn_minion(type_name: String, elite := false, at = null):
 	var angle := rng.randf() * TAU
 	var dist := rng.randf_range(B.SPAWN_MIN_DIST, B.SPAWN_MAX_DIST)
 	var pos: Vector2 = hero.position + Vector2.from_angle(angle) * dist
+	if at != null:
+		pos = at
 	pos = pos.clamp(Vector2(20, 20), B.ARENA_SIZE - Vector2(20, 20))
 	var m = Minion.new()
 	m.world = self
@@ -136,6 +148,7 @@ func spawn_minion(type_name: String, elite := false) -> void:
 	m.position = pos
 	minions.append(m)
 	_entities.add_child(m)
+	return m
 
 
 ## Los civiles aparecen lejos del héroe, para que comer sea una alternativa a robarle.
@@ -177,8 +190,19 @@ func on_civilian_killed(c, by_hero := false) -> void:
 
 
 func on_minion_killed(m) -> void:
-	kills += 1
 	minions.erase(m)
+	if m.raised:
+		# los levantados no dejan cadáver ni gema: si no, el héroe farmea con ellos
+		raised_count -= 1
+		m.queue_free()
+		return
+	kills += 1
+	if player.rank("carronia") > 0 and not m.elite and raised_count < B.RAISE_MAX \
+			and m.position.distance_to(player.position) < B.RAISE_RADIUS:
+		var z = spawn_minion(m.type_name, false, m.position)
+		z.max_hp = m.max_hp
+		z.make_raised()
+		raised_count += 1
 	var c = Corpse.new()
 	c.world = self
 	c.position = m.position
@@ -232,6 +256,26 @@ func spawn_spit(from: Vector2, dir: Vector2, damage: float, from_player: bool) -
 func remove_spit(s) -> void:
 	spits.erase(s)
 	s.queue_free()
+
+
+func spawn_puddle(pos: Vector2, dps: float) -> void:
+	if puddles.size() >= B.ACID_MAX:
+		remove_puddle(puddles[0])
+	var p = Puddle.new()
+	p.world = self
+	p.position = pos
+	p.dps = dps
+	puddles.append(p)
+	_entities.add_child(p)
+
+
+func remove_puddle(p) -> void:
+	puddles.erase(p)
+	p.queue_free()
+
+
+func add_entity(n: Node) -> void:
+	_entities.add_child(n)
 
 
 # --- Amenaza y fin de partida ------------------------------------------------

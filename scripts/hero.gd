@@ -7,6 +7,7 @@ extends Node2D
 
 const B := preload("res://scripts/balance.gd")
 const HeroPowers := preload("res://scripts/hero_powers.gd")
+const HeroStatus := preload("res://scripts/hero_status.gd")
 
 var world
 var hp := B.HERO_HP
@@ -39,6 +40,7 @@ var _aim_windup := 0.0
 var _aim_locked := Vector2.RIGHT
 var _rng := RandomNumberGenerator.new()
 var powers # hero_powers.gd: orbes, rayo, aura, nova, etc.
+var status # hero_status.gd: sangrado, aturdimiento, lentitud
 var damage_taken := {"jugador": 0.0, "horda": 0.0} # para los reportes de --sim
 
 
@@ -49,10 +51,18 @@ func _ready() -> void:
 	powers.hero = self
 	powers.world = world
 	add_child(powers)
+	status = HeroStatus.new()
+	status.hero = self
+	status.world = world
+	add_child(status)
 
 
 func _process(delta: float) -> void:
 	if not world.running:
+		return
+	if status.stunned():
+		_aim_windup = 0.0
+		queue_redraw()
 		return
 	_think_t -= delta
 	if _think_t <= 0.0:
@@ -65,7 +75,7 @@ func _process(delta: float) -> void:
 		position += _roll_dir * B.HERO_ROLL_SPEED * delta
 	else:
 		_check_roll()
-		position += _move_dir * speed * delta
+		position += _move_dir * speed * status.speed_mult() * delta
 	position = position.clamp(Vector2(radius, radius), B.ARENA_SIZE - Vector2(radius, radius))
 
 	for g in world.gems.duplicate():
@@ -226,6 +236,14 @@ func _think() -> void:
 		if best_heart != null:
 			steer += (best_heart.position - position).normalized() * B.HERO_HEART_PULL
 
+	# 2c. un cofre es lo que más le importa: lo hace subir de nivel
+	if not low_hp and world.chest != null and position.distance_to(world.chest.position) < B.CHEST_HERO_SEEK_RADIUS:
+		var to_chest: Vector2 = world.chest.position - position
+		if to_chest.length() > B.CHEST_OPEN_RADIUS * 0.5:
+			steer += to_chest.normalized() * B.CHEST_HERO_PULL
+		else:
+			steer = Vector2.ZERO # quieto encima para abrirlo
+
 	# 2b. si un civil gritó, va hacia ahí a matar civiles
 	if world.alarm_t > 0.0 and not low_hp and not world.detected:
 		var to_alarm: Vector2 = world.alarm_pos - position
@@ -330,7 +348,9 @@ func enrage() -> void:
 	speed *= B.HERO_ENRAGE_SPEED_MULT
 
 
-func take_damage(amount: float, from_player: bool) -> void:
+func take_damage(amount: float, from_player: bool, melee := false) -> void:
+	if from_player:
+		status.log_damage(amount, melee)
 	damage_taken["jugador" if from_player else "horda"] += amount
 	if not from_player:
 		# la horda lo desgasta pero el golpe final solo lo puede dar el jugador

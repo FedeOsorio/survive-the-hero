@@ -236,3 +236,64 @@ static func pick_minion_type(minute: float, rng: RandomNumberGenerator) -> Strin
 	if r < 0.55:
 		return "rata"
 	return "zombi"
+
+
+# --- Tanda 01 ------------------------------------------------------------------
+# Evoluciones de mutaciones: arma al máximo + pasiva con al menos 1 rango.
+# Lluvia ácida: cada escupitajo deja un charco que daña y frena al héroe.
+const ACID_RADIUS := 40.0
+const ACID_TIME := 3.0
+const ACID_DPS_MULT := 0.5 # x mordida por segundo
+const ACID_SLOW := 0.3
+const ACID_MAX := 6
+# Mandíbula sangrienta: la mordida cura y hace sangrar.
+const JAW_HEAL := 0.35 # reemplaza a Mordida vampírica
+const BLEED_MULT := 0.6 # x mordida, repartido en BLEED_TIME
+const BLEED_TIME := 4.0
+const BLEED_MAX_STACKS := 3
+const JAW_BITE_RANGE := 10.0
+# Señor de la carroña: compañeros que mueren cerca tuyo se levantan un rato.
+const RAISE_RADIUS := 200.0
+const RAISE_TIME := 8.0
+const RAISE_MAX := 10
+const RAISED_COLOR := Color(0.45, 0.9, 0.5)
+# Coraza viva: al terminar la embestida sale una onda.
+const SHELL_WAVE_RADIUS := 110.0
+const SHELL_WAVE_DAMAGE := 1.0 # x mordida
+const SHELL_WAVE_PUSH := 120.0
+const SHELL_WAVE_MINION_PUSH := 60.0
+const HERO_STUN_TIME := 0.8
+const HERO_STUN_IMMUNE := 4.0
+
+# Cofres en disputa: el héroe sube un nivel; vos ganás una mutación.
+const CHEST_FIRST := 90.0
+const CHEST_EVERY := 75.0
+const CHEST_MIN_DIST := 400.0
+const CHEST_MAX_DIST := 700.0
+const CHEST_OPEN_RADIUS := 30.0
+const CHEST_OPEN_TIME := 1.0
+const CHEST_LIFETIME := 30.0
+const CHEST_HERO_HEAL := 0.2
+const CHEST_HERO_PULL := 3.0
+const CHEST_HERO_SEEK_RADIUS := 900.0
+const CHEST_THREAT := 40.0
+
+# Eventos de oleada, en rotación: estampida, asedio, luna de sangre.
+const EVENT_FIRST := 120.0
+const EVENT_EVERY := 90.0
+const EVENT_WARNING := 3.0
+const STAMPEDE_COUNT := 40
+const STAMPEDE_DIST := 700.0
+const STAMPEDE_WIDTH := 600.0
+const STAMPEDE_SPEED_MULT := 1.5
+const STAMPEDE_BOOST_TIME := 6.0
+const SIEGE_WARNING := 1.0
+const SIEGE_COUNT := 24
+const SIEGE_RADIUS := 220.0
+const BLOOD_MOON_TIME := 30.0
+const BLOOD_MOON_DAMAGE_MULT := 2.0
+
+# El héroe se adapta: con el jugador detectado elige poderes según cómo lo atacás.
+const ADAPT_WINDOW := 30.0
+const ADAPT_SHARE := 0.6
+const ADAPT_WEIGHT := 3.0

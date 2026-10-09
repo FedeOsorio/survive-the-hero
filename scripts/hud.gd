@@ -82,7 +82,12 @@ func _draw_hud() -> void:
 		_text(font, Vector2(size.x - 280, y), "%s %d" % [h.powers.LIST[id].name, h.powers.ranks[id]], 13, Color(1.0, 0.85, 0.5))
 		y += 16.0
 
-	_hero_pointer(h)
+	_pointer(h, Color(0.4, 0.65, 1.0, 0.9))
+	if world.chest != null:
+		_pointer(world.chest, Color(1.0, 0.8, 0.25, 0.95))
+	if world.events.blood_moon_t > 0.0:
+		_view.draw_rect(Rect2(Vector2.ZERO, size), Color(0.8, 0.0, 0.0, 0.08))
+		_text_centered(font, Vector2(size.x * 0.5, 96), "Luna de sangre: %ds" % int(ceil(world.events.blood_moon_t)), 18, Color(1, 0.35, 0.3))
 
 	_text_centered(font, Vector2(size.x * 0.5, size.y - 16),
 		"WASD mover · Espacio embestida · Q camuflaje · E evolucionar · R reiniciar  (mordida y escupitajo son automáticos)", 13, Color(0.7, 0.7, 0.75))
@@ -113,15 +118,17 @@ func _draw_choices(font: Font, p) -> void:
 	for i in n:
 		var id: String = p.pending_choices[i]
 		var m: Dictionary = Mutations.LIST[id]
-		var r := Rect2(x0 + i * (w + gap), size.y * 0.33, w, 170)
-		_view.draw_rect(r, Color(0.12, 0.1, 0.16, 0.95))
-		_view.draw_rect(r, Color(0.6, 0.9, 1.0, 0.8), false, 2.0)
-		_text(font, r.position + Vector2(14, 30), "%d. %s" % [i + 1, m.name], 20, Color.WHITE)
-		_text(font, r.position + Vector2(14, 56), "Rango %d/%d" % [p.rank(id) + 1, m.max], 13, Color(0.7, 0.7, 0.8))
-		_view.draw_multiline_string(font, r.position + Vector2(14, 86), m.desc, HORIZONTAL_ALIGNMENT_LEFT, w - 28, 16, -1, Color(0.9, 0.9, 0.95))
+		var evo := Mutations.is_evolution(id)
+		var r := Rect2(x0 + i * (w + gap), size.y * 0.33, w, 190)
+		_view.draw_rect(r, Color(0.2, 0.15, 0.05, 0.95) if evo else Color(0.12, 0.1, 0.16, 0.95))
+		_view.draw_rect(r, Color(1.0, 0.8, 0.25) if evo else Color(0.6, 0.9, 1.0, 0.8), false, 3.0 if evo else 2.0)
+		_text(font, r.position + Vector2(14, 30), "%d. %s" % [i + 1, m.name], 20, Color(1.0, 0.85, 0.35) if evo else Color.WHITE)
+		_text(font, r.position + Vector2(14, 56), "EVOLUCIÓN" if evo else "Rango %d/%d" % [p.rank(id) + 1, m.max], 13, Color(1.0, 0.8, 0.3) if evo else Color(0.7, 0.7, 0.8))
+		_view.draw_multiline_string(font, r.position + Vector2(14, 86), Mutations.desc(id), HORIZONTAL_ALIGNMENT_LEFT, w - 28, 16, -1, Color(0.9, 0.9, 0.95))
 
 
-func _hero_pointer(h) -> void:
+## Flecha en el borde de pantalla hacia algo que está fuera de vista.
+func _pointer(h, col: Color) -> void:
 	var screen_pos: Vector2 = _view.get_viewport().get_canvas_transform() * h.global_position
 	var rect := Rect2(Vector2.ZERO, _view.size).grow(-30)
 	if rect.has_point(screen_pos):
@@ -130,7 +137,7 @@ func _hero_pointer(h) -> void:
 	var dir := (screen_pos - center).normalized()
 	var edge := Vector2(clampf(screen_pos.x, rect.position.x, rect.end.x), clampf(screen_pos.y, rect.position.y, rect.end.y))
 	var pts := PackedVector2Array([edge + dir * 12.0, edge + dir.orthogonal() * 8.0, edge - dir.orthogonal() * 8.0])
-	_view.draw_colored_polygon(pts, Color(0.4, 0.65, 1.0, 0.9))
+	_view.draw_colored_polygon(pts, col)
 
 
 func _bar(r: Rect2, ratio: float, col: Color, label: String) -> void:

@@ -2,6 +2,7 @@ extends Node2D
 ## Poderes del héroe (hijo del nodo del héroe). En cada nivel elige 1 de 3:
 ## un poder nuevo o subir uno que ya tiene, hasta 5 poderes distintos.
 ## Los de área le pegan a la horda y al jugador por igual; rayo y nova avisan antes.
+## Con el jugador detectado, elige según cómo lo atacás (cuerpo a cuerpo o a distancia).
 
 const B := preload("res://scripts/balance.gd")
 
@@ -53,11 +54,40 @@ func level_up() -> String:
 	var options: Array = []
 	while options.size() < B.HERO_POWER_CHOICES and not pool.is_empty():
 		options.append(pool.pop_at(_rng.randi_range(0, pool.size() - 1)))
-	var pick: String = options[_rng.randi_range(0, options.size() - 1)]
+	var favored := _favored()
+	var weights: Array = []
+	var total := 0.0
+	for id in options:
+		var w: float = B.ADAPT_WEIGHT if favored.has(id) else 1.0
+		weights.append(w)
+		total += w
+	var roll := _rng.randf() * total
+	var pick: String = options[-1]
+	for i in options.size():
+		roll -= weights[i]
+		if roll <= 0.0:
+			pick = options[i]
+			break
 	ranks[pick] = rank(pick) + 1
-	if ranks[pick] == 1:
+	if favored.has(pick):
+		world.hud.banner("El héroe se adapta: %s" % LIST[pick].name)
+	elif ranks[pick] == 1:
 		world.hud.banner("El héroe aprendió %s" % LIST[pick].name)
 	return pick
+
+
+## Con el jugador detectado, favorece lo que contrarresta cómo lo estás atacando.
+func _favored() -> Array:
+	if not world.detected:
+		return []
+	var share: float = hero.status.melee_share()
+	if share < 0.0:
+		return []
+	if share > B.ADAPT_SHARE:
+		return ["aura", "nova"]
+	if 1.0 - share > B.ADAPT_SHARE:
+		return ["rayo", "botas"]
+	return []
 
 
 func summary() -> String:

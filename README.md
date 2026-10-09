@@ -38,6 +38,10 @@ La mordida y el escupitajo son automáticos: salen solos cuando el héroe o un c
 - **Mutaciones:** la biomasa también llena tu barra de nivel. Cada vez que subís, el juego se pausa y elegís 1 de 3 mejoras (las opciones están en `scripts/mutations.gd`).
 - **Liderazgo:** los compañeros dentro de tu círculo verde se vuelven más rápidos y pegan más fuerte (se ven con borde verde).
 - **Civiles:** los muñequitos amarillos deambulan lejos del héroe y huyen de vos. Comerlos da mucha biomasa, pero gritan apenas empiezan a huir y el héroe va hacia ahí a matarlos (los que mata él no dejan cadáver). Comerlos además sube tu amenaza.
+- **Evoluciones:** una mutación al máximo + su pareja (la carta dice "Evoluciona con...") desbloquea una evolución dorada: Lluvia ácida, Mandíbula sangrienta, Señor de la carroña o Coraza viva.
+- **Cofres:** desde el minuto 1:30 aparece un cofre cada tanto (flecha dorada). Quedate 1 segundo encima sin recibir daño: si lo abrís, mutación gratis; si lo abre el héroe, sube de nivel.
+- **Eventos:** desde el minuto 2, cada minuto y medio: Estampida (ola de ratas), Asedio (anillo de zombis alrededor del héroe) y Luna de sangre (la horda pega el doble 30 s).
+- **El héroe se adapta:** cuando te detectó, elige poderes contra tu forma de pelear (aura y nova si lo mordés, rayo y botas si le escupís).
 
 Todos los números de balance están en `scripts/balance.gd`. El diseño está en `docs/diseno-mvp.md`.
 
