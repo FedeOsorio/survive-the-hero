@@ -91,11 +91,13 @@ func magnet_radius() -> float:
 
 
 func lead_radius() -> float:
-	return B.LEAD_RADIUS + rank("rey") * B.LEAD_RADIUS_PER_RANK
+	if rank("rey") == 0:
+		return 0.0
+	return B.LEAD_RADIUS + (rank("rey") - 1) * B.LEAD_RADIUS_PER_RANK
 
 
 func lead_damage_mult() -> float:
-	return B.LEAD_DAMAGE_MULT + rank("rey") * B.LEAD_DAMAGE_PER_RANK
+	return B.LEAD_DAMAGE_MULT + (rank("rey") - 1) * B.LEAD_DAMAGE_PER_RANK
 
 
 func mut_xp_needed() -> float:
@@ -303,7 +305,8 @@ func _bot() -> Vector2:
 
 func _draw() -> void:
 	var c := Color.WHITE if _flash > 0.0 else color
-	draw_arc(Vector2.ZERO, lead_radius(), 0.0, TAU, 48, Color(0.4, 1.0, 0.5, 0.08), 2.0)
+	if lead_radius() > 0.0:
+		draw_arc(Vector2.ZERO, lead_radius(), 0.0, TAU, 48, Color(0.4, 1.0, 0.5, 0.08), 2.0)
 	if magnet_radius() > 0.0:
 		draw_arc(Vector2.ZERO, radius + magnet_radius(), 0.0, TAU, 32, Color(0.75, 0.45, 0.9, 0.12), 1.5)
 	if _dash_t > 0.0:

@@ -42,11 +42,11 @@ const COMBO_WINDOW_PER_RANK := 0.75
 const COMBO_STEP := 0.15 # cada bocado en combo suma esto al multiplicador
 const COMBO_MAX := 2.5
 
-# Liderazgo: los compañeros cerca tuyo se potencian.
-const LEAD_RADIUS := 170.0
-const LEAD_RADIUS_PER_RANK := 30.0
+# Liderazgo (solo con la mutación Rey de la horda): los compañeros cerca tuyo se potencian.
+const LEAD_RADIUS := 140.0
+const LEAD_RADIUS_PER_RANK := 40.0
 const LEAD_SPEED_MULT := 1.4
-const LEAD_DAMAGE_MULT := 2.0
+const LEAD_DAMAGE_MULT := 1.5
 const LEAD_DAMAGE_PER_RANK := 0.25
 
 # Civiles: comida que huye de vos, lejos del héroe.
@@ -78,10 +78,10 @@ const HERO_ARROW_SPEED := 520.0
 const HERO_RANGE := 420.0
 const HERO_PICKUP_RADIUS := 100.0
 const HERO_PICKUP_PER_LEVEL := 2.0
-const HERO_DAMAGE_PER_LEVEL := 1.07
-const HERO_COOLDOWN_PER_LEVEL := 0.97
+const HERO_DAMAGE_PER_LEVEL := 1.10
+const HERO_COOLDOWN_PER_LEVEL := 0.95
 const HERO_MIN_COOLDOWN := 0.18
-const HERO_LEVELS_PER_EXTRA_ARROW := 6
+const HERO_LEVELS_PER_EXTRA_ARROW := 4
 # Las flechas no atraviesan: eso será una mejora que el héroe elija (hito 2).
 const HERO_ARROW_PIERCE := 0
 # Tajo de espada: ataque cuerpo a cuerpo en arco, con aviso previo para poder esquivarlo.
@@ -115,7 +115,7 @@ const HERO_ENRAGE_SPEED_MULT := 1.3
 
 
 static func xp_for_level(level: int) -> float:
-	return 10.0 + level * 20.0
+	return 5.0 + level * 8.0
 
 
 # --- Horda -------------------------------------------------------------------
