@@ -77,6 +77,10 @@ func _draw_hud() -> void:
 	# Héroe: arriba a la derecha
 	_text(font, Vector2(size.x - 280, 30), "Héroe nivel %d" % h.level, 20, Color(0.5, 0.7, 1.0))
 	_bar(Rect2(size.x - 280, 40, 260, 14), h.hp / h.max_hp, Color(0.85, 0.25, 0.25), "Vida %d/%d" % [int(h.hp), int(h.max_hp)])
+	var y := 74.0
+	for id in h.powers.ranks:
+		_text(font, Vector2(size.x - 280, y), "%s %d" % [h.powers.LIST[id].name, h.powers.ranks[id]], 13, Color(1.0, 0.85, 0.5))
+		y += 16.0
 
 	_hero_pointer(h)
 

@@ -3,8 +3,10 @@ extends Node2D
 ## kitea, junta experiencia, sube de nivel, esquiva proyectiles y se retira
 ## con poca vida. No se regenera: solo se cura al subir de nivel.
 ## Al jugador lo trata como un creep más hasta que lo detecta.
+## En cada nivel gana un poder (ver hero_powers.gd).
 
 const B := preload("res://scripts/balance.gd")
+const HeroPowers := preload("res://scripts/hero_powers.gd")
 
 var world
 var hp := B.HERO_HP
@@ -36,12 +38,17 @@ var _roll_dir := Vector2.ZERO
 var _aim_windup := 0.0
 var _aim_locked := Vector2.RIGHT
 var _rng := RandomNumberGenerator.new()
+var powers # hero_powers.gd: orbes, rayo, aura, nova, etc.
 var damage_taken := {"jugador": 0.0, "horda": 0.0} # para los reportes de --sim
 
 
 func _ready() -> void:
 	z_index = 2
 	_rng.randomize()
+	powers = HeroPowers.new()
+	powers.hero = self
+	powers.world = world
+	add_child(powers)
 
 
 func _process(delta: float) -> void:
@@ -311,7 +318,10 @@ func _level_up() -> void:
 	hp = minf(max_hp, hp + B.HERO_HP_PER_LEVEL + max_hp * B.HERO_LEVEL_HEAL)
 	damage *= B.HERO_DAMAGE_PER_LEVEL
 	cooldown = maxf(cooldown * B.HERO_COOLDOWN_PER_LEVEL, B.HERO_MIN_COOLDOWN)
-	arrows = 1 + level / B.HERO_LEVELS_PER_EXTRA_ARROW
+	powers.level_up()
+	arrows = 1 + level / B.HERO_LEVELS_PER_EXTRA_ARROW + powers.rank("multiple")
+	pierce = B.HERO_ARROW_PIERCE + powers.rank("perforante")
+	speed = B.HERO_SPEED * (1.0 + B.POWER_SPEED * powers.rank("botas"))
 	_level_fx = 0.6
 
 

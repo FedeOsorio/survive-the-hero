@@ -17,6 +17,7 @@ Survivor estilo Vampire Survivors al revés, en Godot 4 (GDScript), pixel art 2D
 - `scripts/main.gd`: raíz de la partida (spawn de la horda, reloj, amenaza, victoria y derrota).
 - `scripts/creep.gd`: el jugador (absorber, mutar, evolucionar, ataques automáticos, embestida invulnerable).
 - `scripts/hero.gd`: IA del héroe (farmear, kitear, juntar XP, subir de nivel, retirarse, rodada, aviso de disparo).
+- `scripts/hero_powers.gd`: poderes del héroe, uno por nivel, hasta 5 distintos (orbes, rayo, aura, nova y pasivos).
 - `scripts/minion.gd`, `corpse.gd`, `gem.gd`, `projectile.gd`: horda, cadáveres, gemas de XP y flechas.
 - `scripts/spit.gd`: escupitajos del creep y disparos de los arqueros de la horda.
 - `scripts/civilian.gd`: civiles que huyen del creep (comida extra).

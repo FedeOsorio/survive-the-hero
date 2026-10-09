@@ -267,8 +267,8 @@ func end_game(player_won: bool, reason: String) -> void:
 	won = player_won
 	end_reason = reason
 	if sim_mode:
-		print("[sim] fin (%02d:%02d): %s | daño al héroe %s | mutaciones %s" % [
-			int(elapsed) / 60, int(elapsed) % 60, reason, hero.damage_taken, player.ranks])
+		print("[sim] fin (%02d:%02d): %s | daño al héroe %s | mutaciones %s | poderes %s" % [
+			int(elapsed) / 60, int(elapsed) % 60, reason, hero.damage_taken, player.ranks, hero.powers.ranks])
 
 
 # --- Consulta espacial para la separación de la horda ------------------------

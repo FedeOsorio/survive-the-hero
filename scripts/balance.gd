@@ -144,6 +144,40 @@ const HERO_DETECTED_TARGET_BONUS := 150.0 # chico: si tiene creeps encima, se de
 const HERO_ENRAGE_DAMAGE_MULT := 5.0
 const HERO_ENRAGE_SPEED_MULT := 1.3
 
+# Poderes del héroe: en cada nivel elige 1 de 3 (nuevo o mejora), hasta 5 distintos.
+# Los daños son multiplicadores del daño de flecha del héroe, que crece con su nivel.
+const HERO_MAX_POWERS := 5
+const HERO_POWER_RANK_BONUS := 0.3 # cada rango extra suma este % al daño del poder
+const HERO_POWER_CHOICES := 3
+# Orbes de fuego: giran alrededor del héroe y queman lo que tocan.
+const ORB_DAMAGE := 0.6
+const ORB_RADIUS := 9.0
+const ORB_ORBIT := 62.0
+const ORB_ORBIT_PER_RANK := 6.0
+const ORB_SPIN := 3.0 # radianes por segundo
+const ORB_HIT_COOLDOWN := 0.5 # cada orbe le pega al mismo blanco como mucho cada tanto
+# Rayo: cada tanto marca círculos en el piso y después cae el rayo (se puede esquivar).
+const BOLT_DAMAGE := 1.5
+const BOLT_COOLDOWN := 2.8
+const BOLT_COOLDOWN_PER_RANK := 0.3
+const BOLT_RANGE := 450.0
+const BOLT_RADIUS := 32.0
+const BOLT_WARNING := 0.55
+# Aura sagrada: daño constante alrededor del héroe.
+const AURA_DPS := 0.5
+const AURA_RADIUS := 70.0
+const AURA_RADIUS_PER_RANK := 12.0
+# Nova: explosión alrededor del héroe que empuja a la horda, con aviso previo.
+const NOVA_DAMAGE := 1.2
+const NOVA_COOLDOWN := 6.0
+const NOVA_COOLDOWN_PER_RANK := 0.6
+const NOVA_RADIUS := 120.0
+const NOVA_RADIUS_PER_RANK := 15.0
+const NOVA_WARNING := 0.4
+const NOVA_PUSH := 70.0
+# Pasivos
+const POWER_SPEED := 0.08 # botas: +8% velocidad por rango
+
 
 static func xp_for_level(level: int) -> float:
 	return 5.0 + level * 8.0

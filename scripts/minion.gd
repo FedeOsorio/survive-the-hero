@@ -86,6 +86,8 @@ func _process(delta: float) -> void:
 
 
 func take_damage(amount: float) -> void:
+	if hp <= 0.0:
+		return
 	hp -= amount
 	_flash = 0.08
 	if hp <= 0.0:
