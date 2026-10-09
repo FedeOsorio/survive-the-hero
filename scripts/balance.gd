@@ -125,8 +125,8 @@ const HERO_ARROW_COOLDOWN := 0.45
 const HERO_ARROW_SPEED := 520.0
 const HERO_RANGE := 420.0
 # El héroe sube de nivel SOLO juntando gemas: tiene que caminar hasta ellas.
-const HERO_PICKUP_RADIUS := 90.0 # las gemas dentro de este radio vuelan hacia él
-const HERO_PICKUP_PER_LEVEL := 3.0
+const HERO_PICKUP_RADIUS := 40.0 # las gemas dentro de este radio vuelan hacia él
+const HERO_PICKUP_PER_LEVEL := 1.0
 const HERO_GEM_PULL_SPEED := 350.0
 const HERO_HEART_PICKUP := 35.0 # los corazones de élite los tiene que pisar (más el radio del corazón)
 const HERO_HEART_PICKUP_PER_LEVEL := 1.0
