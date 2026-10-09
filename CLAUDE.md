@@ -1,0 +1,37 @@
+# Survive the Hero
+
+Survivor estilo Vampire Survivors al revés, en Godot 4 (GDScript), pixel art 2D. El jugador es el creep (en el juego, "Anti Hero"); el héroe lo controla una IA. Destino: Steam, y mobile más adelante.
+
+<!-- Nota para humanos: los comentarios HTML no cuestan tokens. Mantener este archivo corto (<80 líneas). Lo que solo aplica a ciertos archivos va en .claude/rules/ con `paths:`. -->
+
+## Dónde está cada cosa
+- Diseño del MVP: `docs/diseno-mvp.md`. Leelo solo si la tarea toca reglas o balance, no "por las dudas".
+- Controles y cómo jugar: `README.md`.
+- Decisiones ya tomadas: `/mnt/project-files/.notes/decisiones.md`. No las vuelvas a discutir.
+- Mapa del repo: sección de abajo. Actualizala cuando agregues una carpeta o un sistema nuevo, así nadie tiene que explorar.
+
+## Mapa del repo
+<!-- Completar a medida que crece el proyecto: una línea por carpeta o sistema. -->
+- `project.godot`: configuración (escena principal `scenes/main.tscn`).
+- `scripts/balance.gd`: todos los números de balance. Para ajustar balance, tocá solo este archivo.
+- `scripts/main.gd`: raíz de la partida (spawn de la horda, reloj, amenaza, victoria y derrota).
+- `scripts/creep.gd`: el jugador (absorber, evolucionar, morder, embestir).
+- `scripts/hero.gd`: IA del héroe (farmear, kitear, juntar XP, subir de nivel, retirarse).
+- `scripts/minion.gd`, `corpse.gd`, `gem.gd`, `projectile.gd`: horda, cadáveres, gemas de XP y flechas.
+- `scripts/hud.gd`, `arena.gd`: interfaz y fondo.
+- Los `*.gd.uid` los genera Godot: no los leas ni los edites a mano.
+
+## Comandos
+- Simulación de balance de 15 min sin ventana: `godot --headless --fixed-fps 60 --quit-after 54600 res://scenes/main.tscn -- --sim 2>&1 | tail -n 40`
+- Siempre filtrá la salida larga (`| tail`, `| grep -E "ERROR|WARN"`); no pegues logs completos al contexto.
+
+## Cómo trabajar sin gastar tokens de más
+- No leas `.godot/`, `*.import`, audio, fuentes ni builds: son generados o binarios (bloqueados en `.claude/settings.json`).
+- Buscá con `rg` y leé solo el rango de líneas que necesitás; no abras escenas `.tscn` enteras si alcanza con un nodo.
+- Exploraciones amplias: delegalas a un subagente y pedile solo la conclusión.
+- Antes de cambios grandes, plan corto primero; evita intentos fallidos caros.
+- Al cerrar una tarea larga, dejá lo que otro hilo necesite saber en `/mnt/project-files/.notes/` (la memoria del proyecto está desactivada).
+
+## Git
+- Autor de los commits: `Federico <fede.osorio@outlook.com.ar>`, sin línea `Co-Authored-By` de Claude (pedido de Federico).
+- Mensajes de commit en español, cortos.
