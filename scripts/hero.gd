@@ -222,10 +222,11 @@ func _think() -> void:
 
 	# 2. juntar experiencia: es su prioridad mientras no esté en peligro.
 	#    Cazándote, solo junta las gemas que le quedan en el camino.
+	var busy: bool = hunting or (world.alarm_t > 0.0 and not world.detected) # cazando o yendo al grito
 	if not low_hp:
-		var gem = _nearest(world.gems, B.HUNT_GEM_RADIUS if hunting else 550.0)
+		var gem = _nearest(world.gems, B.HUNT_GEM_RADIUS if busy else 550.0)
 		if gem != null:
-			var pull := B.HUNT_GEM_PULL if hunting else (2.2 if danger < 3.0 else 0.8)
+			var pull := B.HUNT_GEM_PULL if busy else (2.2 if danger < 3.0 else 0.8)
 			steer += (gem.position - position).normalized() * pull
 
 	# 2a. un corazón de élite vale más que cualquier gema

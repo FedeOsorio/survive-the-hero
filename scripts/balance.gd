@@ -68,11 +68,14 @@ const CIVILIAN_SPEED := 85.0
 const CIVILIAN_FLEE_RADIUS := 220.0
 const CIVILIAN_BIOMASS := 3.0
 # Comer civiles hace ruido: suma amenaza y el héroe va a investigar el lugar.
-const THREAT_PER_CIVILIAN := 5.0
+const THREAT_PER_CIVILIAN := 10.0
 # El grito empieza apenas un civil sale corriendo de vos, no cuando muere.
-const ALARM_TIME := 5.0 # segundos que el héroe busca en el lugar del grito
-const ALARM_PULL := 2.0 # qué tanto le importa ir a investigar (las gemas pesan 2.2)
-const ALARM_COOLDOWN := 8.0 # un grito nuevo dentro de esta ventana no lo mueve otra vez
+# Cada grito nuevo actualiza el lugar. La alarma dura hasta que llega (a ALARM_ARRIVE_DIST)
+# y ALARM_SEARCH_TIME más buscando, con un máximo de ALARM_MAX_TIME desde el último grito.
+const ALARM_PULL := 4.0 # más que cofres (3,0), corazones (2,8) y gemas (2,2)
+const ALARM_ARRIVE_DIST := 80.0
+const ALARM_SEARCH_TIME := 3.0
+const ALARM_MAX_TIME := 12.0
 const CIVILIAN_SCREAM_COOLDOWN := 3.0 # cada civil grita como mucho cada tantos segundos
 
 # Camuflaje (Q): te saca del radar del héroe. Una vez por minuto.

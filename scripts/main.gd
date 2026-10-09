@@ -50,7 +50,7 @@ var _civilian_t := 0.0
 var _elite_t := 0.0
 var alarm_pos := Vector2.ZERO # último grito de un civil; el héroe va a investigar
 var alarm_t := 0.0
-var _alarm_lock := 0.0 # hasta cuándo un grito nuevo no lo mueve
+var _alarm_arrived := false # el héroe ya llegó al lugar del grito
 
 var hud
 var _entities: Node2D
@@ -115,7 +115,7 @@ func _process(delta: float) -> void:
 	var minute := elapsed / 60.0
 
 	add_threat(player.stage * B.THREAT_PASSIVE_PER_STAGE * delta)
-	alarm_t = maxf(alarm_t - delta, 0.0)
+	_update_alarm(delta)
 	_elite_t += delta
 	if _elite_t >= B.ELITE_EVERY:
 		_elite_t = 0.0
@@ -186,11 +186,22 @@ func spawn_civilian_group() -> void:
 
 ## Un civil que huye grita: el héroe va hacia ahí a matar civiles.
 func raise_alarm(pos: Vector2) -> void:
-	if elapsed < _alarm_lock:
-		return
-	_alarm_lock = elapsed + B.ALARM_COOLDOWN
 	alarm_pos = pos
-	alarm_t = B.ALARM_TIME
+	alarm_t = B.ALARM_MAX_TIME
+	_alarm_arrived = false
+
+
+## Al llegar al lugar busca unos segundos más. Si durante la alarma te ve
+## a tiro y sin camuflaje, te detecta al instante.
+func _update_alarm(delta: float) -> void:
+	alarm_t = maxf(alarm_t - delta, 0.0)
+	if alarm_t <= 0.0:
+		return
+	if not _alarm_arrived and hero.position.distance_to(alarm_pos) < B.ALARM_ARRIVE_DIST:
+		_alarm_arrived = true
+		alarm_t = minf(alarm_t, B.ALARM_SEARCH_TIME)
+	if not detected and player.stealth_t <= 0.0 and hero.position.distance_to(player.position) < B.HERO_RANGE:
+		set_detected()
 
 
 func on_civilian_killed(c) -> void:
