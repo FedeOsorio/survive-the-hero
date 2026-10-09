@@ -85,6 +85,10 @@ const HUNGER_MAX := 3.0
 const ELITE_EVERY := 45.0
 const ELITE_HP_MULT := 8.0
 const ELITE_HEART_BIOMASS := 10.0
+# Si el héroe agarra el corazón primero: sube un nivel y se cura este %.
+const ELITE_HEART_HERO_HEAL := 0.3
+const HERO_HEART_PULL := 2.8 # prioridad de ir a buscar un corazón (más que las gemas)
+const HERO_HEART_SEEK_RADIUS := 700.0
 
 # --- Héroe -------------------------------------------------------------------
 const HERO_HP := 200.0

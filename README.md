@@ -32,7 +32,7 @@ La mordida y el escupitajo son automáticos: salen solos cuando el héroe o un c
 - **Evolución:** con suficiente biomasa apretá E. Hay 4 etapas: Slime, Esqueleto, Cultista y Demonio.
 - **Amenaza:** el héroe te ignora (sos un creep más) hasta que la barra se llena. Suben la amenaza morderlo, pisarle gemas o robarle corazones cerca de él, evolucionar y, de a poco, simplemente ser grande. No hay reloj: la partida dura lo que vos decidas.
 - **Hambre:** si vas atrás del héroe en poder, cada bocado rinde más (se ve en el HUD).
-- **Élites dorados:** aparecen cada 45 segundos. Cuando el héroe mata uno, deja un corazón rojo: si lo comés, ganás una mutación al instante.
+- **Élites dorados:** aparecen cada 45 segundos. Cuando el héroe mata uno, deja un corazón rojo: si lo comés, ganás una mutación al instante. Él también lo va a buscar: si lo agarra primero, sube un nivel y se cura.
 - **El héroe:** ataca solo con flechas, esquiva tus escupitajos (no siempre) y se cura únicamente al subir de nivel. La horda lo desgasta, pero el golpe final lo tenés que dar vos.
 - **Arqueros:** los creeps violetas atacan al héroe a distancia.
 - **Mutaciones:** la biomasa también llena tu barra de nivel. Cada vez que subís, el juego se pausa y elegís 1 de 3 mejoras (las opciones están en `scripts/mutations.gd`).

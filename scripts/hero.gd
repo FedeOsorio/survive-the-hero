@@ -65,6 +65,11 @@ func _process(delta: float) -> void:
 		if position.distance_to(g.position) < pickup_radius():
 			_gain_xp(g.xp)
 			world.remove_gem(g)
+	for c in world.corpses.duplicate():
+		if c.heart and position.distance_to(c.position) < pickup_radius() + c.radius:
+			_level_up()
+			hp = minf(max_hp, hp + max_hp * B.ELITE_HEART_HERO_HEAL)
+			world.remove_corpse(c)
 
 	_fire_t -= delta
 	if _aim_windup > 0.0:
@@ -202,6 +207,17 @@ func _think() -> void:
 		var gem = _nearest(world.gems, 550.0)
 		if gem != null:
 			steer += (gem.position - position).normalized() * (2.2 if danger < 3.0 else 0.8)
+
+	# 2a. un corazón de élite vale más que cualquier gema
+	if not low_hp:
+		var best_heart = null
+		var best_d := B.HERO_HEART_SEEK_RADIUS
+		for c in world.corpses:
+			if c.heart and position.distance_to(c.position) < best_d:
+				best_d = position.distance_to(c.position)
+				best_heart = c
+		if best_heart != null:
+			steer += (best_heart.position - position).normalized() * B.HERO_HEART_PULL
 
 	# 2b. si un civil gritó, va a investigar el lugar
 	if world.alarm_t > 0.0 and not low_hp and not world.detected:
