@@ -258,13 +258,19 @@ func _think() -> void:
 	elif low_hp:
 		steer *= 2.5
 
-	# 2. juntar experiencia: es su prioridad mientras no esté en peligro.
-	#    Cazándote, solo junta las gemas que le quedan en el camino.
-	var busy: bool = hunting or (world.alarm_t > 0.0 and not world.detected) # cazando o yendo al grito
+	# 2. juntar experiencia: va al montón de gemas que más vale. Cazándote o yendo
+	#    a un grito mira más cerca y tira menos, pero igual se desvía por un montón.
 	if not low_hp:
-		var gem = _nearest(world.gems, B.HUNT_GEM_RADIUS if busy else 550.0)
+		var seek := B.HERO_GEM_SEEK_RADIUS
+		var pull := B.HERO_GEM_PULL if danger < 3.0 else B.HERO_GEM_PULL_DANGER
+		if hunting:
+			seek = B.HUNT_GEM_RADIUS
+			pull = B.HUNT_GEM_PULL
+		elif world.alarm_t > 0.0 and not world.detected:
+			seek = B.ALARM_GEM_RADIUS
+			pull = B.ALARM_GEM_PULL
+		var gem = _best_gem_pile(seek)
 		if gem != null:
-			var pull := B.HUNT_GEM_PULL if busy else (2.2 if danger < 3.0 else 0.8)
 			steer += (gem.position - position).normalized() * pull
 
 	# 2a. un corazón de élite vale más que cualquier gema
@@ -365,6 +371,27 @@ func _pick_hunt_target():
 			best_off = off
 			best = m
 	return best if best != null else p
+
+
+## La gema a menos de "seek" con más XP alrededor (HERO_GEM_CLUSTER_RADIUS),
+## dividida por (distancia + HERO_GEM_DIST_BIAS).
+func _best_gem_pile(seek: float):
+	var near: Array = []
+	for g in world.gems:
+		if position.distance_to(g.position) < seek:
+			near.append(g)
+	var best = null
+	var best_score := 0.0
+	for g in near:
+		var xp_sum := 0.0
+		for o in world.gems:
+			if g.position.distance_to(o.position) < B.HERO_GEM_CLUSTER_RADIUS:
+				xp_sum += o.xp
+		var score: float = xp_sum / (position.distance_to(g.position) + B.HERO_GEM_DIST_BIAS)
+		if score > best_score:
+			best_score = score
+			best = g
+	return best
 
 
 func _nearest(list: Array, max_dist: float):

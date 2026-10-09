@@ -169,8 +169,16 @@ const HUNT_PULL := 3.0
 const HUNT_PULL_CROWDED := 1.5 # con mucha horda encima
 const HUNT_CROWDED_DANGER := 3.0
 const HUNT_IDEAL_DIST := 220.0
-const HUNT_GEM_RADIUS := 150.0 # mientras caza, solo junta las gemas del camino
-const HUNT_GEM_PULL := 1.0
+const HUNT_GEM_RADIUS := 200.0 # mientras caza, solo junta los montones cercanos
+const HUNT_GEM_PULL := 1.2
+# Gemas: va al montón que más vale (XP a HERO_GEM_CLUSTER_RADIUS / (distancia + HERO_GEM_DIST_BIAS)).
+const HERO_GEM_CLUSTER_RADIUS := 100.0
+const HERO_GEM_DIST_BIAS := 150.0
+const HERO_GEM_SEEK_RADIUS := 600.0 # libre
+const HERO_GEM_PULL := 2.6 # libre, sin peligro
+const HERO_GEM_PULL_DANGER := 1.6 # libre, con horda encima (peligro >= 3)
+const ALARM_GEM_RADIUS := 300.0 # yendo a un grito
+const ALARM_GEM_PULL := 1.8
 const HUNT_ESCAPE_RADIUS := 80.0 # con tantos creeps así de cerca, primero zafa
 const HUNT_ESCAPE_COUNT := 2
 const HUNT_SHARE_RADIUS := 150.0 # con creeps así de cerca, alterna un disparo a vos y uno a la horda
