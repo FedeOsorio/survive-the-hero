@@ -1,0 +1,90 @@
+extends RefCounted
+## Todos los números de balance en un solo lugar.
+## Se ajustan acá mientras jugamos, sin tocar la lógica.
+
+const MATCH_SECONDS := 15.0 * 60.0
+const FORCED_DETECTION_SECONDS := 10.0 * 60.0
+const ARENA_SIZE := Vector2(3000, 3000)
+
+# --- Creep (jugador) ---------------------------------------------------------
+# Cada etapa reemplaza los stats de la anterior. "cost" es la biomasa necesaria
+# para pasar a la siguiente etapa (-1 = etapa final).
+const CREEP_STAGES := [
+	{"name": "Slime", "hp": 30.0, "speed": 170.0, "bite": 4.0, "radius": 10.0, "cost": 20.0, "color": Color(0.45, 0.85, 0.35)},
+	{"name": "Esqueleto", "hp": 75.0, "speed": 180.0, "bite": 10.0, "radius": 13.0, "cost": 80.0, "color": Color(0.9, 0.88, 0.75)},
+	{"name": "Cultista", "hp": 190.0, "speed": 190.0, "bite": 25.0, "radius": 17.0, "cost": 220.0, "color": Color(0.6, 0.35, 0.8)},
+	{"name": "Demonio", "hp": 470.0, "speed": 200.0, "bite": 62.0, "radius": 23.0, "cost": -1.0, "color": Color(0.9, 0.2, 0.15)},
+]
+const BITE_COOLDOWN := 0.6
+const BITE_RANGE := 26.0 # se suma a los radios del creep y del héroe
+const DASH_SPEED := 650.0
+const DASH_TIME := 0.18
+const DASH_COOLDOWN := 2.5
+const DASH_HIT_MULT := 1.5 # daño de la embestida = mordida * esto
+const HEAL_PER_BIOMASS := 2.0
+const GEM_BIOMASS := 1.0
+
+# --- Amenaza y detección -----------------------------------------------------
+const DETECTION_THRESHOLD := 100.0
+const THREAT_PER_DAMAGE := 0.5
+const THREAT_PER_STOLEN_GEM := 3.0
+const STEAL_RADIUS := 300.0 # robar una gema cerca del héroe suma amenaza
+const THREAT_PER_STAGE := 20.0
+
+# --- Héroe -------------------------------------------------------------------
+const HERO_HP := 200.0
+const HERO_HP_PER_LEVEL := 8.0
+const HERO_REGEN := 1.5
+const HERO_SPEED := 150.0
+const HERO_RADIUS := 14.0
+const HERO_ARROW_DAMAGE := 10.0
+const HERO_ARROW_COOLDOWN := 0.55
+const HERO_ARROW_SPEED := 520.0
+const HERO_RANGE := 420.0
+const HERO_PICKUP_RADIUS := 70.0
+const HERO_DAMAGE_PER_LEVEL := 1.06
+const HERO_COOLDOWN_PER_LEVEL := 0.97
+const HERO_MIN_COOLDOWN := 0.18
+const HERO_LEVELS_PER_EXTRA_ARROW := 6
+const HERO_REACTION_MIN := 0.15
+const HERO_REACTION_MAX := 0.3
+const HERO_AIM_ERROR_DEG := 6.0
+const HERO_RETREAT_HP := 0.3
+const HERO_MISTAKE_CHANCE := 0.06
+const HERO_DETECTED_TARGET_BONUS := 400.0
+const HERO_ENRAGE_DAMAGE_MULT := 5.0
+const HERO_ENRAGE_SPEED_MULT := 1.3
+
+
+static func xp_for_level(level: int) -> float:
+	return 4.0 + level * 3.5
+
+
+# --- Horda -------------------------------------------------------------------
+const MINION_TYPES := {
+	"rata": {"hp": 6.0, "speed": 120.0, "dps": 3.0, "radius": 7.0, "xp": 1.0, "biomass": 1.0, "color": Color(0.6, 0.5, 0.4)},
+	"zombi": {"hp": 16.0, "speed": 80.0, "dps": 5.0, "radius": 10.0, "xp": 2.0, "biomass": 2.0, "color": Color(0.4, 0.6, 0.45)},
+	"bruto": {"hp": 60.0, "speed": 60.0, "dps": 10.0, "radius": 16.0, "xp": 5.0, "biomass": 6.0, "color": Color(0.6, 0.3, 0.3)},
+}
+const MAX_MINIONS := 250
+const CORPSE_LIFETIME := 20.0
+const GEM_LIFETIME := 30.0
+const SPAWN_MIN_DIST := 650.0
+const SPAWN_MAX_DIST := 900.0
+
+
+static func minion_hp_mult(minute: float) -> float:
+	return 1.0 + minute * 0.25
+
+
+static func spawns_per_second(minute: float) -> float:
+	return 1.5 + minute * 0.9
+
+
+static func pick_minion_type(minute: float, rng: RandomNumberGenerator) -> String:
+	var r := rng.randf()
+	if minute > 3.0 and r < minf(0.05 + minute * 0.02, 0.25):
+		return "bruto"
+	if r < 0.55:
+		return "rata"
+	return "zombi"
