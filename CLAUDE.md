@@ -15,9 +15,13 @@ Survivor estilo Vampire Survivors al revés, en Godot 4 (GDScript), pixel art 2D
 - `project.godot`: configuración (escena principal `scenes/main.tscn`).
 - `scripts/balance.gd`: todos los números de balance. Para ajustar balance, tocá solo este archivo.
 - `scripts/main.gd`: raíz de la partida (spawn de la horda, reloj, amenaza, victoria y derrota).
-- `scripts/creep.gd`: el jugador (absorber, evolucionar, morder, embestir).
-- `scripts/hero.gd`: IA del héroe (farmear, kitear, juntar XP, subir de nivel, retirarse).
+- `scripts/creep.gd`: el jugador (absorber, mutar, evolucionar, ataques automáticos, embestida invulnerable).
+- `scripts/hero.gd`: IA del héroe (farmear, kitear, juntar XP, subir de nivel, retirarse, rodada, aviso de disparo).
 - `scripts/minion.gd`, `corpse.gd`, `gem.gd`, `projectile.gd`: horda, cadáveres, gemas de XP y flechas.
+- `scripts/spit.gd`: escupitajos del creep y disparos de los arqueros de la horda.
+- `scripts/civilian.gd`: civiles que huyen del creep (comida extra).
+- `scripts/mutations.gd`: lista de mutaciones del creep y sorteo de 3 opciones.
+- Modos de prueba: `-- --sim` (creep invulnerable) y `-- --bot` (bot juega). Federico prueba él mismo: no correr el bot en cada cambio.
 - `scripts/hud.gd`, `arena.gd`: interfaz y fondo.
 - Los `*.gd.uid` los genera Godot: no los leas ni los edites a mano.
 
