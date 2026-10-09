@@ -57,15 +57,14 @@ const CIVILIAN_HP := 8.0
 const CIVILIAN_SPEED := 85.0
 const CIVILIAN_FLEE_RADIUS := 220.0
 const CIVILIAN_BIOMASS := 4.0
-const GEM_BIOMASS := 0.5
 
 # --- Amenaza y detección -----------------------------------------------------
-const DETECTION_THRESHOLD := 100.0
-const THREAT_PER_DAMAGE := 0.5
+const DETECTION_THRESHOLD := 150.0
+const THREAT_PER_DAMAGE := 0.15
 const THREAT_PER_STOLEN_GEM := 3.0
-const STEAL_RADIUS := 300.0 # robar una gema cerca del héroe suma amenaza
+const STEAL_RADIUS := 300.0 # pisar una gema cerca del héroe suma amenaza
 const THREAT_PER_STAGE := 20.0
-const THREAT_PASSIVE_PER_STAGE := 0.4 # por segundo y por etapa: crecer te vuelve visible
+const THREAT_PASSIVE_PER_STAGE := 0.15 # por segundo y por etapa: crecer te vuelve visible
 
 # Hambre: si vas atrás del héroe, cada bocado rinde más.
 # Tu poder = nivel + 3 x etapa; por cada nivel del héroe por encima, +12% de biomasa.
@@ -88,8 +87,10 @@ const HERO_ARROW_DAMAGE := 16.0
 const HERO_ARROW_COOLDOWN := 0.45
 const HERO_ARROW_SPEED := 520.0
 const HERO_RANGE := 420.0
-const HERO_PICKUP_RADIUS := 100.0
-const HERO_PICKUP_PER_LEVEL := 2.0
+# El héroe sube de nivel SOLO juntando gemas: tiene que caminar hasta ellas.
+const HERO_PICKUP_RADIUS := 35.0
+const HERO_PICKUP_PER_LEVEL := 1.0
+const GEM_SCATTER := 30.0 # las gemas saltan un poco al caer, lejos del cadáver
 const HERO_DAMAGE_PER_LEVEL := 1.10
 const HERO_COOLDOWN_PER_LEVEL := 0.95
 const HERO_MIN_COOLDOWN := 0.18
@@ -122,7 +123,7 @@ const HERO_REACTION_MAX := 0.3
 const HERO_AIM_ERROR_DEG := 6.0
 const HERO_RETREAT_HP := 0.3
 const HERO_MISTAKE_CHANCE := 0.06
-const HERO_DETECTED_TARGET_BONUS := 400.0
+const HERO_DETECTED_TARGET_BONUS := 150.0 # chico: si tiene creeps encima, se defiende primero
 const HERO_ENRAGE_DAMAGE_MULT := 5.0
 const HERO_ENRAGE_SPEED_MULT := 1.3
 

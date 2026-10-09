@@ -27,9 +27,9 @@ La mordida y el escupitajo son automáticos: salen solos cuando el héroe o un c
 - **La horda:** los círculos marrones, verdes y rojos. Caminan hacia el héroe.
 - **Al morir, cada creep deja:**
   - un cadáver: pasá por encima para absorberlo y ganar biomasa y vida;
-  - una gema celeste: es experiencia para el héroe, y si te la comés primero se la robás.
+  - una gema celeste: es la única forma en que el héroe sube de nivel. No te alimenta, pero si la pisás antes que él, se la destruís.
 - **Evolución:** con suficiente biomasa apretá E. Hay 4 etapas: Slime, Esqueleto, Cultista y Demonio.
-- **Amenaza:** el héroe te ignora (sos un creep más) hasta que la barra se llena. Suben la amenaza morderlo, robarle gemas o corazones cerca de él, evolucionar y, de a poco, simplemente ser grande. No hay reloj: la partida dura lo que vos decidas.
+- **Amenaza:** el héroe te ignora (sos un creep más) hasta que la barra se llena. Suben la amenaza morderlo, pisarle gemas o robarle corazones cerca de él, evolucionar y, de a poco, simplemente ser grande. No hay reloj: la partida dura lo que vos decidas.
 - **Hambre:** si vas atrás del héroe en poder, cada bocado rinde más (se ve en el HUD).
 - **Élites dorados:** aparecen cada 45 segundos. Cuando el héroe mata uno, deja un corazón rojo: si lo comés, ganás una mutación al instante.
 - **El héroe:** ataca solo con flechas, esquiva tus escupitajos (no siempre) y se cura únicamente al subir de nivel. La horda lo desgasta, pero el golpe final lo tenés que dar vos.

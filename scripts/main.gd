@@ -177,7 +177,7 @@ func on_minion_killed(m) -> void:
 
 	var g = Gem.new()
 	g.world = self
-	g.position = m.position + Vector2(rng.randf_range(-6, 6), rng.randf_range(-6, 6))
+	g.position = m.position + Vector2(rng.randf_range(-B.GEM_SCATTER, B.GEM_SCATTER), rng.randf_range(-B.GEM_SCATTER, B.GEM_SCATTER))
 	g.xp = m.xp
 	gems.append(g)
 	_entities.add_child(g)

@@ -209,7 +209,8 @@ func _think() -> void:
 		var hunting: bool = target == world.player and world.detected
 		var ideal := 220.0 if hunting else B.HERO_RANGE * 0.5
 		if hunting and d > ideal + 60.0:
-			steer += to_t / d * 1.8
+			# con creeps encima prioriza zafar antes que perseguirte
+			steer += to_t / d * 1.8 / (1.0 + danger)
 		elif d < ideal - 60.0:
 			steer -= to_t / d * 0.8
 
