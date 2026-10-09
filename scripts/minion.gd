@@ -77,6 +77,10 @@ func _process(delta: float) -> void:
 	# margen extra para que la separación de la horda no los deje justo afuera
 	if dps > 0.0 and dist <= touch + 6.0:
 		hero.take_damage(dps * dmg_mult * delta, false)
+	# al Paladín también le pegan si lo tocan
+	for pal in world.infamy.paladins:
+		if dps > 0.0 and position.distance_to(pal.position) <= radius + pal.radius + 6.0:
+			pal.take_damage(dps * dmg_mult * delta)
 
 	# separación barata para que la horda no se apile en un solo punto
 	var push := Vector2.ZERO
@@ -102,13 +106,13 @@ func make_raised() -> void:
 	color = B.RAISED_COLOR
 
 
-func take_damage(amount: float, by_player := false) -> void:
+func take_damage(amount: float) -> void:
 	if hp <= 0.0:
 		return
 	hp -= amount
 	_flash = 0.08
 	if hp <= 0.0:
-		world.on_minion_killed(self, by_player)
+		world.on_minion_killed(self)
 
 
 func _draw() -> void:

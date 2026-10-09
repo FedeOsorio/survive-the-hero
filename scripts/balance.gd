@@ -308,26 +308,34 @@ const SHAKE_PX := 4.0
 const SHAKE_TIME := 0.12
 
 
-# --- Tanda 02: "El mal debe hacer sacrificios" ----------------------------------
-# Modo traición (F): tus ataques también matan aliados y te los comés al instante.
-const BETRAYAL_BIOMASS_MULT := 1.5
-const BETRAYAL_MAX := 100.0
-const BETRAYAL_DECAY := 0.5 # por segundo, solo en modo normal
-const BETRAYAL_PER_KILL := {"rata": 3.0, "zombi": 4.0, "arquero": 4.0, "bruto": 10.0}
-const BETRAYAL_PER_ELITE := 25.0
-const HUNTER_MAX_ALIVE := 2
+# --- Tanda 02: Infamia y Paladín del cielo --------------------------------------
+# Infamia: sube cuando el héroe no puede con vos. Al llenarse llega un Paladín.
+const INFAMY_NAME := "Infamia" # nombre visible de la barra (puede cambiar)
+const INFAMY_MAX := 100.0
+const INFAMY_PER_CIVILIAN := 6.0 # civiles que matás vos
+const INFAMY_PER_SECOND_DETECTED := 1.0
+const INFAMY_HERO_LOW := 15.0 # cada vez que el héroe baja del umbral de retirada
+const INFAMY_HERO_LOW_HP := 0.3
 
-# Cazador del infierno: stats según el creep al aparecer.
-const HUNTER_SPAWN_DIST := 600.0
-const HUNTER_HP_MULT := 6.0 # x tu vida máxima
-const HUNTER_CONTACT := 0.18 # x tu vida máxima por segundo
-const HUNTER_SPEED_MULT := 0.9 # x tu velocidad
-const HUNTER_FIRE_EVERY := 3.0
-const HUNTER_FIRE_WARNING := 0.5
-const HUNTER_FIRE_DAMAGE := 0.12 # x tu vida máxima
-const HUNTER_FIRE_SPEED := 380.0
-const HUNTER_FIRE_RANGE := 600.0
-const HUNTER_NEXT_HP := 1.3 # cada cazador siguiente
-const HUNTER_NEXT_DAMAGE := 1.15
-const HUNTER_RADIUS := 18.0
-const HELL_HEART_BIOMASS := 0.2 # x costo de tu próxima evolución
+# Paladín del cielo: se une al héroe, te caza y lo cura. Stats según el creep al aparecer.
+const PALADIN_ARRIVAL := 2.0 # columna de luz antes de aparecer
+const PALADIN_SPAWN_DIST := 150.0 # del héroe
+const PALADIN_HP_MULT := 6.0 # x tu vida máxima
+const PALADIN_SPEED_MULT := 0.85 # x tu velocidad
+const PALADIN_RADIUS := 18.0
+const PALADIN_HAMMER_WINDUP := 0.4
+const PALADIN_HAMMER_DAMAGE := 0.2 # x tu vida máxima
+const PALADIN_HAMMER_COOLDOWN := 1.5
+const PALADIN_HAMMER_RANGE := 40.0 # se suma a los radios
+const PALADIN_HAMMER_ARC_DEG := 120.0
+const PALADIN_CHARGE_EVERY := 6.0
+const PALADIN_CHARGE_RANGE := 350.0
+const PALADIN_CHARGE_WINDUP := 0.6
+const PALADIN_CHARGE_DAMAGE := 0.25 # x tu vida máxima
+const PALADIN_CHARGE_SPEED := 650.0
+const PALADIN_CHARGE_DIST := 420.0
+const PALADIN_HEAL_RADIUS := 150.0
+const PALADIN_HEAL := 0.02 # x vida máxima del héroe por segundo
+const PALADIN_NEXT_HP := 1.3 # cada Paladín siguiente
+const PALADIN_NEXT_DAMAGE := 1.15
+const HOLY_HEART_BIOMASS := 0.2 # x costo de tu próxima evolución

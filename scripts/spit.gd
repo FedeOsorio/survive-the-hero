@@ -32,17 +32,11 @@ func _process(delta: float) -> void:
 		_land()
 		return
 	if from_player:
-		for h in world.betrayal.hunters:
-			if position.distance_to(h.position) < h.radius + 5.0:
-				h.take_damage(damage)
+		for pal in world.infamy.paladins:
+			if position.distance_to(pal.position) < pal.radius + 5.0:
+				pal.take_damage(damage)
 				_land()
 				return
-		if world.player.betrayal_mode:
-			for m in world.minions_near(position):
-				if position.distance_to(m.position) < m.radius + 5.0:
-					m.take_damage(damage, true)
-					_land()
-					return
 		for c in world.civilians:
 			if position.distance_to(c.position) < c.radius + 5.0:
 				c.take_damage(damage)

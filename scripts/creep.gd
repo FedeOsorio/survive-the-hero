@@ -41,7 +41,6 @@ var _flash := 0.0
 var _wave_fx := 0.0
 var stealth_cd := 0.0
 var stealth_t := 0.0 # mientras dura, el héroe no te puede apuntar
-var betrayal_mode := false # F: tus ataques también matan aliados
 var _dash_victims: Array = []
 var _rng := RandomNumberGenerator.new()
 
@@ -101,7 +100,7 @@ func magnet_radius() -> float:
 
 
 func lead_radius() -> float:
-	if rank("rey") == 0 or betrayal_mode: # en modo traición te tienen miedo
+	if rank("rey") == 0:
 		return 0.0
 	return B.LEAD_RADIUS + (rank("rey") - 1) * B.LEAD_RADIUS_PER_RANK
 
@@ -135,9 +134,6 @@ func _process(delta: float) -> void:
 		input = Input.get_vector("move_left", "move_right", "move_up", "move_down")
 		want_dash = Input.is_action_just_pressed("dash")
 		want_evolve = Input.is_action_just_pressed("evolve")
-		if Input.is_action_just_pressed("betray"):
-			betrayal_mode = not betrayal_mode
-			world.hud.banner("Modo traición" if betrayal_mode else "Modo normal")
 		if Input.is_action_just_pressed("stealth") and stealth_cd <= 0.0:
 			stealth_cd = B.STEALTH_COOLDOWN
 			stealth_t = B.STEALTH_TIME
@@ -190,23 +186,12 @@ func _in_reach(target, extra: float) -> bool:
 	return position.distance_to(target.position) <= radius + target.radius + extra
 
 
-## La embestida le pega una vez a cada cazador (y en modo traición, a cada aliado) que atraviesa.
+## La embestida le pega una vez a cada Paladín que atraviesa.
 func _dash_through() -> void:
-	var victims: Array = world.betrayal.hunters.duplicate()
-	if betrayal_mode:
-		victims.append_array(world.minions_near(position))
-	for v in victims:
+	for v in world.infamy.paladins:
 		if not _dash_victims.has(v) and _in_reach(v, 0.0):
 			_dash_victims.append(v)
-			_hurt(v, bite * B.DASH_HIT_MULT)
-
-
-## Daño del jugador a algo que no es el héroe (aliados cuentan como traición).
-func _hurt(v, amount: float) -> void:
-	if world.minions.has(v):
-		v.take_damage(amount, true)
-	else:
-		v.take_damage(amount)
+			v.take_damage(bite * B.DASH_HIT_MULT)
 
 
 ## Lo más cercano de una lista dentro de "max_dist".
@@ -221,8 +206,7 @@ func _closest(list: Array, max_dist: float):
 	return best
 
 
-## Mordida y escupitajo automáticos. Prioridad: héroe, cazador, aliado (en modo
-## traición) y civiles.
+## Mordida y escupitajo automáticos. Prioridad: héroe, Paladín y civiles.
 func _auto_attack() -> void:
 	var hero = world.hero
 	if _bite_cd <= 0.0:
@@ -231,9 +215,7 @@ func _auto_attack() -> void:
 		if _in_reach(hero, bite_range()):
 			victim = hero
 		else:
-			victim = _closest(world.betrayal.hunters, reach)
-			if victim == null and betrayal_mode:
-				victim = _closest(world.minions_near(position), reach)
+			victim = _closest(world.infamy.paladins, reach)
 			if victim == null:
 				victim = _closest(world.civilians, reach)
 		if victim != null:
@@ -246,7 +228,7 @@ func _auto_attack() -> void:
 				if rank("mandibula") > 0:
 					hero.status.bleed(bite * B.BLEED_MULT)
 			else:
-				_hurt(victim, bite)
+				victim.take_damage(bite)
 			if rank("mandibula") > 0:
 				hp = minf(max_hp, hp + bite * B.JAW_HEAL)
 			elif rank("vampiro") > 0:
@@ -257,9 +239,7 @@ func _auto_attack() -> void:
 		if position.distance_to(hero.position) <= B.SPIT_RANGE:
 			target = hero
 		else:
-			target = _closest(world.betrayal.hunters, B.SPIT_RANGE)
-			if target == null and betrayal_mode:
-				target = _closest(world.minions, B.SPIT_RANGE)
+			target = _closest(world.infamy.paladins, B.SPIT_RANGE)
 			if target == null:
 				target = _closest(world.civilians, B.SPIT_RANGE)
 		if target != null:
@@ -281,7 +261,7 @@ func _shell_wave() -> void:
 		world.shake()
 		hero.position = (hero.position + to_h.normalized() * B.SHELL_WAVE_PUSH).clamp(Vector2(20, 20), B.ARENA_SIZE - Vector2(20, 20))
 		hero.status.stun(B.HERO_STUN_TIME)
-	for h in world.betrayal.hunters:
+	for h in world.infamy.paladins:
 		if position.distance_to(h.position) < B.SHELL_WAVE_RADIUS + h.radius:
 			h.take_damage(bite * B.SHELL_WAVE_DAMAGE)
 	for m in world.minions_near(position):
@@ -304,9 +284,9 @@ func _absorb(delta: float) -> void:
 	for c in world.corpses.duplicate():
 		var d := position.distance_to(c.position)
 		if d < radius + c.radius:
-			if c.hell:
-				biomass += maxf(evolve_cost(), 0.0) * B.HELL_HEART_BIOMASS
-				world.hud.banner("Pagaste tu deuda")
+			if c.holy:
+				biomass += maxf(evolve_cost(), 0.0) * B.HOLY_HEART_BIOMASS
+				world.hud.banner("¡Corazón celestial! Mutación extra")
 				grant_mutation()
 			if c.heart:
 				_queued_levels += 1
@@ -340,11 +320,6 @@ func _eat(value: float) -> void:
 		_queued_levels += 1
 	if pending_choices.is_empty() and _queued_levels > 0:
 		_offer_mutation()
-
-
-## Bocado instantáneo (aliado traicionado): pasa por Frenesí y Hambre.
-func eat_now(value: float) -> void:
-	_eat(value)
 
 
 ## Mutación gratis (cofre): se suma a la cola de elecciones.
@@ -393,8 +368,6 @@ func take_damage(amount: float) -> void:
 
 func _draw() -> void:
 	var c := Color.WHITE if _flash > 0.0 else color
-	if betrayal_mode and _flash <= 0.0:
-		c = c.lerp(Color(0.45, 0.02, 0.05), 0.6)
 	if lead_radius() > 0.0:
 		draw_arc(Vector2.ZERO, lead_radius(), 0.0, TAU, 48, Color(0.4, 1.0, 0.5, 0.08), 2.0)
 	if magnet_radius() > 0.0:

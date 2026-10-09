@@ -2,8 +2,6 @@
 
 Un survivor al revés: sos un creep de la horda, el héroe lo controla la IA. Te alimentás de los cadáveres que deja, evolucionás y al final lo matás.
 
-*El mal debe hacer sacrificios para acabar con el héroe.*
-
 ## Cómo abrirlo
 
 1. Instalá [Godot 4](https://godotengine.org/download) (4.7, versión estándar, no la .NET).
@@ -17,7 +15,6 @@ Un survivor al revés: sos un creep de la horda, el héroe lo controla la IA. Te
 | Moverse | WASD o flechas | Stick izquierdo |
 | Embestida | Espacio o Shift | RB |
 | Camuflaje (el héroe te pierde de vista, 1 vez por minuto) | Q | LB |
-| Modo traición (prender / apagar) | F | Gatillo izquierdo |
 | Evolucionar | E | Y |
 | Elegir mutación | 1 / 2 / 3 | X / A / B |
 | Reiniciar | R | Start |
@@ -41,7 +38,7 @@ La mordida y el escupitajo son automáticos: salen solos cuando el héroe o un c
 - **Mutaciones:** la biomasa también llena tu barra de nivel. Cada vez que subís, el juego se pausa y elegís 1 de 3 mejoras (las opciones están en `scripts/mutations.gd`).
 - **Liderazgo:** los compañeros dentro de tu círculo verde se vuelven más rápidos y pegan más fuerte (se ven con borde verde).
 - **Civiles:** los muñequitos amarillos deambulan lejos del héroe y huyen de vos. Comerlos da mucha biomasa, pero gritan apenas empiezan a huir y el héroe va hacia ahí a matarlos (los que mata él no dejan cadáver). Comerlos además sube tu amenaza.
-- **Traición (F):** en modo traición tus ataques también matan aliados y te los comés al instante (más biomasa y sin hacer ruido), pero se llena la barra roja. Al llenarse llega un Cazador del infierno que te caza solo a vos; si lo matás, su corazón te da una mutación y biomasa. En modo traición, Rey de la horda no potencia a nadie.
+- **Infamia y Paladín:** la barra dorada debajo de la amenaza sube cuando el héroe no puede con vos: cada civil que matás, cada segundo que sobrevivís detectado y cada vez que lo hacés retirarse. Al llenarse, una columna de luz anuncia un Paladín del cielo que te caza y cura al héroe si están cerca: separalos. Si lo matás, su corazón celestial te da una mutación y biomasa.
 - **Evoluciones:** una mutación al máximo + su pareja (la carta dice "Evoluciona con...") desbloquea una evolución dorada: Lluvia ácida, Mandíbula sangrienta, Señor de la carroña o Coraza viva.
 - **Cofres:** desde el minuto 1:30 aparece un cofre cada tanto (flecha dorada). Quedate 1 segundo encima sin recibir daño: si lo abrís, mutación gratis; si lo abre el héroe, sube de nivel.
 - **Eventos:** desde el minuto 2, cada minuto y medio: Estampida (ola de ratas), Asedio (anillo de zombis alrededor del héroe) y Luna de sangre (la horda pega el doble 30 s).

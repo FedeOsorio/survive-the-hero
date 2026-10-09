@@ -20,7 +20,7 @@ Survivor estilo Vampire Survivors al revés, en Godot 4 (GDScript), pixel art 2D
 - `scripts/hero_status.gd`: estados del héroe (sangrado, aturdido, lento) y registro de daño cuerpo a cuerpo / distancia.
 - `scripts/events.gd`, `chest.gd`: cofres en disputa y eventos de oleada (estampida, asedio, luna de sangre).
 - `scripts/puddle.gd`: charcos de Lluvia ácida.
-- `scripts/betrayal.gd`, `hunter.gd`: barra de traición (modo F, matar aliados) y Cazador del infierno.
+- `scripts/infamy.gd`, `paladin.gd`: barra de Infamia y Paladín del cielo (te caza y cura al héroe).
 - `scripts/creep_bot.gd`: bot del modo `--bot`.
 - `scripts/hero_powers.gd`: poderes del héroe, uno por nivel, hasta 5 distintos (orbes, rayo, aura, nova y pasivos).
 - `scripts/minion.gd`, `corpse.gd`, `gem.gd`, `projectile.gd`: horda, cadáveres, gemas de XP y flechas.
