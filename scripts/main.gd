@@ -36,6 +36,7 @@ var gems: Array = []
 var spits: Array = []
 var civilians: Array = []
 var _civilian_t := 0.0
+var _elite_t := 0.0
 
 var hud
 var _entities: Node2D
@@ -92,12 +93,12 @@ func _process(delta: float) -> void:
 	elapsed += delta
 	var minute := elapsed / 60.0
 
-	if not detected and elapsed >= B.FORCED_DETECTION_SECONDS:
-		set_detected()
-	if not enraged and elapsed >= B.MATCH_SECONDS:
-		enraged = true
-		hero.enrage()
-		hud.banner("¡El héroe se enfureció! Matalo ya.")
+	add_threat(player.stage * B.THREAT_PASSIVE_PER_STAGE * delta)
+	_elite_t += delta
+	if _elite_t >= B.ELITE_EVERY:
+		_elite_t = 0.0
+		spawn_minion("bruto", true)
+		hud.banner("Apareció un élite dorado: robale el corazón al héroe")
 
 	_spawn_accum += B.spawns_per_second(minute) * delta
 	while _spawn_accum >= 1.0:
@@ -121,14 +122,14 @@ func _process(delta: float) -> void:
 
 # --- Spawning ----------------------------------------------------------------
 
-func spawn_minion(type_name: String) -> void:
+func spawn_minion(type_name: String, elite := false) -> void:
 	var angle := rng.randf() * TAU
 	var dist := rng.randf_range(B.SPAWN_MIN_DIST, B.SPAWN_MAX_DIST)
 	var pos: Vector2 = hero.position + Vector2.from_angle(angle) * dist
 	pos = pos.clamp(Vector2(20, 20), B.ARENA_SIZE - Vector2(20, 20))
 	var m = Minion.new()
 	m.world = self
-	m.setup(type_name, B.minion_hp_mult(elapsed / 60.0))
+	m.setup(type_name, B.minion_hp_mult(elapsed / 60.0), elite)
 	m.position = pos
 	minions.append(m)
 	_entities.add_child(m)
@@ -167,7 +168,8 @@ func on_minion_killed(m) -> void:
 	var c = Corpse.new()
 	c.world = self
 	c.position = m.position
-	c.value = m.biomass
+	c.value = B.ELITE_HEART_BIOMASS if m.elite else m.biomass
+	c.heart = m.elite
 	c.radius = m.radius
 	c.color = m.color
 	corpses.append(c)

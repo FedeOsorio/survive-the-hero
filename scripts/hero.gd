@@ -102,6 +102,9 @@ func _check_roll() -> void:
 	for s in world.spits:
 		if not s.from_player or s.dodge_roll > B.HERO_DODGE_CHANCE:
 			continue
+		# sin detectarte no gasta la rodada en escupitajos que casi no le hacen nada
+		if not world.detected and s.damage < max_hp * B.HERO_DODGE_MIN_DAMAGE:
+			continue
 		var rel: Vector2 = position - s.position
 		var along: float = rel.dot(s.direction)
 		if along <= 0.0 or along > B.HERO_DODGE_LOOKAHEAD:
@@ -326,9 +329,6 @@ func _draw() -> void:
 		draw_line(Vector2.ZERO, _aim_locked * B.HERO_RANGE, Color(1, 0.25, 0.2, 0.55), 2.0)
 	if _roll_t > 0.0:
 		body = Color(body, 0.45)
-	# cooldown de la rodada: arco completo = rodada lista
-	var roll_ready := 1.0 - _roll_cd / B.HERO_ROLL_COOLDOWN
-	draw_arc(Vector2.ZERO, radius + 7.0, -PI / 2, -PI / 2 + TAU * roll_ready, 24, Color(0.6, 0.85, 1.0, 0.7 if _roll_cd <= 0.0 else 0.3), 2.0)
 	draw_rect(Rect2(Vector2(-radius, -radius), Vector2(radius, radius) * 2.0), Color(0.05, 0.05, 0.1))
 	draw_rect(Rect2(Vector2(-radius + 2, -radius + 2), Vector2(radius - 2, radius - 2) * 2.0), body)
 	draw_line(Vector2.ZERO, _aim * (radius + 10.0), Color(1, 0.95, 0.7), 3.0)

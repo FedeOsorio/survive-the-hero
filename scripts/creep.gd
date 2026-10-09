@@ -100,6 +100,12 @@ func lead_damage_mult() -> float:
 	return B.LEAD_DAMAGE_MULT + (rank("rey") - 1) * B.LEAD_DAMAGE_PER_RANK
 
 
+## Multiplicador de biomasa cuando vas atrás del héroe.
+func hunger() -> float:
+	var gap: int = world.hero.level - (level + 3 * stage)
+	return clampf(1.0 + gap * B.HUNGER_PER_LEVEL, 1.0, B.HUNGER_MAX)
+
+
 func mut_xp_needed() -> float:
 	return B.mutation_xp_for_level(level)
 
@@ -215,6 +221,11 @@ func _absorb(delta: float) -> void:
 	for c in world.corpses.duplicate():
 		var d := position.distance_to(c.position)
 		if d < radius + c.radius:
+			if c.heart:
+				_queued_levels += 1
+				if position.distance_to(world.hero.position) < B.STEAL_RADIUS:
+					world.add_threat(B.THREAT_PER_STOLEN_GEM * 5.0)
+				world.hud.banner("¡Corazón de élite! Mutación extra")
 			_eat(c.value)
 			world.remove_corpse(c)
 		elif d < radius + magnet:
@@ -232,7 +243,7 @@ func _eat(value: float) -> void:
 		if _combo_t > 0.0:
 			combo = minf(combo + B.COMBO_STEP, B.COMBO_MAX + 0.5 * (rank("frenesi") - 1))
 		_combo_t = B.COMBO_WINDOW + B.COMBO_WINDOW_PER_RANK * (rank("frenesi") - 1)
-	var gained := value * combo
+	var gained := value * combo * hunger()
 	biomass += gained
 	hp = minf(max_hp, hp + gained * B.HEAL_PER_BIOMASS)
 	mut_xp += gained

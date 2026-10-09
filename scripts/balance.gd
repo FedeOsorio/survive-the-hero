@@ -2,8 +2,8 @@ extends RefCounted
 ## Todos los números de balance en un solo lugar.
 ## Se ajustan acá mientras jugamos, sin tocar la lógica.
 
-const MATCH_SECONDS := 15.0 * 60.0
-const FORCED_DETECTION_SECONDS := 10.0 * 60.0
+# Sin reloj fijo: la partida dura lo que vos decidas. El héroe escala con sus
+# niveles y te detecta solo por amenaza.
 const ARENA_SIZE := Vector2(3000, 3000)
 
 # --- Creep (jugador) ---------------------------------------------------------
@@ -65,6 +65,18 @@ const THREAT_PER_DAMAGE := 0.5
 const THREAT_PER_STOLEN_GEM := 3.0
 const STEAL_RADIUS := 300.0 # robar una gema cerca del héroe suma amenaza
 const THREAT_PER_STAGE := 20.0
+const THREAT_PASSIVE_PER_STAGE := 0.4 # por segundo y por etapa: crecer te vuelve visible
+
+# Hambre: si vas atrás del héroe, cada bocado rinde más.
+# Tu poder = nivel + 3 x etapa; por cada nivel del héroe por encima, +12% de biomasa.
+const HUNGER_PER_LEVEL := 0.12
+const HUNGER_MAX := 3.0
+
+# Élites: cada tanto aparece un creep dorado. Cuando el héroe lo mata deja un
+# corazón; si lo comés, ganás una mutación al instante (y amenaza si estás cerca).
+const ELITE_EVERY := 45.0
+const ELITE_HP_MULT := 8.0
+const ELITE_HEART_BIOMASS := 10.0
 
 # --- Héroe -------------------------------------------------------------------
 const HERO_HP := 200.0
@@ -97,7 +109,8 @@ const HERO_SLASH_ARC_DEG := 130.0
 const HERO_SLASH_DAMAGE_MULT := 1.5 # daño del tajo = daño de flecha * esto
 # Rodada: el héroe esquiva tus escupitajos rodando (invulnerable mientras rueda).
 # Con la rodada en cooldown no puede esquivar: ese es el momento de castigarlo.
-const HERO_DODGE_CHANCE := 0.8
+const HERO_DODGE_CHANCE := 0.55
+const HERO_DODGE_MIN_DAMAGE := 0.04 # sin detectarte, solo rueda si el escupitajo le saca al menos este % de vida
 const HERO_ROLL_SPEED := 520.0
 const HERO_ROLL_TIME := 0.25
 const HERO_ROLL_COOLDOWN := 3.0

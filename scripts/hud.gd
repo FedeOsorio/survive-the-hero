@@ -58,6 +58,8 @@ func _draw_hud() -> void:
 			_text(font, Vector2(20, 112), "¡Pulsá E para evolucionar!", 18, Color(1, 0.9, 0.3))
 	else:
 		_text(font, Vector2(20, 88), "Forma final", 14, Color(0.9, 0.8, 0.8))
+	if p.hunger() > 1.0:
+		_text(font, Vector2(20, 158), "Hambre x%.2f" % p.hunger(), 16, Color(0.9, 0.4, 0.4))
 	if p.combo > 1.0:
 		_text(font, Vector2(20, 136), "Combo x%.2f" % p.combo, 18, Color(1, 0.55, 0.3))
 

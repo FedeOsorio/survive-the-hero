@@ -5,6 +5,7 @@ const B := preload("res://scripts/balance.gd")
 
 var world
 var value := 1.0
+var heart := false # corazón de élite: da una mutación al comerlo
 var radius := 8.0
 var color := Color.GRAY
 var _age := 0.0
@@ -26,6 +27,12 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
+	if heart:
+		draw_circle(Vector2.ZERO, 14.0, Color(1.0, 0.2, 0.3, 0.25))
+		draw_circle(Vector2(-3, -2), 4.0, Color(1.0, 0.2, 0.3))
+		draw_circle(Vector2(3, -2), 4.0, Color(1.0, 0.2, 0.3))
+		draw_colored_polygon(PackedVector2Array([Vector2(-7, -1), Vector2(7, -1), Vector2(0, 8)]), Color(1.0, 0.2, 0.3))
+		return
 	var c := color.darkened(0.55)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2(1.0, 0.55))
 	draw_circle(Vector2.ZERO, radius, c)
