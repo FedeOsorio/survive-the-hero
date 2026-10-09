@@ -203,7 +203,7 @@ func on_minion_killed(m) -> void:
 		m.queue_free()
 		return
 	kills += 1
-	if player.rank("carronia") > 0 and not m.elite and raised_count < B.RAISE_MAX \
+	if player.rank("carronia") > 0 and not m.elite and raised_count < B.RAISE_MAX and minions.size() < B.MAX_MINIONS \
 			and m.position.distance_to(player.position) < B.RAISE_RADIUS:
 		var z = spawn_minion(m.type_name, false, m.position)
 		z.max_hp = m.max_hp
