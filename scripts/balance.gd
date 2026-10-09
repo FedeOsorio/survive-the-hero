@@ -50,12 +50,12 @@ const LEAD_DAMAGE_MULT := 1.5
 const LEAD_DAMAGE_PER_RANK := 0.25
 
 # Civiles: comida que huye de vos, lejos del héroe.
-const CIVILIANS_START := 40
-const CIVILIANS_MAX := 70
-const CIVILIAN_RESPAWN := 1.5 # cada tanto aparece un caserío
+const CIVILIANS_START := 20
+const CIVILIANS_MAX := 30
+const CIVILIAN_RESPAWN := 3.0 # cada tanto aparece un caserío
 # Aparecen en grupos, en un anillo alrededor del creep y lejos del héroe.
-const CIVILIAN_GROUP_MIN := 3
-const CIVILIAN_GROUP_MAX := 5
+const CIVILIAN_GROUP_MIN := 2
+const CIVILIAN_GROUP_MAX := 4
 const CIVILIAN_GROUP_SPREAD := 40.0
 const CIVILIAN_RING_MIN := 350.0 # del creep
 const CIVILIAN_RING_MAX := 800.0
@@ -66,10 +66,10 @@ const CIVILIAN_DODGE_SPEED := 0.6
 const CIVILIAN_HP := 8.0
 const CIVILIAN_SPEED := 85.0
 const CIVILIAN_FLEE_RADIUS := 220.0
-const CIVILIAN_BIOMASS := 3.0
+const CIVILIAN_BIOMASS := 7.0
 # Comer civiles hace ruido: suma amenaza y el héroe va a investigar el lugar.
-const THREAT_PER_CIVILIAN := 10.0
-const THREAT_PER_CIVILIAN_SEEN := 20.0 # si lo matás a HERO_RANGE del héroe y sin camuflaje
+const THREAT_PER_CIVILIAN := 15.0
+const THREAT_PER_CIVILIAN_SEEN := 30.0 # si lo matás a HERO_RANGE del héroe y sin camuflaje
 const THREAT_PER_SCREAM := 2.0 # perseguir sin matar casi no suma
 # El grito empieza apenas un civil sale corriendo de vos, no cuando muere.
 # Cada grito nuevo actualiza el lugar. La alarma dura hasta que llega (a ALARM_ARRIVE_DIST)
@@ -336,7 +336,7 @@ const SHAKE_TIME := 0.12
 # Infamia: sube cuando el héroe no puede con vos. Al llenarse llega un Paladín.
 const INFAMY_NAME := "Infamia" # nombre visible de la barra (puede cambiar)
 const INFAMY_MAX := 100.0
-const INFAMY_PER_CIVILIAN := 6.0 # civiles que matás vos
+const INFAMY_PER_CIVILIAN := 12.0 # civiles que matás vos
 const INFAMY_PER_SECOND_DETECTED := 1.0
 const INFAMY_HERO_LOW := 15.0 # cada vez que el héroe baja del umbral de retirada
 const INFAMY_HERO_LOW_HP := 0.3
@@ -361,6 +361,14 @@ const PALADIN_CHARGE_DIST := 420.0
 const PALADIN_HEAL_RADIUS := 150.0
 const PALADIN_HEAL := 0.02 # x vida máxima del héroe por segundo
 const PALADIN_MAX_ALIVE := 3
-const PALADIN_NEXT_HP := 1.3 # cada Paladín siguiente
-const PALADIN_NEXT_DAMAGE := 1.15
+# Escalón: cada PALADIN_TIER_EVERY soldados enviados (el 1.º al 3.º son escalón 0).
+const PALADIN_TIER_EVERY := 3
+const PALADIN_TIER_HP := 0.3 # +30% de vida por escalón
+const PALADIN_TIER_DAMAGE := 0.35 # +35% de daño por escalón
+# Cada 3.º soldado es un Capitán del cielo: más grande, más fuerte y con onda en el martillazo.
+const CAPTAIN_HP_MULT := 1.4
+const CAPTAIN_DAMAGE_MULT := 1.6
+const CAPTAIN_RADIUS := 24.0
+const CAPTAIN_WAVE_RADIUS := 90.0 # el martillazo además pega en este radio, con el mismo aviso
+const CAPTAIN_HEART_MUTATIONS := 2
 const HOLY_HEART_BIOMASS := 0.2 # x costo de tu próxima evolución

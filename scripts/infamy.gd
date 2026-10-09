@@ -42,7 +42,10 @@ func _process(delta: float) -> void:
 		_arrival_t = B.PALADIN_ARRIVAL
 		arrival_pos = (hero.position + Vector2.from_angle(world.rng.randf() * TAU) * B.PALADIN_SPAWN_DIST) \
 				.clamp(Vector2(30, 30), B.ARENA_SIZE - Vector2(30, 30))
-		world.hud.banner("El cielo envía refuerzos" if not paladins.is_empty() else "El cielo envía a un Paladín")
+		if Paladin.is_captain(_spawned):
+			world.hud.banner("El cielo envía a un Capitán")
+		else:
+			world.hud.banner("El cielo envía refuerzos" if not paladins.is_empty() else "El cielo envía a un Paladín")
 
 
 ## Sube aunque haya Paladines vivos; solo se frena mientras uno está llegando.
@@ -76,6 +79,7 @@ func on_paladin_killed(p) -> void:
 	c.world = world
 	c.position = p.position
 	c.holy = true
+	c.holy_mutations = B.CAPTAIN_HEART_MUTATIONS if p.captain else 1
 	c.value = 0.0
 	c.radius = 12.0
 	world.corpses.append(c)

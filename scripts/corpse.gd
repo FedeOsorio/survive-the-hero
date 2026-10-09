@@ -7,6 +7,7 @@ var world
 var value := 1.0
 var heart := false # corazón de élite: da una mutación al comerlo
 var holy := false # corazón celestial del Paladín: mutación y biomasa
+var holy_mutations := 1 # el del Capitán da 2
 var radius := 8.0
 var color := Color.GRAY
 var _age := 0.0

@@ -286,8 +286,9 @@ func _absorb(delta: float) -> void:
 		if d < radius + c.radius:
 			if c.holy:
 				biomass += maxf(evolve_cost(), 0.0) * B.HOLY_HEART_BIOMASS
-				world.hud.banner("¡Corazón celestial! Mutación extra")
-				grant_mutation()
+				world.hud.banner("¡Corazón celestial! Mutación extra" if c.holy_mutations == 1 else "¡Corazón del Capitán! Dos mutaciones")
+				for i in c.holy_mutations:
+					grant_mutation()
 			if c.heart:
 				_queued_levels += 1
 				if position.distance_to(world.hero.position) < B.STEAL_RADIUS:

@@ -2,7 +2,8 @@ extends Node2D
 ## Paladín del cielo: llega cuando se llena la Infamia, se une al héroe y te caza.
 ## Martillazo con aviso (arco), carga en línea recta con aviso (línea dorada)
 ## y aura que cura al héroe si están cerca. Tu horda le pega; el héroe no.
-## Al morir deja un corazón celestial.
+## Al morir deja un corazón celestial. Cada 3.º soldado es un Capitán: más grande,
+## más fuerte y su martillazo deja una onda alrededor.
 
 const B := preload("res://scripts/balance.gd")
 
@@ -24,16 +25,27 @@ var _charge_dir := Vector2.RIGHT
 var _charge_hit := false
 var _flash := 0.0
 var _healing := false
+var captain := false
 
 
-## Stats según el creep al aparecer; "index" es cuántos Paladines vinieron antes.
+## Stats según el creep al aparecer; "index" es cuántos soldados vinieron antes.
 func setup(creep, index: int) -> void:
-	var dmg_scale := pow(B.PALADIN_NEXT_DAMAGE, index)
-	max_hp = creep.max_hp * B.PALADIN_HP_MULT * pow(B.PALADIN_NEXT_HP, index)
+	var tier := index / B.PALADIN_TIER_EVERY
+	captain = is_captain(index)
+	var hp_scale := (1.0 + B.PALADIN_TIER_HP * tier) * (B.CAPTAIN_HP_MULT if captain else 1.0)
+	var dmg_scale := (1.0 + B.PALADIN_TIER_DAMAGE * tier) * (B.CAPTAIN_DAMAGE_MULT if captain else 1.0)
+	if captain:
+		radius = B.CAPTAIN_RADIUS
+	max_hp = creep.max_hp * B.PALADIN_HP_MULT * hp_scale
 	hp = max_hp
 	speed = creep.speed * B.PALADIN_SPEED_MULT
 	hammer_damage = creep.max_hp * B.PALADIN_HAMMER_DAMAGE * dmg_scale
 	charge_damage = creep.max_hp * B.PALADIN_CHARGE_DAMAGE * dmg_scale
+
+
+## El soldado número index + 1 es Capitán si es el 3.º, 6.º, 9.º...
+static func is_captain(index: int) -> bool:
+	return (index + 1) % B.PALADIN_TIER_EVERY == 0
 
 
 func _ready() -> void:
@@ -95,7 +107,10 @@ func _hammer() -> void:
 	var p = world.player
 	var to_p: Vector2 = p.position - position
 	var half := deg_to_rad(B.PALADIN_HAMMER_ARC_DEG) * 0.5
-	if to_p.length() < hammer_reach() + p.radius and absf(_hammer_dir.angle_to(to_p)) <= half:
+	var hit: bool = to_p.length() < hammer_reach() + p.radius and absf(_hammer_dir.angle_to(to_p)) <= half
+	if captain and to_p.length() < B.CAPTAIN_WAVE_RADIUS + p.radius:
+		hit = true
+	if hit:
 		p.take_damage(hammer_damage)
 
 
@@ -118,11 +133,17 @@ func _draw() -> void:
 		for i in 13:
 			pts.append(Vector2.from_angle(a - half + half * 2.0 * i / 12.0) * hammer_reach())
 		draw_colored_polygon(pts, Color(1.0, 0.85, 0.3, 0.25))
+		if captain:
+			draw_circle(Vector2.ZERO, B.CAPTAIN_WAVE_RADIUS, Color(1.0, 0.75, 0.1, 0.12))
+			draw_arc(Vector2.ZERO, B.CAPTAIN_WAVE_RADIUS, 0.0, TAU, 40, Color(1.0, 0.75, 0.1, 0.7), 2.0)
 	if _hammer_fx > 0.0:
 		draw_arc(Vector2.ZERO, hammer_reach() * 0.85, a - half, a + half, 16, Color(1, 1, 0.85, 0.9), 6.0)
+		if captain:
+			draw_arc(Vector2.ZERO, B.CAPTAIN_WAVE_RADIUS * (1.0 - _hammer_fx * 2.0), 0.0, TAU, 40, Color(1.0, 0.85, 0.3, 0.9), 5.0)
 	if _charge_aim > 0.0:
 		draw_line(Vector2.ZERO, _charge_dir * B.PALADIN_CHARGE_DIST, Color(1.0, 0.85, 0.2, 0.7), 3.0)
-	var body := Color.WHITE if _flash > 0.0 else Color(0.95, 0.88, 0.6)
+	var gold := Color(1.0, 0.75, 0.15) if captain else Color(0.95, 0.88, 0.6)
+	var body := Color.WHITE if _flash > 0.0 else gold
 	draw_circle(Vector2.ZERO, radius + 2.0, Color(0.3, 0.25, 0.05))
 	draw_circle(Vector2.ZERO, radius, body)
 	draw_arc(Vector2(0, -radius - 6), 8.0, 0.0, TAU, 16, Color(1.0, 0.9, 0.3), 2.0) # aureola
