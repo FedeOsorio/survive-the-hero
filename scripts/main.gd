@@ -191,8 +191,7 @@ func raise_alarm(pos: Vector2) -> void:
 	_alarm_arrived = false
 
 
-## Al llegar al lugar busca unos segundos más. Si durante la alarma te ve
-## a tiro y sin camuflaje, te detecta al instante.
+## Al llegar al lugar busca unos segundos más.
 func _update_alarm(delta: float) -> void:
 	alarm_t = maxf(alarm_t - delta, 0.0)
 	if alarm_t <= 0.0:
@@ -200,13 +199,12 @@ func _update_alarm(delta: float) -> void:
 	if not _alarm_arrived and hero.position.distance_to(alarm_pos) < B.ALARM_ARRIVE_DIST:
 		_alarm_arrived = true
 		alarm_t = minf(alarm_t, B.ALARM_SEARCH_TIME)
-	if not detected and player.stealth_t <= 0.0 and hero.position.distance_to(player.position) < B.HERO_RANGE:
-		set_detected()
 
 
 func on_civilian_killed(c) -> void:
 	civilians.erase(c)
-	add_threat(B.THREAT_PER_CIVILIAN)
+	var seen: bool = player.stealth_t <= 0.0 and hero.position.distance_to(player.position) < B.HERO_RANGE
+	add_threat(B.THREAT_PER_CIVILIAN_SEEN if seen else B.THREAT_PER_CIVILIAN)
 	infamy.add(B.INFAMY_PER_CIVILIAN)
 	raise_alarm(c.position)
 	var corpse = Corpse.new()

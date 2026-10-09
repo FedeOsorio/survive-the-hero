@@ -38,6 +38,7 @@ var _roll_cd := 0.0
 var _roll_dir := Vector2.ZERO
 var _aim_windup := 0.0
 var _aim_locked := Vector2.RIGHT
+var _horde_turn := false # cazando: el próximo disparo va a la horda
 var _rng := RandomNumberGenerator.new()
 var powers # hero_powers.gd: orbes, rayo, aura, nova, etc.
 var status # hero_status.gd: sangrado, aturdimiento, lentitud
@@ -93,10 +94,18 @@ func _process(delta: float) -> void:
 		_aim_windup -= delta
 		if _aim_windup <= 0.0:
 			_fire_t = cooldown
-			_fire_dir(_aim_locked)
+			_fire_dir(_aim_locked, _close_horde())
 	elif _fire_t <= 0.0 and _roll_t <= 0.0 and _target_valid() and position.distance_to(target.position) <= B.HERO_RANGE:
-		if target == world.player and world.detected:
+		var hunting_you: bool = target == world.player and world.detected
+		var guard: Array = _close_horde() if hunting_you else []
+		if _horde_turn and not guard.is_empty():
+			# cazando con creeps cerca, alterna: un disparo a la horda y uno a vos
+			_horde_turn = false
+			_fire_t = cooldown
+			_fire_dir((guard[0].position - position).normalized(), guard.slice(1) if guard.size() > 1 else guard)
+		elif hunting_you:
 			# contra el jugador apunta primero y avisa: se puede esquivar
+			_horde_turn = true
 			_aim_windup = B.HERO_AIM_WINDUP
 			_aim_locked = (target.position - position).normalized()
 			_aim = _aim_locked
@@ -301,10 +310,11 @@ func _pick_target():
 
 
 ## Cazando: a vos si estás a tiro; si no, al creep más cerca de la línea hacia vos.
-## Con 3 o más creeps encima, primero zafa tirándole al más cercano.
+## Con HUNT_ESCAPE_COUNT creeps encima, primero zafa tirándole al más cercano.
+## Con creeps a menos de HUNT_SHARE_RADIUS, el disparo alterna entre vos y la horda.
 func _pick_hunt_target():
 	var close: Array = []
-	for m in world.minions_near(position):
+	for m in _close_horde():
 		if position.distance_to(m.position) < B.HUNT_ESCAPE_RADIUS:
 			close.append(m)
 	if close.size() >= B.HUNT_ESCAPE_COUNT:
@@ -345,13 +355,30 @@ func _fire() -> void:
 	_fire_dir((target.position - position).normalized())
 
 
-func _fire_dir(base: Vector2) -> void:
+## Con "extra" (creeps cercanos), la primera flecha va a "base" y las demás a esos creeps.
+func _fire_dir(base: Vector2, extra: Array = []) -> void:
 	var dir := base.rotated(deg_to_rad(_rng.randf_range(-B.HERO_AIM_ERROR_DEG, B.HERO_AIM_ERROR_DEG)))
 	_aim = dir
 	var spread := deg_to_rad(12.0)
 	for i in arrows:
-		var offset := (i - (arrows - 1) * 0.5) * spread
-		world.spawn_projectile(position + dir * radius, dir.rotated(offset), damage, pierce)
+		var d := dir.rotated((i - (arrows - 1) * 0.5) * spread)
+		if not extra.is_empty():
+			d = dir
+			if i > 0:
+				var m = extra[(i - 1) % extra.size()]
+				if is_instance_valid(m):
+					d = (m.position - position).normalized()
+		world.spawn_projectile(position + dir * radius, d, damage, pierce)
+
+
+## Creeps a menos de HUNT_SHARE_RADIUS, del más cercano al más lejano.
+func _close_horde() -> Array:
+	var out: Array = []
+	for m in world.minions:
+		if position.distance_to(m.position) < B.HUNT_SHARE_RADIUS:
+			out.append(m)
+	out.sort_custom(func(a, b): return position.distance_squared_to(a.position) < position.distance_squared_to(b.position))
+	return out
 
 
 func _gain_xp(amount: float) -> void:

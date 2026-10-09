@@ -69,6 +69,8 @@ const CIVILIAN_FLEE_RADIUS := 220.0
 const CIVILIAN_BIOMASS := 3.0
 # Comer civiles hace ruido: suma amenaza y el héroe va a investigar el lugar.
 const THREAT_PER_CIVILIAN := 10.0
+const THREAT_PER_CIVILIAN_SEEN := 20.0 # si lo matás a HERO_RANGE del héroe y sin camuflaje
+const THREAT_PER_SCREAM := 2.0 # perseguir sin matar casi no suma
 # El grito empieza apenas un civil sale corriendo de vos, no cuando muere.
 # Cada grito nuevo actualiza el lugar. La alarma dura hasta que llega (a ALARM_ARRIVE_DIST)
 # y ALARM_SEARCH_TIME más buscando, con un máximo de ALARM_MAX_TIME desde el último grito.
@@ -156,12 +158,13 @@ const HERO_DETECTED_TARGET_BONUS := 150.0 # chico: si tiene creeps encima, se de
 # Cacería: con el jugador detectado, el héroe va por vos.
 const HUNT_PULL := 3.0
 const HUNT_PULL_CROWDED := 1.5 # con mucha horda encima
-const HUNT_CROWDED_DANGER := 5.0
+const HUNT_CROWDED_DANGER := 3.0
 const HUNT_IDEAL_DIST := 220.0
 const HUNT_GEM_RADIUS := 150.0 # mientras caza, solo junta las gemas del camino
 const HUNT_GEM_PULL := 1.0
-const HUNT_ESCAPE_RADIUS := 60.0 # con tantos creeps así de cerca, primero zafa
-const HUNT_ESCAPE_COUNT := 3
+const HUNT_ESCAPE_RADIUS := 80.0 # con tantos creeps así de cerca, primero zafa
+const HUNT_ESCAPE_COUNT := 2
+const HUNT_SHARE_RADIUS := 150.0 # con creeps así de cerca, alterna un disparo a vos y uno a la horda
 const HERO_ENRAGE_DAMAGE_MULT := 5.0
 const HERO_ENRAGE_SPEED_MULT := 1.3
 
