@@ -98,7 +98,7 @@ func summary() -> String:
 
 
 func _power_damage(id: String, base: float, per_rank: float) -> float:
-	return base + per_rank * (rank(id) - 1)
+	return (base + per_rank * (rank(id) - 1)) * hero.power_mult
 
 
 func _process(delta: float) -> void:

@@ -47,6 +47,7 @@ var title := "Arquero"
 var article := "el"
 var color := Color(0.3, 0.55, 1.0)
 var speed_mult := 1.0 # del tipo de héroe y del enfurecido
+var power_mult := 1.0 # daño de los poderes: solo lo sube el enfurecido
 var was_low := false # para la Infamia: ya sumó por tenerlo con poca vida
 
 
@@ -432,6 +433,7 @@ func _apply_ranks() -> void:
 
 func enrage() -> void:
 	damage *= B.HERO_ENRAGE_DAMAGE_MULT
+	power_mult *= B.HERO_ENRAGE_DAMAGE_MULT
 	speed_mult *= B.HERO_ENRAGE_SPEED_MULT
 	_apply_ranks()
 
