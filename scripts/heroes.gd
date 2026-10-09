@@ -2,8 +2,9 @@ extends Node2D
 ## Los tres héroes de la partida (B.HEROES): llegan a horario fijo (o antes, si
 ## matás al anterior: HERO_NEXT_AFTER_KILL) por un portal
 ## que se abre cerca tuyo, cada uno con su IA, nivel y poderes. "nearest" da el
-## héroe vivo más cercano a un punto. Al minuto MATCH_MINUTES los que queden se
-## enfurecen. Ganás cuando caen los tres.
+## héroe vivo más cercano a un punto. Al minuto MATCH_MINUTES los que queden
+## escapan en una columna de luz (victoria por escape). Si caen los tres, victoria.
+## Anota cuándo llega y cae cada uno, para la tabla de la pantalla final.
 
 const B := preload("res://scripts/balance.gd")
 const Hero := preload("res://scripts/hero.gd")
@@ -16,11 +17,14 @@ var _next := 0 # índice del próximo en llegar
 var _portal_open := false
 var _dawn := false
 var _best_level := 1 # el nivel más alto que alcanzó un héroe en la partida
+var _escape_t := -1.0 # escapando al amanecer: todo lo demás queda en pausa
+var history: Array = [] # {name, arrive, arrive_level, died, died_level, escaped}
 var _early_at := -1.0 # si matás a uno, el siguiente se adelanta a este segundo
 
 
 func _ready() -> void:
 	z_index = 0
+	process_mode = Node.PROCESS_MODE_ALWAYS # el escape corre con el resto en pausa
 
 
 ## El primero (el Arquero) arranca ya en la arena.
@@ -75,8 +79,13 @@ func any_within(pos: Vector2, dist: float) -> bool:
 	return false
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if not world.running:
+		return
+	if _escape_t >= 0.0:
+		_update_escape(delta)
+		return
+	if get_tree().paused:
 		return
 	var t: float = world.elapsed
 	for h in list:
@@ -91,11 +100,41 @@ func _process(_delta: float) -> void:
 	if not _dawn and t >= B.MATCH_MINUTES * 60.0:
 		_dawn = true
 		if not list.is_empty():
-			world.enraged = true
-			world.hud.banner("Amanece: los héroes resisten")
-			for h in list:
-				h.enrage()
+			world.hud.banner("Amanece: el cielo se lleva a los héroes")
+			_escape_t = B.HERO_ESCAPE_TIME
+			world.escaping = true
+			get_tree().paused = true
 	queue_redraw()
+
+
+## Los héroes vivos suben en una columna de luz y desaparecen; después, fin de partida.
+func _update_escape(delta: float) -> void:
+	_escape_t -= delta
+	for h in list:
+		h.modulate.a = clampf(_escape_t / B.HERO_ESCAPE_TIME, 0.0, 1.0)
+		h.position.y -= 40.0 * delta
+	queue_redraw()
+	if _escape_t > 0.0:
+		return
+	_escape_t = -1.0
+	var names: Array = []
+	for h in list:
+		names.append(h.title)
+		_record(h).escaped = true
+		_record(h).died_level = h.level
+	world.escaping = false
+	get_tree().paused = false
+	world.end_game("escape", "Escaparon: %s" % ", ".join(names)) # la última fila los lista
+	for h in list:
+		h.queue_free()
+	list.clear()
+
+
+func _record(h) -> Dictionary:
+	for r in history:
+		if r.name == h.title:
+			return r
+	return {}
 
 
 func _open_portal() -> void:
@@ -109,7 +148,7 @@ func _open_portal() -> void:
 		if inner.has_point(portal_pos):
 			break
 	portal_pos = portal_pos.clamp(inner.position, inner.end)
-	world.hud.banner("Llegó %s %s" % [cfg.article, cfg.name])
+	world.hud.banner("Se abre un portal: llega %s %s" % [cfg.article, cfg.name])
 
 
 func _spawn(pos: Vector2) -> void:
@@ -118,8 +157,9 @@ func _spawn(pos: Vector2) -> void:
 	h.position = pos
 	world.add_entity(h)
 	h.setup(B.HEROES[_next], arrival_level(_next))
-	if world.enraged:
-		h.enrage()
+	if _next > 0:
+		world.hud.banner("Llegó %s %s (nv %d): %s" % [h.article, h.title, h.level, h.powers.summary()])
+	history.append({"name": h.title, "arrive": world.elapsed, "arrive_level": h.level, "died": -1.0, "died_level": 0, "escaped": false})
 	list.append(h)
 	_next += 1
 	_early_at = -1.0
@@ -128,18 +168,26 @@ func _spawn(pos: Vector2) -> void:
 func on_hero_killed(h) -> void:
 	list.erase(h)
 	killed += 1
+	_record(h).died = world.elapsed
+	_record(h).died_level = h.level
 	h.queue_free()
 	if _next < total() and not _portal_open:
 		var at: float = world.elapsed + B.HERO_NEXT_AFTER_KILL
 		_early_at = minf(_early_at, at) if _early_at >= 0.0 else at
 	if killed >= total():
 		var t := int(world.elapsed)
-		world.end_game(true, "Derrotaste a los tres héroes en %02d:%02d." % [t / 60, t % 60])
+		# hasta la tanda 07 no hay Último Bastión: matar a los tres es la victoria total
+		world.end_game("total", "Derrotaste a los tres héroes en %02d:%02d. Pronto: el Último Bastión" % [t / 60, t % 60])
 	else:
 		world.hud.banner("¡Cayó %s %s!" % [h.article, h.title])
 
 
 func _draw() -> void:
+	if _escape_t >= 0.0:
+		var k := 1.0 - _escape_t / B.HERO_ESCAPE_TIME
+		for h in list:
+			draw_rect(Rect2(h.position + Vector2(-18, -700), Vector2(36, 720)), Color(1.0, 0.9, 0.45, 0.2 + 0.4 * k))
+			draw_circle(h.position, 30.0, Color(1.0, 0.95, 0.6, 0.3 + 0.4 * k))
 	if not _portal_open:
 		return
 	var k := clampf(1.0 - (next_arrival() - world.elapsed) / B.HERO_ARRIVAL_WARNING, 0.0, 1.0)

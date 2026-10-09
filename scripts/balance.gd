@@ -168,15 +168,15 @@ const HUNT_GEM_PULL := 1.0
 const HUNT_ESCAPE_RADIUS := 80.0 # con tantos creeps así de cerca, primero zafa
 const HUNT_ESCAPE_COUNT := 2
 const HUNT_SHARE_RADIUS := 150.0 # con creeps así de cerca, alterna un disparo a vos y uno a la horda
-const HERO_ENRAGE_DAMAGE_MULT := 2.0 # al amanecer (minuto MATCH_MINUTES) con héroes vivos
-const HERO_ENRAGE_SPEED_MULT := 1.2
 
 # Tres héroes en 15 minutos: llegan a horario fijo, haya muerto o no el anterior.
 # Ganás matando a los tres. "hp", "speed" y "damage" multiplican la vida, la velocidad
 # y el daño de las flechas; "powers" son los poderes con los que llega (rango 1).
-# "level_bonus": llega en máx(nivel más alto de los héroes anteriores, tu nivel) + esto,
-# solo con sus poderes de inicio (los poderes por nivel los define un plan aparte).
-const MATCH_MINUTES := 15.0
+# "level_bonus": llega en máx(nivel más alto de los héroes anteriores, tu nivel) + esto.
+# "table": +1 rango del poder de cada nivel (índice 0 = nivel 2, hasta el 20; después solo stats).
+# Al llegar se aplican en silencio todas las filas hasta su nivel de llegada.
+const MATCH_MINUTES := 15.0 # amanece: los héroes vivos escapan y termina la partida
+const HERO_ESCAPE_TIME := 2.0 # suben en una columna de luz; todo lo demás queda quieto
 const HORDE_IDLE_DIST := 120.0 # sin héroes vivos, la horda te sigue a esta distancia
 const HERO_ARRIVAL_WARNING := 5.0 # banner y portal antes de que llegue
 const HERO_NEXT_AFTER_KILL := 60.0 # si matás a uno, el siguiente llega a más tardar en estos segundos
@@ -184,18 +184,22 @@ const HERO_PORTAL_MIN := 600.0 # distancia del portal a vos
 const HERO_PORTAL_MAX := 900.0
 const HEROES := [
 	{"name": "Arquero", "article": "el", "minute": 0.0, "level": 1, "hp": 1.0, "speed": 1.0, "damage": 1.0,
-		"powers": [], "color": Color(0.3, 0.55, 1.0)},
+		"powers": [], "color": Color(0.3, 0.55, 1.0),
+		"table": ["perforante", "multiple", "botas", "rayo", "perforante", "multiple", "orbes", "rayo", "botas",
+			"perforante", "multiple", "rayo", "orbes", "botas", "rayo", "orbes", "rayo", "orbes", "orbes"]},
 	{"name": "Caballero", "article": "el", "minute": 5.0, "level_bonus": 2, "hp": 1.5, "speed": 0.9, "damage": 0.8,
-		"powers": ["aura", "nova"], "color": Color(0.78, 0.8, 0.88)},
+		"powers": ["aura", "nova"], "color": Color(0.78, 0.8, 0.88),
+		"table": ["aura", "orbes", "nova", "aura", "botas", "orbes", "rayo", "nova", "aura",
+			"orbes", "botas", "nova", "rayo", "aura", "orbes", "nova", "botas", "rayo", "orbes"]},
 	{"name": "Maga", "article": "la", "minute": 10.0, "level_bonus": 4, "hp": 0.8, "speed": 1.05, "damage": 1.15,
-		"powers": ["rayo", "orbes"], "color": Color(0.72, 0.4, 0.95)},
+		"powers": ["rayo", "orbes"], "color": Color(0.72, 0.4, 0.95),
+		"table": ["rayo", "orbes", "multiple", "rayo", "nova", "orbes", "aura", "rayo", "multiple",
+			"nova", "orbes", "rayo", "aura", "nova", "multiple", "orbes", "nova", "aura", "nova"]},
 ]
 
-# Poderes del héroe: en cada nivel elige 1 de 3 (nuevo o mejora), hasta 5 distintos.
+# Poderes del héroe: cada nivel sube el de su fila en la tabla de su héroe (HEROES.table).
 # Como en Vampire Survivors: rango 1 es débil y cada rango lo mejora bastante.
 # Daño = base + por_rango x (rango - 1). No depende del daño de flecha.
-const HERO_MAX_POWERS := 5
-const HERO_POWER_CHOICES := 3
 # Orbes de fuego: giran alrededor del héroe y queman lo que tocan.
 const ORB_DAMAGE := 3.0
 const ORB_DAMAGE_PER_RANK := 3.0
@@ -340,10 +344,8 @@ const SIEGE_RADIUS := 220.0
 const BLOOD_MOON_TIME := 30.0
 const BLOOD_MOON_DAMAGE_MULT := 2.0
 
-# El héroe se adapta: con el jugador detectado elige poderes según cómo lo atacás.
+# Registro del daño que le hacés al héroe (cuerpo a cuerpo o a distancia), por estos segundos.
 const ADAPT_WINDOW := 30.0
-const ADAPT_SHARE := 0.6
-const ADAPT_WEIGHT := 3.0
 
 # Golpe con feedback: números de daño, parpadeo y temblor de pantalla.
 const DMG_NUMBER_TIME := 0.6

@@ -1,7 +1,7 @@
 extends Node2D
 ## Estados del héroe (hijo del nodo del héroe): sangrado, aturdimiento,
 ## lentitud de los charcos ácidos y el registro del daño que le hace el jugador
-## (cuerpo a cuerpo o a distancia), que usa para adaptar sus poderes.
+## (cuerpo a cuerpo o a distancia).
 
 const B := preload("res://scripts/balance.gd")
 

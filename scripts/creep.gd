@@ -357,7 +357,7 @@ func choose_mutation(index: int) -> void:
 		hp = minf(max_hp, hp + max_hp * B.MUT_HP)
 	else:
 		_recalc_stats()
-	get_tree().paused = false
+	get_tree().paused = world.escaping # si amaneció, el resto sigue quieto
 	if _queued_levels > 0:
 		_offer_mutation()
 
@@ -369,7 +369,7 @@ func take_damage(amount: float) -> void:
 	_flash = 0.1
 	if hp <= 0.0:
 		hp = 0.0
-		world.end_game(false, "El héroe te mató siendo %s nivel %d." % [stage_name(), level])
+		world.end_game("derrota", "Te mataron siendo %s nivel %d." % [stage_name(), level])
 
 
 func _draw() -> void:

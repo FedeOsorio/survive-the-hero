@@ -15,6 +15,11 @@ var _arrival_t := 0.0 # columna de luz: el Paladín está por llegar
 var arrival_pos := Vector2.ZERO
 
 
+## Cuántos soldados del cielo mandó en la partida.
+func sent() -> int:
+	return _spawned
+
+
 func arriving() -> bool:
 	return _arrival_t > 0.0
 

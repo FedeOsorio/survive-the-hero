@@ -1,19 +1,18 @@
 extends Node2D
-## Poderes del héroe (hijo del nodo del héroe). En cada nivel elige 1 de 3:
-## un poder nuevo o subir uno que ya tiene, hasta 5 poderes distintos.
+## Poderes del héroe (hijo del nodo del héroe). Cada nivel sube el poder de su
+## fila en la tabla fija de su héroe (B.HEROES.table): termina con 5 distintos.
 ## Los de área le pegan a la horda y al jugador por igual; rayo y nova avisan antes.
-## Con el jugador detectado, elige según cómo lo atacás (cuerpo a cuerpo o a distancia).
 
 const B := preload("res://scripts/balance.gd")
 
 const LIST := {
-	"orbes": {"name": "Orbes de fuego", "max": 5},
-	"rayo": {"name": "Rayo", "max": 5},
-	"aura": {"name": "Aura sagrada", "max": 5},
-	"nova": {"name": "Nova", "max": 5},
-	"perforante": {"name": "Flechas perforantes", "max": 3},
-	"multiple": {"name": "Lluvia de flechas", "max": 3},
-	"botas": {"name": "Botas aladas", "max": 3},
+	"orbes": {"name": "Orbes de fuego", "max": 5, "short": "Orbes"},
+	"rayo": {"name": "Rayo", "max": 5, "short": "Rayo"},
+	"aura": {"name": "Aura sagrada", "max": 5, "short": "Aura"},
+	"nova": {"name": "Nova", "max": 5, "short": "Nova"},
+	"perforante": {"name": "Flechas perforantes", "max": 3, "short": "Perforantes"},
+	"multiple": {"name": "Lluvia de flechas", "max": 3, "short": "Lluvia"},
+	"botas": {"name": "Botas aladas", "max": 3, "short": "Botas"},
 }
 
 var hero
@@ -39,66 +38,36 @@ func rank(id: String) -> int:
 	return ranks.get(id, 0)
 
 
-## Elige un poder al subir de nivel. Devuelve el id, o "" si ya tiene todo al máximo.
-func level_up() -> String:
-	var pool: Array = []
-	for id in LIST:
-		var r := rank(id)
-		if r >= LIST[id].max:
-			continue
-		if r == 0 and ranks.size() >= B.HERO_MAX_POWERS:
-			continue
-		pool.append(id)
-	if pool.is_empty():
+## Sube el poder de la fila de "level" en la tabla del héroe (+1 rango, sin pasar
+## del máximo). Devuelve el id, o "" si ese nivel no tiene fila. "quiet": sin banner.
+func apply_level(level: int, table: Array, quiet := false) -> String:
+	var i := level - 2
+	if i < 0 or i >= table.size():
 		return ""
-	var options: Array = []
-	while options.size() < B.HERO_POWER_CHOICES and not pool.is_empty():
-		options.append(pool.pop_at(_rng.randi_range(0, pool.size() - 1)))
-	var favored := _favored()
-	var weights: Array = []
-	var total := 0.0
-	for id in options:
-		var w: float = B.ADAPT_WEIGHT if favored.has(id) else 1.0
-		weights.append(w)
-		total += w
-	var roll := _rng.randf() * total
-	var pick: String = options[-1]
-	for i in options.size():
-		roll -= weights[i]
-		if roll <= 0.0:
-			pick = options[i]
-			break
-	ranks[pick] = rank(pick) + 1
-	if favored.has(pick):
-		world.hud.banner("El héroe se adapta: %s" % LIST[pick].name)
-	elif ranks[pick] == 1:
-		world.hud.banner("El héroe aprendió %s" % LIST[pick].name)
-	return pick
+	var id: String = table[i]
+	if rank(id) >= LIST[id].max:
+		return ""
+	ranks[id] = rank(id) + 1
+	if not quiet:
+		if ranks[id] == 1:
+			world.hud.banner("%s aprendió %s" % [hero.full_name(), LIST[id].name])
+		else:
+			world.hud.banner("%s %s sube a %d" % [LIST[id].name, hero.of_name(), ranks[id]])
+	return id
 
 
-## Con el jugador detectado, favorece lo que contrarresta cómo lo estás atacando.
-func _favored() -> Array:
-	if not world.detected:
-		return []
-	var share: float = hero.status.melee_share()
-	if share < 0.0:
-		return []
-	if share > B.ADAPT_SHARE:
-		return ["aura", "nova"]
-	if 1.0 - share > B.ADAPT_SHARE:
-		return ["rayo", "botas"]
-	return []
-
-
+## "Aura 4, Nova 3, Orbes 3": del rango más alto al más bajo, con nombres cortos.
 func summary() -> String:
+	var ids: Array = ranks.keys()
+	ids.sort_custom(func(a, b): return ranks[a] > ranks[b])
 	var parts: Array = []
-	for id in ranks:
-		parts.append("%s %d" % [LIST[id].name, ranks[id]])
+	for id in ids:
+		parts.append("%s %d" % [LIST[id].short, ranks[id]])
 	return ", ".join(parts)
 
 
 func _power_damage(id: String, base: float, per_rank: float) -> float:
-	return (base + per_rank * (rank(id) - 1)) * hero.power_mult
+	return base + per_rank * (rank(id) - 1)
 
 
 func _process(delta: float) -> void:

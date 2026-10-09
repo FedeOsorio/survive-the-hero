@@ -1,6 +1,7 @@
 extends CanvasLayer
 ## Interfaz: vida, biomasa, nivel, reloj con la próxima llegada, amenaza,
-## vida y nivel de cada héroe vivo con su flecha, elección de mutaciones y pantalla final. Corre aunque el juego esté en pausa.
+## vida y nivel de cada héroe vivo con su flecha, elección de mutaciones y pantalla
+## final (resultado, tabla por minuto y botón Copiar tabla). Corre aunque el juego esté en pausa.
 
 const B := preload("res://scripts/balance.gd")
 const Mutations := preload("res://scripts/mutations.gd")
@@ -9,6 +10,12 @@ var world
 var _view: Control
 var _banner_text := ""
 var _banner_t := 0.0
+var _copy: Button
+var _copied_t := 0.0
+
+const RESULTS := ["derrota", "escape", "victoria", "total"]
+const RESULT_TITLES := {"derrota": "DERROTA", "escape": "VICTORIA POR ESCAPE", "victoria": "VICTORIA", "total": "VICTORIA TOTAL"}
+const RESULT_SHORT := {"derrota": "Derrota", "escape": "Escape", "victoria": "Victoria", "total": "Victoria total"}
 
 
 func _ready() -> void:
@@ -18,6 +25,16 @@ func _ready() -> void:
 	_view.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_view.draw.connect(_draw_hud)
 	add_child(_view)
+	_copy = Button.new()
+	_copy.text = "Copiar tabla"
+	_copy.visible = false
+	_copy.pressed.connect(_on_copy)
+	add_child(_copy)
+
+
+func _on_copy() -> void:
+	DisplayServer.clipboard_set(world.stats_text())
+	_copied_t = 2.0
 
 
 func banner(text: String) -> void:
@@ -37,6 +54,12 @@ func _process(delta: float) -> void:
 				p.choose_mutation(i)
 				break
 	_banner_t = maxf(_banner_t - delta, 0.0)
+	_copied_t = maxf(_copied_t - delta, 0.0)
+	_copy.visible = not world.running
+	if _copy.visible:
+		_copy.position = Vector2(_view.size.x * 0.5 - 70, _view.size.y - 70)
+		_copy.size = Vector2(140, 32)
+		_copy.text = "¡Copiada!" if _copied_t > 0.0 else "Copiar tabla"
 	_view.queue_redraw()
 
 
@@ -115,15 +138,33 @@ func _draw_hud() -> void:
 		_draw_choices(font, p)
 
 	if not world.running:
-		_view.draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.6))
-		var title := "¡GANASTE!" if world.won else "PERDISTE"
-		var col := Color(0.4, 1, 0.5) if world.won else Color(1, 0.35, 0.3)
-		_text_centered(font, Vector2(size.x * 0.5, size.y * 0.42), title, 56, col)
-		_text_centered(font, Vector2(size.x * 0.5, size.y * 0.52), world.end_reason, 22, Color.WHITE)
-		var et := int(world.elapsed)
-		_text_centered(font, Vector2(size.x * 0.5, size.y * 0.58), "Tiempo %02d:%02d · Héroes muertos %d/%d · Tu nivel %d" % [
-				et / 60, et % 60, world.heroes.killed, world.heroes.total(), p.level], 18, Color(0.9, 0.9, 0.95))
-		_text_centered(font, Vector2(size.x * 0.5, size.y * 0.65), "R para jugar de nuevo", 18, Color(0.8, 0.8, 0.8))
+		_draw_end(font, p)
+
+
+## Pantalla final: resultado, la escalera de resultados y la tabla de la partida.
+func _draw_end(font: Font, p) -> void:
+	var size := _view.size
+	_view.draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.75))
+	var col := Color(1, 0.35, 0.3) if world.result == "derrota" else Color(0.4, 1, 0.5)
+	_text_centered(font, Vector2(size.x * 0.5, 70), RESULT_TITLES.get(world.result, ""), 44, col)
+	_text_centered(font, Vector2(size.x * 0.5, 100), world.end_reason, 18, Color.WHITE)
+	# de peor a mejor, con el obtenido resaltado
+	var parts: Array = []
+	for r in RESULTS:
+		parts.append(RESULT_SHORT[r])
+	var ladder := " · ".join(parts)
+	var x := size.x * 0.5 - font.get_string_size(ladder, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x * 0.5
+	for i in RESULTS.size():
+		var s: String = RESULT_SHORT[RESULTS[i]] + (" · " if i < RESULTS.size() - 1 else "")
+		var on: bool = RESULTS[i] == world.result
+		_text(font, Vector2(x, 124), s, 13, Color(1, 0.85, 0.3) if on else Color(0.55, 0.55, 0.6))
+		x += font.get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x
+	var lines: PackedStringArray = world.stats_text().split("\n")
+	var y := 156.0
+	for i in range(2, lines.size()):
+		_text(font, Vector2(size.x * 0.5 - 300, y), lines[i], 13, Color(0.9, 0.9, 0.95) if i > 2 else Color(1, 0.85, 0.5))
+		y += 16.0
+	_text_centered(font, Vector2(size.x * 0.5, size.y - 18), "R para jugar de nuevo", 16, Color(0.8, 0.8, 0.8))
 
 
 func _draw_choices(font: Font, p) -> void:

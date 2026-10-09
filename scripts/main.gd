@@ -28,7 +28,8 @@ var won := false
 var end_reason := ""
 var detected := false
 var threat := 0.0
-var enraged := false
+var escaping := false # amanecer: los héroes vivos escapan y todo lo demás queda quieto
+var result := "" # derrota, escape, victoria o total
 var kills := 0
 var sim_mode := false # --sim: el creep es invulnerable y se imprime un reporte por minuto
 var bot_mode := false # --bot: el creep lo maneja un bot simple, para medir cuánto tarda en ganarse
@@ -59,6 +60,9 @@ var _entities: Node2D
 var _spawn_accum := 0.0
 var _grid := {}
 var _next_report := 60.0
+var _next_row := 60.0
+var stats_rows: Array = [] # una fila por minuto (y una al terminar) para la pantalla final
+var civilians_eaten := 0
 
 
 func _ready() -> void:
@@ -115,6 +119,9 @@ func _process(delta: float) -> void:
 
 	elapsed += delta
 	var minute := elapsed / 60.0
+	if elapsed >= _next_row:
+		_next_row = (floorf(elapsed / 60.0) + 1.0) * 60.0
+		stats_rows.append(_stats_row(str(int(elapsed / 60.0))))
 
 	add_threat(player.stage * B.THREAT_PASSIVE_PER_STAGE * delta)
 	_update_alarm(delta)
@@ -218,6 +225,7 @@ func _update_alarm(delta: float) -> void:
 
 func on_civilian_killed(c) -> void:
 	civilians.erase(c)
+	civilians_eaten += 1
 	var seen: bool = player.stealth_t <= 0.0 and heroes.any_within(player.position, B.HERO_RANGE)
 	add_threat(B.THREAT_PER_CIVILIAN_SEEN if seen else B.THREAT_PER_CIVILIAN)
 	infamy.add(B.INFAMY_PER_CIVILIAN)
@@ -353,15 +361,58 @@ func set_detected() -> void:
 	hud.banner("¡El héroe te vio! Ahora te caza.")
 
 
-func end_game(player_won: bool, reason: String) -> void:
+## "result": derrota (te matan), escape (amanece con héroes vivos), victoria (mataste
+## a los tres y te vence el Último Bastión, desde la tanda 07) o total.
+func end_game(how: String, reason: String) -> void:
 	if not running:
 		return
 	running = false
-	won = player_won
+	result = how
+	won = how != "derrota"
 	end_reason = reason
+	var t := int(elapsed)
+	stats_rows.append(_stats_row("%d:%02d" % [t / 60, t % 60]))
+	print(stats_text())
 	if sim_mode:
 		print("[sim] fin (%02d:%02d): %s | héroes muertos %d/%d | vivos %s | mutaciones %s" % [
 			int(elapsed) / 60, int(elapsed) % 60, reason, heroes.killed, heroes.total(), _heroes_report(), player.ranks])
+
+
+# --- Tabla de la partida ------------------------------------------------------
+
+func _stats_row(when: String) -> Array:
+	var alive: Array = []
+	for h in heroes.list:
+		alive.append("%s %d" % [h.title, h.level])
+	return [when, "%d / %s" % [player.level, player.stage_name()], ", ".join(alive) if not alive.is_empty() else "—", str(minions.size())]
+
+
+## La tabla por minuto y los momentos de cada héroe, en texto plano para copiar.
+func stats_text() -> String:
+	var titles := {"derrota": "Derrota", "escape": "Victoria por escape", "victoria": "Victoria", "total": "Victoria total"}
+	var t := int(elapsed)
+	var lines: Array = ["Survive the Hero: %s (%d:%02d). %s" % [titles.get(result, "En curso"), t / 60, t % 60, end_reason], "",
+			"Min | Creep (nivel / etapa) | Héroes vivos (nivel) | Horda viva"]
+	for r in stats_rows:
+		lines.append(" | ".join(r))
+	lines.append("")
+	for r in heroes.history:
+		var line := "%s llegó %s (nv %d)" % [r.name, _clock(r.arrive), r.arrive_level]
+		if r.escaped:
+			line += ", escapó %s (nv %d)" % [_clock(elapsed), r.died_level]
+		elif r.died >= 0.0:
+			line += ", murió %s (nv %d)" % [_clock(r.died), r.died_level]
+		else:
+			line += ", seguía en pie"
+		lines.append(line)
+	lines.append("Soldados del cielo: %d" % infamy.sent())
+	lines.append("Civiles comidos: %d" % civilians_eaten)
+	return "\n".join(lines)
+
+
+func _clock(seconds: float) -> String:
+	var s := int(seconds)
+	return "%d:%02d" % [s / 60, s % 60]
 
 
 # --- Consulta espacial para la separación de la horda ------------------------
