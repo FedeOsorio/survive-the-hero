@@ -66,7 +66,7 @@ const CIVILIAN_DODGE_SPEED := 0.6
 const CIVILIAN_HP := 8.0
 const CIVILIAN_SPEED := 85.0
 const CIVILIAN_FLEE_RADIUS := 220.0
-const CIVILIAN_BIOMASS := 7.0
+const CIVILIAN_BIOMASS := 12.0
 # Comer civiles hace ruido: suma amenaza y el héroe va a investigar el lugar.
 const THREAT_PER_CIVILIAN := 15.0
 const THREAT_PER_CIVILIAN_SEEN := 30.0 # si lo matás a HERO_RANGE del héroe y sin camuflaje
