@@ -73,6 +73,12 @@ func _draw_hud() -> void:
 	else:
 		_bar(Rect2(size.x * 0.5 - 100, 46, 200, 10), world.threat / B.DETECTION_THRESHOLD, Color(1, 0.6, 0.2), "")
 		_text_centered(font, Vector2(size.x * 0.5, 72), "Amenaza", 12, Color(0.9, 0.8, 0.7))
+	var bt: float = world.betrayal.bar
+	if bt > 0.0 or p.betrayal_mode:
+		_bar(Rect2(size.x * 0.5 - 100, 80, 200, 10), bt / B.BETRAYAL_MAX, Color(0.85, 0.1, 0.12), "")
+		_text_centered(font, Vector2(size.x * 0.5, 106), "Traición", 12, Color(1.0, 0.5, 0.5))
+	if p.betrayal_mode:
+		_dagger(Vector2(size.x * 0.5 - 118, 85))
 
 	# Héroe: arriba a la derecha
 	_text(font, Vector2(size.x - 280, 30), "Héroe nivel %d" % h.level, 20, Color(0.5, 0.7, 1.0))
@@ -85,12 +91,14 @@ func _draw_hud() -> void:
 	_pointer(h, Color(0.4, 0.65, 1.0, 0.9))
 	if world.chest != null:
 		_pointer(world.chest, Color(1.0, 0.8, 0.25, 0.95))
+	for hunter in world.betrayal.hunters:
+		_pointer(hunter, Color(1.0, 0.15, 0.1, 0.95))
 	if world.events.blood_moon_t > 0.0:
 		_view.draw_rect(Rect2(Vector2.ZERO, size), Color(0.8, 0.0, 0.0, 0.08))
-		_text_centered(font, Vector2(size.x * 0.5, 96), "Luna de sangre: %ds" % int(ceil(world.events.blood_moon_t)), 18, Color(1, 0.35, 0.3))
+		_text_centered(font, Vector2(size.x * 0.5, 128), "Luna de sangre: %ds" % int(ceil(world.events.blood_moon_t)), 18, Color(1, 0.35, 0.3))
 
 	_text_centered(font, Vector2(size.x * 0.5, size.y - 16),
-		"WASD mover · Espacio embestida · Q camuflaje · E evolucionar · R reiniciar  (mordida y escupitajo son automáticos)", 13, Color(0.7, 0.7, 0.75))
+		"WASD mover · Espacio embestida · Q camuflaje · F traición · E evolucionar · R reiniciar  (mordida y escupitajo son automáticos)", 13, Color(0.7, 0.7, 0.75))
 
 	if _banner_t > 0.0:
 		_text_centered(font, Vector2(size.x * 0.5, size.y * 0.3), _banner_text, 26, Color(1, 1, 1, minf(_banner_t, 1.0)))
@@ -125,6 +133,13 @@ func _draw_choices(font: Font, p) -> void:
 		_text(font, r.position + Vector2(14, 30), "%d. %s" % [i + 1, m.name], 20, Color(1.0, 0.85, 0.35) if evo else Color.WHITE)
 		_text(font, r.position + Vector2(14, 56), "EVOLUCIÓN" if evo else "Rango %d/%d" % [p.rank(id) + 1, m.max], 13, Color(1.0, 0.8, 0.3) if evo else Color(0.7, 0.7, 0.8))
 		_view.draw_multiline_string(font, r.position + Vector2(14, 86), Mutations.desc(id), HORIZONTAL_ALIGNMENT_LEFT, w - 28, 16, -1, Color(0.9, 0.9, 0.95))
+
+
+## Daga: estás en modo traición.
+func _dagger(at: Vector2) -> void:
+	_view.draw_colored_polygon(PackedVector2Array([at + Vector2(-2, 0), at + Vector2(2, 0), at + Vector2(0, -14)]), Color(0.9, 0.9, 0.95))
+	_view.draw_rect(Rect2(at + Vector2(-5, 0), Vector2(10, 2)), Color(0.7, 0.55, 0.2))
+	_view.draw_rect(Rect2(at + Vector2(-1.5, 2), Vector2(3, 6)), Color(0.45, 0.1, 0.1))
 
 
 ## Flecha en el borde de pantalla hacia algo que está fuera de vista.

@@ -6,6 +6,7 @@ const B := preload("res://scripts/balance.gd")
 var world
 var value := 1.0
 var heart := false # corazón de élite: da una mutación al comerlo
+var hell := false # corazón infernal del cazador: mutación y biomasa
 var radius := 8.0
 var color := Color.GRAY
 var _age := 0.0
@@ -27,6 +28,13 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
+	if hell:
+		draw_circle(Vector2.ZERO, 16.0, Color(1.0, 0.35, 0.05, 0.3))
+		draw_circle(Vector2(-3, -2), 4.5, Color(0.35, 0.0, 0.05))
+		draw_circle(Vector2(3, -2), 4.5, Color(0.35, 0.0, 0.05))
+		draw_colored_polygon(PackedVector2Array([Vector2(-7.5, -1), Vector2(7.5, -1), Vector2(0, 9)]), Color(0.35, 0.0, 0.05))
+		draw_arc(Vector2.ZERO, 12.0, 0.0, TAU, 20, Color(1.0, 0.5, 0.1, 0.8), 1.5)
+		return
 	if heart:
 		draw_circle(Vector2.ZERO, 14.0, Color(1.0, 0.2, 0.3, 0.25))
 		draw_circle(Vector2(-3, -2), 4.0, Color(1.0, 0.2, 0.3))

@@ -28,7 +28,7 @@ const SPIT_RANGE := 380.0
 const HEAL_PER_BIOMASS := 2.0
 # Mutaciones: la biomasa también llena una barra de nivel; al subir elegís 1 de 3.
 static func mutation_xp_for_level(level: int) -> float:
-	return 15.0 + level * 15.0
+	return 10.0 + level * 10.0
 
 const MUT_DAMAGE := 0.25
 const MUT_SPEED := 0.10
@@ -184,20 +184,20 @@ const POWER_SPEED := 0.08 # botas: +8% velocidad por rango
 
 
 static func xp_for_level(level: int) -> float:
-	return 5.0 + level * 8.0
+	return 10.0 + level * 14.0 + 1.2 * level * level
 
 
 # --- Horda -------------------------------------------------------------------
 const MINION_TYPES := {
-	"rata": {"hp": 6.0, "speed": 120.0, "dps": 4.0, "radius": 7.0, "xp": 1.0, "biomass": 0.4, "color": Color(0.6, 0.5, 0.4)},
-	"zombi": {"hp": 16.0, "speed": 80.0, "dps": 7.0, "radius": 10.0, "xp": 2.0, "biomass": 0.8, "color": Color(0.4, 0.6, 0.45)},
-	"arquero": {"hp": 10.0, "speed": 70.0, "dps": 0.0, "radius": 9.0, "xp": 2.0, "biomass": 0.8, "color": Color(0.55, 0.4, 0.75),
+	"rata": {"hp": 6.0, "speed": 120.0, "dps": 4.0, "radius": 7.0, "xp": 1.0, "biomass": 0.8, "color": Color(0.6, 0.5, 0.4)},
+	"zombi": {"hp": 16.0, "speed": 80.0, "dps": 7.0, "radius": 10.0, "xp": 2.0, "biomass": 1.5, "color": Color(0.4, 0.6, 0.45)},
+	"arquero": {"hp": 10.0, "speed": 70.0, "dps": 0.0, "radius": 9.0, "xp": 2.0, "biomass": 1.5, "color": Color(0.55, 0.4, 0.75),
 		"range": 260.0, "shot_cooldown": 2.2, "shot_damage": 4.0},
-	"bruto": {"hp": 60.0, "speed": 60.0, "dps": 14.0, "radius": 16.0, "xp": 5.0, "biomass": 2.5, "color": Color(0.6, 0.3, 0.3)},
+	"bruto": {"hp": 60.0, "speed": 60.0, "dps": 14.0, "radius": 16.0, "xp": 5.0, "biomass": 5.0, "color": Color(0.6, 0.3, 0.3)},
 }
 const MAX_MINIONS := 300
 const CORPSE_LIFETIME := 20.0
-const GEM_LIFETIME := 30.0
+const GEM_LIFETIME := 18.0
 const SPAWN_MIN_DIST := 650.0
 const SPAWN_MAX_DIST := 900.0
 
@@ -306,3 +306,28 @@ const DMG_TICK_EVERY := 0.5 # charcos y sangrado: un número sumado cada tanto
 const HERO_HIT_FLASH := 0.08
 const SHAKE_PX := 4.0
 const SHAKE_TIME := 0.12
+
+
+# --- Tanda 02: "El mal debe hacer sacrificios" ----------------------------------
+# Modo traición (F): tus ataques también matan aliados y te los comés al instante.
+const BETRAYAL_BIOMASS_MULT := 1.5
+const BETRAYAL_MAX := 100.0
+const BETRAYAL_DECAY := 0.5 # por segundo, solo en modo normal
+const BETRAYAL_PER_KILL := {"rata": 3.0, "zombi": 4.0, "arquero": 4.0, "bruto": 10.0}
+const BETRAYAL_PER_ELITE := 25.0
+const HUNTER_MAX_ALIVE := 2
+
+# Cazador del infierno: stats según el creep al aparecer.
+const HUNTER_SPAWN_DIST := 600.0
+const HUNTER_HP_MULT := 6.0 # x tu vida máxima
+const HUNTER_CONTACT := 0.18 # x tu vida máxima por segundo
+const HUNTER_SPEED_MULT := 0.9 # x tu velocidad
+const HUNTER_FIRE_EVERY := 3.0
+const HUNTER_FIRE_WARNING := 0.5
+const HUNTER_FIRE_DAMAGE := 0.12 # x tu vida máxima
+const HUNTER_FIRE_SPEED := 380.0
+const HUNTER_FIRE_RANGE := 600.0
+const HUNTER_NEXT_HP := 1.3 # cada cazador siguiente
+const HUNTER_NEXT_DAMAGE := 1.15
+const HUNTER_RADIUS := 18.0
+const HELL_HEART_BIOMASS := 0.2 # x costo de tu próxima evolución

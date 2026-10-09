@@ -23,6 +23,9 @@ func _process(delta: float) -> void:
 	if position.distance_to(hero.position) < B.ACID_RADIUS + hero.radius:
 		hero.take_damage(dps * delta, true, false, true)
 		hero.status.slow()
+	for h in world.betrayal.hunters:
+		if position.distance_to(h.position) < B.ACID_RADIUS + h.radius:
+			h.take_damage(dps * delta)
 	queue_redraw()
 
 

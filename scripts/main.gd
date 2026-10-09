@@ -14,6 +14,7 @@ const Civilian := preload("res://scripts/civilian.gd")
 const Puddle := preload("res://scripts/puddle.gd")
 const Chest := preload("res://scripts/chest.gd")
 const Events := preload("res://scripts/events.gd")
+const Betrayal := preload("res://scripts/betrayal.gd")
 const Arena := preload("res://scripts/arena.gd")
 const Hud := preload("res://scripts/hud.gd")
 
@@ -41,6 +42,7 @@ var civilians: Array = []
 var puddles: Array = []
 var chest = null # cofre en disputa (uno a la vez)
 var events # events.gd: cofres y eventos de oleada
+var betrayal # betrayal.gd: barra de traición y cazadores del infierno
 var camera: Camera2D
 var _shake_t := 0.0
 var raised_count := 0 # compañeros levantados por Señor de la carroña
@@ -66,6 +68,9 @@ func _ready() -> void:
 	events = Events.new()
 	events.world = self
 	add_child(events)
+	betrayal = Betrayal.new()
+	betrayal.world = self
+	add_child(betrayal)
 	_entities = Node2D.new()
 	_entities.y_sort_enabled = false
 	add_child(_entities)
@@ -98,7 +103,7 @@ func _ready() -> void:
 	hud = Hud.new()
 	hud.world = self
 	add_child(hud)
-	hud.banner("Sos un creep más. Sobreviví, comé y evolucioná.")
+	hud.banner("El mal debe hacer sacrificios para acabar con el héroe.")
 
 
 func _process(delta: float) -> void:
@@ -195,11 +200,16 @@ func on_civilian_killed(c, by_hero := false) -> void:
 	c.queue_free()
 
 
-func on_minion_killed(m) -> void:
+func on_minion_killed(m, by_player := false) -> void:
 	minions.erase(m)
 	if m.raised:
 		# los levantados no dejan cadáver ni gema: si no, el héroe farmea con ellos
 		raised_count -= 1
+		m.queue_free()
+		return
+	if by_player:
+		# traición: no deja cadáver ni gema, te lo comés al instante
+		betrayal.on_ally_killed(m)
 		m.queue_free()
 		return
 	kills += 1
@@ -360,6 +370,7 @@ func _setup_input() -> void:
 	_add_action("dash", [KEY_SPACE, KEY_SHIFT], [], [JOY_BUTTON_RIGHT_SHOULDER])
 	_add_action("evolve", [KEY_E, KEY_L], [], [JOY_BUTTON_Y])
 	_add_action("stealth", [KEY_Q], [], [JOY_BUTTON_LEFT_SHOULDER])
+	_add_action("betray", [KEY_F], [[JOY_AXIS_TRIGGER_LEFT, 1.0]], [])
 	_add_action("pick_1", [KEY_1, KEY_KP_1], [], [JOY_BUTTON_X])
 	_add_action("pick_2", [KEY_2, KEY_KP_2], [], [JOY_BUTTON_A])
 	_add_action("pick_3", [KEY_3, KEY_KP_3], [], [JOY_BUTTON_B])

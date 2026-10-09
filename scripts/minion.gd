@@ -102,13 +102,13 @@ func make_raised() -> void:
 	color = B.RAISED_COLOR
 
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, by_player := false) -> void:
 	if hp <= 0.0:
 		return
 	hp -= amount
 	_flash = 0.08
 	if hp <= 0.0:
-		world.on_minion_killed(self)
+		world.on_minion_killed(self, by_player)
 
 
 func _draw() -> void:
