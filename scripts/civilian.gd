@@ -31,8 +31,13 @@ func _process(delta: float) -> void:
 		_scream_cd = B.CIVILIAN_SCREAM_COOLDOWN
 		world.raise_alarm(position)
 	_fleeing = flee
+	var dodge := _dodge_dir()
 	if flee:
 		dir = away / d
+	elif dodge != Vector2.ZERO:
+		# esquiva a la horda solo para que se vea: se corre al costado
+		dir = dodge
+		spd *= B.CIVILIAN_DODGE_SPEED
 	else:
 		_wander_t -= delta
 		if _wander_t <= 0.0:
@@ -44,6 +49,17 @@ func _process(delta: float) -> void:
 	position = position.clamp(Vector2(radius, radius), B.ARENA_SIZE - Vector2(radius, radius))
 	_flash = maxf(_flash - delta, 0.0)
 	queue_redraw()
+
+
+## Si un compañero de la horda está muy cerca, devuelve un paso al costado.
+func _dodge_dir() -> Vector2:
+	for m in world.minions_near(position):
+		var away: Vector2 = position - m.position
+		var d := away.length()
+		if d < B.CIVILIAN_DODGE_RADIUS and d > 0.01:
+			var side := away.orthogonal() / d
+			return side if side.dot(_wander) >= 0.0 else -side
+	return Vector2.ZERO
 
 
 func take_damage(amount: float, by_hero := false) -> void:

@@ -97,8 +97,8 @@ func _ready() -> void:
 	player.add_child(cam)
 	camera = cam
 
-	for i in B.CIVILIANS_START:
-		spawn_civilian()
+	while civilians.size() < B.CIVILIANS_START:
+		spawn_civilian_group()
 
 	hud = Hud.new()
 	hud.world = self
@@ -130,7 +130,7 @@ func _process(delta: float) -> void:
 	_civilian_t -= delta
 	if _civilian_t <= 0.0 and civilians.size() < B.CIVILIANS_MAX:
 		_civilian_t = B.CIVILIAN_RESPAWN
-		spawn_civilian()
+		spawn_civilian_group()
 
 	_rebuild_grid()
 
@@ -163,17 +163,24 @@ func spawn_minion(type_name: String, elite := false, at = null):
 
 
 ## Los civiles aparecen lejos del héroe, para que comer sea una alternativa a robarle.
-func spawn_civilian() -> void:
-	var pos := Vector2.ZERO
-	for i in 10:
-		pos = Vector2(rng.randf_range(60, B.ARENA_SIZE.x - 60), rng.randf_range(60, B.ARENA_SIZE.y - 60))
-		if pos.distance_to(hero.position) > 700.0 and pos.distance_to(player.position) > 300.0:
+## Un caserío de 3 a 5 civiles en un anillo alrededor del creep, lejos del héroe.
+func spawn_civilian_group() -> void:
+	var center := Vector2.ZERO
+	var inner := Rect2(Vector2(60, 60), B.ARENA_SIZE - Vector2(120, 120))
+	for i in 15:
+		var dist := rng.randf_range(B.CIVILIAN_RING_MIN, B.CIVILIAN_RING_MAX)
+		center = player.position + Vector2.from_angle(rng.randf() * TAU) * dist
+		if inner.has_point(center) and center.distance_to(hero.position) > B.CIVILIAN_MIN_HERO_DIST:
 			break
-	var c = Civilian.new()
-	c.world = self
-	c.position = pos
-	civilians.append(c)
-	_entities.add_child(c)
+	center = center.clamp(inner.position, inner.end)
+	var n := mini(rng.randi_range(B.CIVILIAN_GROUP_MIN, B.CIVILIAN_GROUP_MAX), B.CIVILIANS_MAX - civilians.size())
+	for i in n:
+		var c = Civilian.new()
+		c.world = self
+		var off := Vector2(rng.randf_range(-1, 1), rng.randf_range(-1, 1)) * B.CIVILIAN_GROUP_SPREAD
+		c.position = (center + off).clamp(Vector2(10, 10), B.ARENA_SIZE - Vector2(10, 10))
+		civilians.append(c)
+		_entities.add_child(c)
 
 
 ## Un civil que huye grita: el héroe va hacia ahí a matar civiles.

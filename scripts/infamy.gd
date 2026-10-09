@@ -24,6 +24,7 @@ func _process(delta: float) -> void:
 	if not world.running:
 		return
 	queue_redraw()
+	_heal_hero(delta)
 	if _arrival_t > 0.0:
 		_arrival_t -= delta
 		if _arrival_t <= 0.0:
@@ -36,18 +37,27 @@ func _process(delta: float) -> void:
 	if low and not _hero_was_low:
 		add(B.INFAMY_HERO_LOW)
 	_hero_was_low = low
-	if bar >= B.INFAMY_MAX:
+	if bar >= B.INFAMY_MAX and paladins.size() < B.PALADIN_MAX_ALIVE:
 		bar = 0.0
 		_arrival_t = B.PALADIN_ARRIVAL
 		arrival_pos = (hero.position + Vector2.from_angle(world.rng.randf() * TAU) * B.PALADIN_SPAWN_DIST) \
 				.clamp(Vector2(30, 30), B.ARENA_SIZE - Vector2(30, 30))
-		world.hud.banner("El cielo envía a un Paladín")
+		world.hud.banner("El cielo envía refuerzos" if not paladins.is_empty() else "El cielo envía a un Paladín")
 
 
-## Mientras haya un Paladín vivo (o llegando), la barra no sube.
+## Sube aunque haya Paladines vivos; solo se frena mientras uno está llegando.
 func add(amount: float) -> void:
-	if paladins.is_empty() and _arrival_t <= 0.0:
+	if _arrival_t <= 0.0:
 		bar = minf(bar + amount, B.INFAMY_MAX)
+
+
+## Las auras no se suman: con uno o más Paladines cerca, el héroe se cura una sola vez.
+func _heal_hero(delta: float) -> void:
+	var hero = world.hero
+	for p in paladins:
+		if p.position.distance_to(hero.position) < B.PALADIN_HEAL_RADIUS:
+			hero.hp = minf(hero.max_hp, hero.hp + hero.max_hp * B.PALADIN_HEAL * delta)
+			return
 
 
 func _spawn_paladin() -> void:

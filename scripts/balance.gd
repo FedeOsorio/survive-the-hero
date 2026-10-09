@@ -50,9 +50,19 @@ const LEAD_DAMAGE_MULT := 1.5
 const LEAD_DAMAGE_PER_RANK := 0.25
 
 # Civiles: comida que huye de vos, lejos del héroe.
-const CIVILIANS_START := 24
-const CIVILIANS_MAX := 40
-const CIVILIAN_RESPAWN := 3.0
+const CIVILIANS_START := 40
+const CIVILIANS_MAX := 70
+const CIVILIAN_RESPAWN := 1.5 # cada tanto aparece un caserío
+# Aparecen en grupos, en un anillo alrededor del creep y lejos del héroe.
+const CIVILIAN_GROUP_MIN := 3
+const CIVILIAN_GROUP_MAX := 5
+const CIVILIAN_GROUP_SPREAD := 40.0
+const CIVILIAN_RING_MIN := 350.0 # del creep
+const CIVILIAN_RING_MAX := 800.0
+const CIVILIAN_MIN_HERO_DIST := 300.0
+# Esquivan a la horda (solo visual: la horda no los daña).
+const CIVILIAN_DODGE_RADIUS := 40.0
+const CIVILIAN_DODGE_SPEED := 0.6
 const CIVILIAN_HP := 8.0
 const CIVILIAN_SPEED := 85.0
 const CIVILIAN_FLEE_RADIUS := 220.0
@@ -100,7 +110,7 @@ const HERO_HP_PER_LEVEL := 30.0
 const HERO_LEVEL_HEAL := 0.25 # al subir de nivel recupera este % de su vida máxima (no tiene regeneración)
 const HERO_SPEED := 150.0
 const HERO_RADIUS := 14.0
-const HERO_ARROW_DAMAGE := 16.0
+const HERO_ARROW_DAMAGE := 20.0
 const HERO_ARROW_COOLDOWN := 0.45
 const HERO_ARROW_SPEED := 520.0
 const HERO_RANGE := 420.0
@@ -112,8 +122,8 @@ const HERO_DAMAGE_PER_LEVEL := 1.10
 const HERO_COOLDOWN_PER_LEVEL := 0.95
 const HERO_MIN_COOLDOWN := 0.18
 const HERO_LEVELS_PER_EXTRA_ARROW := 4
-# Las flechas no atraviesan: eso será una mejora que el héroe elija (hito 2).
-const HERO_ARROW_PIERCE := 0
+# Cada flecha atraviesa a este número de enemigos extra (Flechas perforantes suma más).
+const HERO_ARROW_PIERCE := 1
 # Tajo de espada: ataque cuerpo a cuerpo en arco, con aviso previo para poder esquivarlo.
 # Apagado por ahora: los poderes extra del héroe se definen cuando el creep
 # tenga habilidades para contrarrestarlos.
@@ -184,7 +194,7 @@ const POWER_SPEED := 0.08 # botas: +8% velocidad por rango
 
 
 static func xp_for_level(level: int) -> float:
-	return 10.0 + level * 14.0 + 1.2 * level * level
+	return 8.0 + level * 10.0 + 0.6 * level * level
 
 
 # --- Horda -------------------------------------------------------------------
@@ -197,7 +207,7 @@ const MINION_TYPES := {
 }
 const MAX_MINIONS := 300
 const CORPSE_LIFETIME := 20.0
-const GEM_LIFETIME := 18.0
+const GEM_LIFETIME := 25.0
 const SPAWN_MIN_DIST := 650.0
 const SPAWN_MAX_DIST := 900.0
 
@@ -211,7 +221,7 @@ static func horde_tier(minute: float) -> float:
 
 
 static func minion_hp_mult(minute: float) -> float:
-	return 1.0 + horde_tier(minute) * 0.3
+	return 1.0 + horde_tier(minute) * 0.2
 
 
 # Como en Vampire Survivors, tus compañeros se vuelven más fuertes con cada escalón.
@@ -224,7 +234,7 @@ static func minion_speed_mult(minute: float) -> float:
 
 
 static func spawns_per_second(minute: float) -> float:
-	return 2.0 + minute * 1.2
+	return 2.0 + minute * 0.9
 
 
 static func pick_minion_type(minute: float, rng: RandomNumberGenerator) -> String:
@@ -336,6 +346,7 @@ const PALADIN_CHARGE_SPEED := 650.0
 const PALADIN_CHARGE_DIST := 420.0
 const PALADIN_HEAL_RADIUS := 150.0
 const PALADIN_HEAL := 0.02 # x vida máxima del héroe por segundo
+const PALADIN_MAX_ALIVE := 3
 const PALADIN_NEXT_HP := 1.3 # cada Paladín siguiente
 const PALADIN_NEXT_DAMAGE := 1.15
 const HOLY_HEART_BIOMASS := 0.2 # x costo de tu próxima evolución

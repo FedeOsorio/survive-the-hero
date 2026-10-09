@@ -56,10 +56,8 @@ func _process(delta: float) -> void:
 	_hammer_fx = maxf(_hammer_fx - delta, 0.0)
 	_flash = maxf(_flash - delta, 0.0)
 
-	# aura: cura al héroe si están cerca
+	# aura: la cura la aplica infamy.gd una sola vez aunque haya varios cerca
 	_healing = position.distance_to(hero.position) < B.PALADIN_HEAL_RADIUS
-	if _healing:
-		hero.hp = minf(hero.max_hp, hero.hp + hero.max_hp * B.PALADIN_HEAL * delta)
 
 	if _charge_left > 0.0:
 		var step := B.PALADIN_CHARGE_SPEED * delta
