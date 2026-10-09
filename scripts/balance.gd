@@ -50,13 +50,22 @@ const LEAD_DAMAGE_MULT := 1.5
 const LEAD_DAMAGE_PER_RANK := 0.25
 
 # Civiles: comida que huye de vos, lejos del héroe.
-const CIVILIANS_START := 14
-const CIVILIANS_MAX := 24
-const CIVILIAN_RESPAWN := 6.0
+const CIVILIANS_START := 24
+const CIVILIANS_MAX := 40
+const CIVILIAN_RESPAWN := 3.0
 const CIVILIAN_HP := 8.0
 const CIVILIAN_SPEED := 85.0
 const CIVILIAN_FLEE_RADIUS := 220.0
 const CIVILIAN_BIOMASS := 4.0
+# Comer civiles hace ruido: suma amenaza y el héroe va a investigar el lugar.
+const THREAT_PER_CIVILIAN := 5.0
+const ALARM_TIME := 8.0 # segundos que el héroe busca en el lugar del grito
+const ALARM_PULL := 1.6 # qué tanto le importa ir a investigar frente a farmear
+
+# Camuflaje (Q): te saca del radar del héroe. Una vez por minuto.
+const STEALTH_COOLDOWN := 60.0
+const STEALTH_TIME := 4.0 # segundos en que el héroe no te puede apuntar
+const STEALTH_THREAT_LEFT := 0.4 # la amenaza queda en este % del umbral
 
 # --- Amenaza y detección -----------------------------------------------------
 const DETECTION_THRESHOLD := 150.0

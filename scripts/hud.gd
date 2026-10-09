@@ -58,6 +58,8 @@ func _draw_hud() -> void:
 			_text(font, Vector2(20, 112), "¡Pulsá E para evolucionar!", 18, Color(1, 0.9, 0.3))
 	else:
 		_text(font, Vector2(20, 88), "Forma final", 14, Color(0.9, 0.8, 0.8))
+	var st := "Camuflaje (Q): listo" if p.stealth_cd <= 0.0 else "Camuflaje (Q): %ds" % int(ceil(p.stealth_cd))
+	_text(font, Vector2(20, 180), st, 14, Color(0.6, 0.9, 0.7) if p.stealth_cd <= 0.0 else Color(0.6, 0.6, 0.65))
 	if p.hunger() > 1.0:
 		_text(font, Vector2(20, 158), "Hambre x%.2f" % p.hunger(), 16, Color(0.9, 0.4, 0.4))
 	if p.combo > 1.0:
@@ -79,7 +81,7 @@ func _draw_hud() -> void:
 	_hero_pointer(h)
 
 	_text_centered(font, Vector2(size.x * 0.5, size.y - 16),
-		"WASD mover · Espacio embestida · E evolucionar · R reiniciar  (mordida y escupitajo son automáticos)", 13, Color(0.7, 0.7, 0.75))
+		"WASD mover · Espacio embestida · Q camuflaje · E evolucionar · R reiniciar  (mordida y escupitajo son automáticos)", 13, Color(0.7, 0.7, 0.75))
 
 	if _banner_t > 0.0:
 		_text_centered(font, Vector2(size.x * 0.5, size.y * 0.3), _banner_text, 26, Color(1, 1, 1, minf(_banner_t, 1.0)))

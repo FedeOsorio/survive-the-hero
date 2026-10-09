@@ -169,7 +169,9 @@ func _nearest_enemy(max_dist: float):
 func _target_valid() -> bool:
 	if target == null or not is_instance_valid(target):
 		return false
-	return target == world.player or world.minions.has(target)
+	if target == world.player:
+		return world.player.stealth_t <= 0.0
+	return world.minions.has(target)
 
 
 # --- Decisiones --------------------------------------------------------------
@@ -201,6 +203,12 @@ func _think() -> void:
 		if gem != null:
 			steer += (gem.position - position).normalized() * (2.2 if danger < 3.0 else 0.8)
 
+	# 2b. si un civil gritó, va a investigar el lugar
+	if world.alarm_t > 0.0 and not low_hp and not world.detected:
+		var to_alarm: Vector2 = world.alarm_pos - position
+		if to_alarm.length() > 40.0:
+			steer += to_alarm.normalized() * B.ALARM_PULL
+
 	# 3. con el jugador detectado lo persigue a distancia de tiro; a la horda
 	#    no la busca (ya viene sola), solo se aleja si está muy encima
 	if _target_valid() and not low_hp:
@@ -228,7 +236,8 @@ func _pick_target():
 	var best_score := -INF
 	var reach := B.HERO_RANGE * 1.3
 	var candidates: Array = world.minions.duplicate()
-	candidates.append(world.player)
+	if world.player.stealth_t <= 0.0:
+		candidates.append(world.player)
 	for c in candidates:
 		var d := position.distance_to(c.position)
 		if d > reach and not (c == world.player and world.detected):

@@ -37,6 +37,8 @@ var _dash_dir := Vector2.ZERO
 var _dash_hit := false
 var _spit_cd := 0.0
 var _flash := 0.0
+var stealth_cd := 0.0
+var stealth_t := 0.0 # mientras dura, el héroe no te puede apuntar
 var _rng := RandomNumberGenerator.new()
 
 
@@ -125,6 +127,10 @@ func _process(delta: float) -> void:
 		input = Input.get_vector("move_left", "move_right", "move_up", "move_down")
 		want_dash = Input.is_action_just_pressed("dash")
 		want_evolve = Input.is_action_just_pressed("evolve")
+		if Input.is_action_just_pressed("stealth") and stealth_cd <= 0.0:
+			stealth_cd = B.STEALTH_COOLDOWN
+			stealth_t = B.STEALTH_TIME
+			world.lose_aggro()
 	if input.length() > 0.1:
 		_facing = input.normalized()
 
@@ -143,6 +149,9 @@ func _process(delta: float) -> void:
 	_spit_cd = maxf(_spit_cd - delta, 0.0)
 	_bite_fx = maxf(_bite_fx - delta, 0.0)
 	_flash = maxf(_flash - delta, 0.0)
+	stealth_cd = maxf(stealth_cd - delta, 0.0)
+	stealth_t = maxf(stealth_t - delta, 0.0)
+	modulate.a = 0.35 if stealth_t > 0.0 else 1.0
 	_combo_t -= delta
 	if _combo_t <= 0.0:
 		combo = 1.0

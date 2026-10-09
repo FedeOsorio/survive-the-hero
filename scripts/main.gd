@@ -37,6 +37,8 @@ var spits: Array = []
 var civilians: Array = []
 var _civilian_t := 0.0
 var _elite_t := 0.0
+var alarm_pos := Vector2.ZERO # último grito de un civil; el héroe va a investigar
+var alarm_t := 0.0
 
 var hud
 var _entities: Node2D
@@ -94,6 +96,7 @@ func _process(delta: float) -> void:
 	var minute := elapsed / 60.0
 
 	add_threat(player.stage * B.THREAT_PASSIVE_PER_STAGE * delta)
+	alarm_t = maxf(alarm_t - delta, 0.0)
 	_elite_t += delta
 	if _elite_t >= B.ELITE_EVERY:
 		_elite_t = 0.0
@@ -151,6 +154,9 @@ func spawn_civilian() -> void:
 
 func on_civilian_killed(c) -> void:
 	civilians.erase(c)
+	add_threat(B.THREAT_PER_CIVILIAN)
+	alarm_pos = c.position
+	alarm_t = B.ALARM_TIME
 	var corpse = Corpse.new()
 	corpse.world = self
 	corpse.position = c.position
@@ -230,6 +236,14 @@ func add_threat(amount: float) -> void:
 		set_detected()
 
 
+## Camuflaje del jugador: vuelve a no estar detectado y borra el rastro.
+func lose_aggro() -> void:
+	detected = false
+	threat = B.DETECTION_THRESHOLD * B.STEALTH_THREAT_LEFT
+	alarm_t = 0.0
+	hud.banner("Camuflaje: el héroe te perdió de vista")
+
+
 func set_detected() -> void:
 	if detected:
 		return
@@ -282,6 +296,7 @@ func _setup_input() -> void:
 	_add_action("move_down", [KEY_S, KEY_DOWN], [[JOY_AXIS_LEFT_Y, 1.0]], [JOY_BUTTON_DPAD_DOWN])
 	_add_action("dash", [KEY_SPACE, KEY_SHIFT], [], [JOY_BUTTON_RIGHT_SHOULDER])
 	_add_action("evolve", [KEY_E, KEY_L], [], [JOY_BUTTON_Y])
+	_add_action("stealth", [KEY_Q], [], [JOY_BUTTON_LEFT_SHOULDER])
 	_add_action("pick_1", [KEY_1, KEY_KP_1], [], [JOY_BUTTON_X])
 	_add_action("pick_2", [KEY_2, KEY_KP_2], [], [JOY_BUTTON_A])
 	_add_action("pick_3", [KEY_3, KEY_KP_3], [], [JOY_BUTTON_B])
