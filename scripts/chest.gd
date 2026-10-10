@@ -31,7 +31,6 @@ func _process(delta: float) -> void:
 	_creep_hp = player.hp
 	if _creep_prog >= B.CHEST_OPEN_TIME:
 		world.events.remove_chest()
-		world.add_threat(B.CHEST_THREAT)
 		world.hud.banner("¡Abriste el cofre! Mutación gratis")
 		player.grant_mutation()
 	elif _hero_prog >= B.CHEST_OPEN_TIME:

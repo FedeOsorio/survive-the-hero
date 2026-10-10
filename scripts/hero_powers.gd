@@ -150,8 +150,8 @@ func _update_bolts(delta: float) -> void:
 				candidates.append(m)
 		var p = world.player
 		if p.stealth_t <= 0.0 and hero.position.distance_to(p.position) < B.BOLT_RANGE:
-			# al jugador detectado siempre le tira uno
-			if world.detected:
+			# si te está cazando, siempre te tira uno
+			if hero.hunting_you():
 				_bolts.append({"pos": p.position, "t": B.BOLT_WARNING})
 			else:
 				candidates.append(p)

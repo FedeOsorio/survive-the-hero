@@ -30,7 +30,6 @@ func _process(delta: float) -> void:
 	if flee and not _fleeing and _scream_cd <= 0.0:
 		_scream_cd = B.CIVILIAN_SCREAM_COOLDOWN
 		world.raise_alarm(position)
-		world.add_threat(B.THREAT_PER_SCREAM)
 	_fleeing = flee
 	var dodge := _dodge_dir()
 	if flee:

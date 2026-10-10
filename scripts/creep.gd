@@ -278,7 +278,6 @@ func _shell_wave() -> void:
 func _evolve() -> void:
 	biomass -= evolve_cost()
 	_apply_stage(stage + 1)
-	world.add_threat(B.THREAT_PER_STAGE)
 	world.hud.banner("Evolucionaste: %s" % stage_name())
 
 
@@ -296,8 +295,6 @@ func _absorb(delta: float) -> void:
 					grant_mutation()
 			if c.heart:
 				_queued_levels += 1
-				if world.heroes.any_within(position, B.STEAL_RADIUS):
-					world.add_threat(B.THREAT_PER_STOLEN_GEM * 5.0)
 				world.hud.banner("¡Corazón de élite! Mutación extra")
 			_eat(c.value)
 			world.remove_corpse(c)
@@ -306,8 +303,6 @@ func _absorb(delta: float) -> void:
 	# las gemas son la XP del héroe: pisarlas se las roba y te alimenta (el imán no las atrae)
 	for g in world.gems.duplicate():
 		if position.distance_to(g.position) < radius + B.GEM_EAT_RANGE:
-			if world.heroes.any_within(position, B.STEAL_RADIUS):
-				world.add_threat(B.THREAT_PER_STOLEN_GEM)
 			_eat(g.xp * B.GEM_BIOMASS)
 			world.remove_gem(g)
 
@@ -404,3 +399,18 @@ func _draw() -> void:
 		draw_arc(Vector2.ZERO, B.SHELL_WAVE_RADIUS * (1.0 - _wave_fx * 2.0), 0.0, TAU, 32, Color(0.9, 0.85, 0.6, 0.9), 5.0)
 	# anillo indicador para encontrarse en la horda
 	draw_arc(Vector2.ZERO, radius + 6.0, 0.0, TAU, 24, Color(0.4, 1.0, 0.5, 0.5), 1.5)
+	# ojo del héroe: cerrado (no te ve), entrecerrado (te busca), abierto rojo (te caza)
+	var sight: int = world.sight_level()
+	var ep := Vector2(0, -radius - 16.0)
+	var ec := Color(1, 0.3, 0.3) if sight == 2 else Color(0.85, 0.85, 0.85, 0.7)
+	if sight == 0:
+		draw_arc(ep, 6.0, 0.2, PI - 0.2, 10, ec, 2.0)
+	else:
+		var h := 4.0 if sight == 2 else 2.0
+		var pts := PackedVector2Array()
+		for i in 13:
+			var a := TAU * i / 12.0
+			pts.append(ep + Vector2(cos(a) * 7.0, sin(a) * h))
+		draw_colored_polygon(pts.slice(0, 12), Color(0.1, 0.05, 0.05, 0.8))
+		draw_polyline(pts, ec, 1.5)
+		draw_circle(ep, minf(h, 2.5), ec)

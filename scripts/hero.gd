@@ -49,6 +49,10 @@ var color := Color(0.3, 0.55, 1.0)
 var speed_mult := 1.0 # del tipo de héroe
 var table: Array = [] # poder que sube en cada nivel (índice 0 = nivel 2)
 var was_low := false # para la Infamia: ya sumó por tenerlo con poca vida
+enum Sight { FARM, HUNT, SEARCH }
+var sight := Sight.FARM # te caza si te ve; si te pierde, te busca un rato
+var _last_seen := Vector2.ZERO
+var _search_t := 0.0
 
 
 func _ready() -> void:
@@ -86,6 +90,7 @@ func setup(cfg: Dictionary, start_level: int) -> void:
 func _process(delta: float) -> void:
 	if not world.running:
 		return
+	_update_sight(delta)
 	if status.stunned():
 		_aim_windup = 0.0
 		queue_redraw()
@@ -125,14 +130,14 @@ func _process(delta: float) -> void:
 			_fire_t = cooldown
 			_fire_dir(_aim_locked, _close_horde())
 	elif _fire_t <= 0.0 and _roll_t <= 0.0 and _target_valid() and position.distance_to(target.position) <= B.HERO_RANGE:
-		var hunting_you: bool = target == world.player and world.detected
-		var guard: Array = _close_horde() if hunting_you else []
+		var at_you: bool = target == world.player and hunting_you()
+		var guard: Array = _close_horde() if at_you else []
 		if _horde_turn and not guard.is_empty():
 			# cazando con creeps cerca, alterna: un disparo a la horda y uno a vos
 			_horde_turn = false
 			_fire_t = cooldown
 			_fire_dir((guard[0].position - position).normalized(), guard.slice(1) if guard.size() > 1 else guard)
-		elif hunting_you:
+		elif at_you:
 			# contra el jugador apunta primero y avisa: se puede esquivar
 			_horde_turn = true
 			_aim_windup = B.HERO_AIM_WINDUP
@@ -163,7 +168,7 @@ func _check_roll() -> void:
 		if not s.from_player or s.dodge_roll > B.HERO_DODGE_CHANCE:
 			continue
 		# sin detectarte no gasta la rodada en escupitajos que casi no le hacen nada
-		if not world.detected and s.damage < max_hp * B.HERO_DODGE_MIN_DAMAGE:
+		if not hunting_you() and s.damage < max_hp * B.HERO_DODGE_MIN_DAMAGE:
 			continue
 		var rel: Vector2 = position - s.position
 		var along: float = rel.dot(s.direction)
@@ -236,8 +241,40 @@ func _target_valid() -> bool:
 
 # --- Decisiones --------------------------------------------------------------
 
+## Te ve si estás a HERO_RANGE y sin camuflaje: te caza. A más de HUNT_LOSE_DIST
+## (o camuflado) te busca HUNT_SEARCH_TIME en tu última posición y vuelve a farmear.
+func _update_sight(delta: float) -> void:
+	var p = world.player
+	var d := position.distance_to(p.position)
+	var hidden: bool = p.stealth_t > 0.0
+	if not hidden and d < B.HERO_RANGE:
+		if sight != Sight.HUNT:
+			world.on_hero_saw_you(self)
+		sight = Sight.HUNT
+		_last_seen = p.position
+	elif sight == Sight.HUNT:
+		if hidden or d > B.HUNT_LOSE_DIST:
+			sight = Sight.SEARCH
+			_search_t = B.HUNT_SEARCH_TIME
+		else:
+			_last_seen = p.position
+	elif sight == Sight.SEARCH:
+		_search_t -= delta
+		if _search_t <= 0.0:
+			sight = Sight.FARM
+			world.hud.banner("Lo perdiste: %s dejó de buscarte" % _the_name())
+
+
+func hunting_you() -> bool:
+	return sight == Sight.HUNT
+
+
+func _the_name() -> String:
+	return "%s %s" % [article, title]
+
+
 func _think() -> void:
-	var hunting: bool = world.detected and world.player.stealth_t <= 0.0
+	var hunting: bool = hunting_you() and world.player.stealth_t <= 0.0
 	target = _pick_hunt_target() if hunting else _pick_target()
 	var low_hp := hp / max_hp < B.HERO_RETREAT_HP
 	var mistake := _rng.randf() < B.HERO_MISTAKE_CHANCE
@@ -266,7 +303,7 @@ func _think() -> void:
 		if hunting:
 			seek = B.HUNT_GEM_RADIUS
 			pull = B.HUNT_GEM_PULL
-		elif world.alarm_t > 0.0 and not world.detected:
+		elif sight == Sight.SEARCH or (world.alarm_t > 0.0 and not hunting):
 			seek = B.ALARM_GEM_RADIUS
 			pull = B.ALARM_GEM_PULL
 		var gem = _best_gem_pile(seek)
@@ -293,10 +330,16 @@ func _think() -> void:
 			steer = Vector2.ZERO # quieto encima para abrirlo
 
 	# 2b. si un civil gritó, va hacia ahí a buscar al creep (a los civiles no los toca)
-	if world.alarm_t > 0.0 and not low_hp and not world.detected:
+	if world.alarm_t > 0.0 and not low_hp and not hunting:
 		var to_alarm: Vector2 = world.alarm_pos - position
 		if to_alarm.length() > 40.0:
 			steer += to_alarm.normalized() * B.ALARM_PULL
+
+	# 2c. te perdió de vista: va a tu última posición vista
+	if sight == Sight.SEARCH and not low_hp:
+		var to_seen: Vector2 = _last_seen - position
+		if to_seen.length() > 40.0:
+			steer += to_seen.normalized() * B.HUNT_SEARCH_PULL
 
 	# 3. cacería: con el jugador detectado lo persigue a distancia de tiro.
 	#    A la horda no la busca (ya viene sola), solo se aleja si está muy encima.
@@ -331,12 +374,12 @@ func _pick_target():
 		candidates.append(world.player)
 	for c in candidates:
 		var d := position.distance_to(c.position)
-		if d > reach and not (c == world.player and world.detected):
+		if d > reach and not (c == world.player and hunting_you()):
 			continue
 		var score := -d
 		if c.hp <= damage:
 			score += 60.0 # prefiere lo que mata de un golpe
-		if c == world.player and world.detected:
+		if c == world.player and hunting_you():
 			score += B.HERO_DETECTED_TARGET_BONUS
 		if score > best_score:
 			best_score = score
@@ -485,10 +528,8 @@ func take_damage(amount: float, from_player: bool, melee := false, tick := false
 		_hurt = 0.05
 		return
 	hp -= amount
-	if from_player:
-		if not tick:
-			_flash = B.HERO_HIT_FLASH
-		world.add_threat(amount * B.THREAT_PER_DAMAGE)
+	if from_player and not tick:
+		_flash = B.HERO_HIT_FLASH
 	if hp <= 0.0:
 		hp = 0.0
 		world.heroes.on_hero_killed(self)

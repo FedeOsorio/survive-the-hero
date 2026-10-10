@@ -14,7 +14,7 @@ Survivor estilo Vampire Survivors al revés, en Godot 4 (GDScript), pixel art 2D
 <!-- Completar a medida que crece el proyecto: una línea por carpeta o sistema. -->
 - `project.godot`: configuración (escena principal `scenes/main.tscn`).
 - `scripts/balance.gd`: todos los números de balance. Para ajustar balance, tocá solo este archivo.
-- `scripts/main.gd`: raíz de la partida (spawn de la horda, reloj, amenaza y fin de partida).
+- `scripts/main.gd`: raíz de la partida (spawn de la horda, reloj, quién te caza y fin de partida).
 - `scripts/creep.gd`: el jugador (absorber, mutar, evolucionar, ataques automáticos, embestida invulnerable).
 - `scripts/heroes.gd`: los tres héroes (Arquero, Caballero, Maga; tabla `HEROES` en balance), llegadas por portal, "el más cercano" (`world.hero`), amanecer a los 15:00 y victoria.
 - `scripts/hero.gd`: IA de un héroe (farmear, kitear, juntar XP, subir de nivel, retirarse, rodada, aviso de disparo).

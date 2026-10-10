@@ -26,9 +26,8 @@ var elapsed := 0.0
 var running := true
 var won := false
 var end_reason := ""
-var detected := false
-var threat := 0.0
-var losing_aggro := false # detectado y lejos de los héroes: la amenaza baja
+var detected: get = _any_hunting # algún héroe te está cazando (cada uno te caza si te ve)
+var _seen_banner_t := -999.0
 var escaping := false # amanecer: los héroes vivos escapan y todo lo demás queda quieto
 var result := "" # derrota, escape, victoria o total
 var kills := 0
@@ -124,8 +123,6 @@ func _process(delta: float) -> void:
 		_next_row = (floorf(elapsed / 60.0) + 1.0) * 60.0
 		stats_rows.append(_stats_row(str(int(elapsed / 60.0))))
 
-	add_threat(player.stage * B.THREAT_PASSIVE_PER_STAGE * delta)
-	_update_escape_aggro(delta)
 	_update_alarm(delta)
 	_elite_t += delta
 	if _elite_t >= B.ELITE_EVERY:
@@ -151,8 +148,8 @@ func _process(delta: float) -> void:
 
 	if sim_mode and elapsed >= _next_report:
 		_next_report += 60.0
-		print("[sim] min %d | heroes %s | creep %s biomasa %d | amenaza %d | horda %d | muertes %d" % [
-			int(elapsed / 60.0), _heroes_report(), player.stage_name(), int(player.biomass), int(threat), minions.size(), kills])
+		print("[sim] min %d | heroes %s | creep %s biomasa %d | %s | horda %d | muertes %d" % [
+			int(elapsed / 60.0), _heroes_report(), player.stage_name(), int(player.biomass), "te caza" if detected else "no te ve", minions.size(), kills])
 
 
 func _nearest_hero():
@@ -228,8 +225,6 @@ func _update_alarm(delta: float) -> void:
 func on_civilian_killed(c) -> void:
 	civilians.erase(c)
 	civilians_eaten += 1
-	var seen: bool = player.stealth_t <= 0.0 and heroes.any_within(player.position, B.HERO_RANGE)
-	add_threat(B.THREAT_PER_CIVILIAN_SEEN if seen else B.THREAT_PER_CIVILIAN)
 	infamy.add(B.INFAMY_PER_CIVILIAN)
 	raise_alarm(c.position)
 	var corpse = Corpse.new()
@@ -332,51 +327,44 @@ func add_entity(n: Node) -> void:
 	_entities.add_child(n)
 
 
-# --- Amenaza y fin de partida ------------------------------------------------
+# --- Cacería y fin de partida ------------------------------------------------
 
 ## Temblor de pantalla chico (mordidas, embestidas y onda que le pegan al héroe).
 func shake() -> void:
 	_shake_t = B.SHAKE_TIME
 
 
-func add_threat(amount: float) -> void:
-	if detected:
-		return
-	threat += amount
-	if threat >= B.DETECTION_THRESHOLD:
-		set_detected()
+func _any_hunting() -> bool:
+	if heroes == null:
+		return false
+	for h in heroes.list:
+		if h.hunting_you():
+			return true
+	return false
 
 
-## Detectado y con el héroe más cercano a más de THREAT_ESCAPE_DISTANCE, la amenaza
-## baja; al llegar a THREAT_ESCAPE_LOSE del umbral te deja de cazar.
-func _update_escape_aggro(delta: float) -> void:
-	var h = hero
-	losing_aggro = detected and (h == null or h.position.distance_to(player.position) > B.THREAT_ESCAPE_DISTANCE)
-	if not losing_aggro:
-		return
-	threat -= B.THREAT_ESCAPE_DECAY * delta
-	var lose := B.DETECTION_THRESHOLD * B.THREAT_ESCAPE_LOSE
-	if threat <= lose:
-		threat = lose
-		detected = false
-		losing_aggro = false
-		hud.banner("Lo perdiste: el héroe dejó de cazarte")
+## 0: nadie te ve, 1: alguien te busca, 2: alguien te caza (para el ojo sobre el creep).
+func sight_level() -> int:
+	var level := 0
+	for h in heroes.list:
+		if h.hunting_you():
+			return 2
+		if h.sight == h.Sight.SEARCH:
+			level = 1
+	return level
 
 
-## Camuflaje del jugador: vuelve a no estar detectado y borra el rastro.
+## Un héroe te vio y empieza a cazarte (banner como mucho cada HUNT_SEEN_BANNER_EVERY).
+func on_hero_saw_you(h) -> void:
+	if elapsed - _seen_banner_t >= B.HUNT_SEEN_BANNER_EVERY:
+		_seen_banner_t = elapsed
+		hud.banner("¡%s te vio!" % h.full_name())
+
+
+## Camuflaje del jugador: los héroes te pierden (te buscan un rato) y se borra el rastro.
 func lose_aggro() -> void:
-	detected = false
-	threat = B.DETECTION_THRESHOLD * B.STEALTH_THREAT_LEFT
 	alarm_t = 0.0
 	hud.banner("Camuflaje: el héroe te perdió de vista")
-
-
-func set_detected() -> void:
-	if detected:
-		return
-	detected = true
-	threat = B.DETECTION_THRESHOLD
-	hud.banner("¡El héroe te vio! Ahora te caza.")
 
 
 ## "result": derrota (te matan), escape (amanece con héroes vivos), victoria (mataste

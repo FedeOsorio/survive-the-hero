@@ -67,10 +67,7 @@ const CIVILIAN_HP := 8.0
 const CIVILIAN_SPEED := 85.0
 const CIVILIAN_FLEE_RADIUS := 220.0
 const CIVILIAN_BIOMASS := 12.0
-# Comer civiles hace ruido: suma amenaza y el héroe va a investigar el lugar.
-const THREAT_PER_CIVILIAN := 15.0
-const THREAT_PER_CIVILIAN_SEEN := 30.0 # si lo matás a HERO_RANGE del héroe y sin camuflaje
-const THREAT_PER_SCREAM := 2.0 # perseguir sin matar casi no suma
+# Comer civiles hace ruido: el héroe va a investigar el lugar.
 # El grito empieza apenas un civil sale corriendo de vos, no cuando muere.
 # Cada grito nuevo actualiza el lugar. La alarma dura hasta que llega (a ALARM_ARRIVE_DIST)
 # y ALARM_SEARCH_TIME más buscando, con un máximo de ALARM_MAX_TIME desde el último grito.
@@ -80,24 +77,19 @@ const ALARM_SEARCH_TIME := 3.0
 const ALARM_MAX_TIME := 12.0
 const CIVILIAN_SCREAM_COOLDOWN := 3.0 # cada civil grita como mucho cada tantos segundos
 
-# Camuflaje (Q): te saca del radar del héroe. Una vez por minuto.
+# Camuflaje (Q): corta la cacería al instante (el héroe pasa a buscarte). Una vez por minuto.
 const STEALTH_COOLDOWN := 60.0
 const STEALTH_TIME := 4.0 # segundos en que el héroe no te puede apuntar
-const STEALTH_THREAT_LEFT := 0.4 # la amenaza queda en este % del umbral
 
-# --- Amenaza y detección -----------------------------------------------------
-const DETECTION_THRESHOLD := 150.0
-const THREAT_PER_DAMAGE := 0.15
-const THREAT_PER_STOLEN_GEM := 3.0
+# --- Te ve, te caza ----------------------------------------------------------
+# Cada héroe te caza si estás a menos de HERO_RANGE y sin camuflaje. A más de
+# HUNT_LOSE_DIST (o camuflado) va HUNT_SEARCH_TIME a tu última posición y vuelve a farmear.
+const HUNT_LOSE_DIST := 520.0
+const HUNT_SEARCH_TIME := 5.0
+const HUNT_SEARCH_PULL := 3.0
+const HUNT_SEEN_BANNER_EVERY := 10.0 # "¡El Arquero te vio!" como mucho cada tantos segundos
 const GEM_BIOMASS := 0.5 # pisar una gema te alimenta: biomasa por punto de XP (el imán no las atrae)
 const GEM_EAT_RANGE := 12.0 # se suma a tu radio
-# Detectado, si el héroe más cercano está lejos la amenaza baja; a la mitad del umbral te pierde.
-const THREAT_ESCAPE_DISTANCE := 600.0
-const THREAT_ESCAPE_DECAY := 6.0 # por segundo
-const THREAT_ESCAPE_LOSE := 0.5 # x DETECTION_THRESHOLD
-const STEAL_RADIUS := 300.0 # pisar una gema cerca del héroe suma amenaza
-const THREAT_PER_STAGE := 20.0
-const THREAT_PASSIVE_PER_STAGE := 0.15 # por segundo y por etapa: crecer te vuelve visible
 
 # Hambre: si vas atrás del héroe, cada bocado rinde más.
 # Tu poder = nivel + 3 x etapa; por cada nivel del héroe por encima, +12% de biomasa.
@@ -105,7 +97,7 @@ const HUNGER_PER_LEVEL := 0.12
 const HUNGER_MAX := 3.0
 
 # Élites: cada tanto aparece un creep dorado. Cuando el héroe lo mata deja un
-# corazón; si lo comés, ganás una mutación al instante (y amenaza si estás cerca).
+# corazón; si lo comés, ganás una mutación al instante.
 const ELITE_EVERY := 45.0
 const ELITE_HP_MULT := 8.0
 const ELITE_HEART_BIOMASS := 10.0
@@ -342,7 +334,6 @@ const CHEST_LIFETIME := 30.0
 const CHEST_HERO_HEAL := 0.2
 const CHEST_HERO_PULL := 3.0
 const CHEST_HERO_SEEK_RADIUS := 900.0
-const CHEST_THREAT := 40.0
 
 # Eventos de oleada, en rotación: estampida, asedio, luna de sangre.
 const EVENT_FIRST := 120.0
