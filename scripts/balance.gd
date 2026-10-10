@@ -129,10 +129,12 @@ const HERO_GEM_PULL_SPEED := 350.0
 const HERO_HEART_PICKUP := 35.0 # los corazones de élite los tiene que pisar (más el radio del corazón)
 const HERO_HEART_PICKUP_PER_LEVEL := 1.0
 const GEM_SCATTER := 30.0 # las gemas saltan un poco al caer, lejos del cadáver
-const HERO_DAMAGE_PER_LEVEL := 1.10
-const HERO_COOLDOWN_PER_LEVEL := 0.95
-const HERO_MIN_COOLDOWN := 0.18
-const HERO_LEVELS_PER_EXTRA_ARROW := 4
+# Por nivel sobre el 1, lineal: daño de flecha +6%, espera entre disparos −1,5% (mínimo
+# HERO_MIN_COOLDOWN), y después se divide por el "fire_rate" del héroe.
+const HERO_DAMAGE_PER_LEVEL := 0.06
+const HERO_COOLDOWN_PER_LEVEL := 0.015
+const HERO_MIN_COOLDOWN := 0.30
+const HERO_LEVELS_PER_EXTRA_ARROW := 6
 # Cada flecha atraviesa a este número de enemigos extra (Flechas perforantes suma más).
 const HERO_ARROW_PIERCE := 1
 # Tajo de espada: ataque cuerpo a cuerpo en arco, con aviso previo para poder esquivarlo.
@@ -184,7 +186,7 @@ const HUNT_SHARE_RADIUS := 150.0 # con creeps así de cerca, alterna un disparo 
 
 # Tres héroes en 15 minutos: llegan a horario fijo, haya muerto o no el anterior.
 # Ganás matando a los tres. "hp", "speed" y "damage" multiplican la vida, la velocidad
-# y el daño de las flechas; "powers" son los poderes con los que llega (rango 1).
+# y el daño de las flechas; "fire_rate" multiplica cuántas tira por segundo; "powers" son los poderes con los que llega (rango 1).
 # "level_bonus": llega en HERO_CURVE (ese minuto) + esto + bonus por ir adelantado, nunca
 # por debajo del héroe más fuerte que hubo. Bonus: (tu nivel equivalente − CREEP_CURVE) / 2,
 # redondeado, entre 0 y ARRIVAL_AHEAD_BONUS_MAX.
@@ -219,15 +221,15 @@ const HERO_GEM_PILE_LOOK := 40 # cuántas gemas cercanas mira para elegir montó
 const HERO_PORTAL_MIN := 600.0 # distancia del portal a vos
 const HERO_PORTAL_MAX := 900.0
 const HEROES := [
-	{"name": "Arquero", "article": "el", "minute": 0.0, "level": 1, "hp": 1.0, "speed": 1.0, "damage": 1.0,
+	{"name": "Arquero", "article": "el", "minute": 0.0, "level": 1, "hp": 1.0, "speed": 1.0, "damage": 1.0, "fire_rate": 1.0,
 		"powers": [], "color": Color(0.3, 0.55, 1.0),
 		"table": ["perforante", "multiple", "botas", "rayo", "perforante", "multiple", "orbes", "rayo", "botas",
 			"perforante", "multiple", "rayo", "orbes", "botas", "rayo", "orbes", "rayo", "orbes", "orbes"]},
-	{"name": "Caballero", "article": "el", "minute": 5.0, "level_bonus": 2, "hp": 1.5, "speed": 0.9, "damage": 0.8,
+	{"name": "Caballero", "article": "el", "minute": 5.0, "level_bonus": 2, "hp": 1.5, "speed": 0.9, "damage": 0.8, "fire_rate": 0.5,
 		"powers": ["aura", "nova"], "color": Color(0.78, 0.8, 0.88),
 		"table": ["aura", "orbes", "nova", "aura", "botas", "orbes", "rayo", "nova", "aura",
 			"orbes", "botas", "nova", "rayo", "aura", "orbes", "nova", "botas", "rayo", "orbes"]},
-	{"name": "Maga", "article": "la", "minute": 10.0, "level_bonus": 4, "hp": 0.8, "speed": 1.05, "damage": 1.15,
+	{"name": "Maga", "article": "la", "minute": 10.0, "level_bonus": 4, "hp": 0.8, "speed": 1.05, "damage": 1.15, "fire_rate": 0.7,
 		"powers": ["rayo", "orbes"], "color": Color(0.72, 0.4, 0.95),
 		"table": ["rayo", "orbes", "multiple", "rayo", "nova", "orbes", "aura", "rayo", "multiple",
 			"nova", "orbes", "rayo", "aura", "nova", "multiple", "orbes", "nova", "aura", "nova"]},

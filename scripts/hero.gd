@@ -50,6 +50,8 @@ var title := "Arquero"
 var article := "el"
 var color := Color(0.3, 0.55, 1.0)
 var speed_mult := 1.0 # del tipo de héroe
+var damage_mult := 1.0
+var fire_rate := 1.0
 var table: Array = [] # poder que sube en cada nivel (índice 0 = nivel 2)
 var was_low := false # para la Infamia: ya sumó por tenerlo con poca vida
 enum Sight { FARM, HUNT, SEARCH }
@@ -78,6 +80,8 @@ func setup(cfg: Dictionary, start_level: int) -> void:
 	article = cfg.article
 	color = cfg.color
 	speed_mult = cfg.speed
+	damage_mult = cfg.damage
+	fire_rate = cfg.fire_rate
 	table = cfg.table
 	for id in cfg.powers:
 		powers.ranks[id] = 1
@@ -85,7 +89,6 @@ func setup(cfg: Dictionary, start_level: int) -> void:
 		_level_up(true)
 	max_hp *= cfg.hp
 	hp = max_hp
-	damage *= cfg.damage
 	_apply_ranks()
 	_level_fx = 0.0
 
@@ -503,14 +506,15 @@ func _level_up(quiet := false) -> void:
 	level += 1
 	max_hp += B.HERO_HP_PER_LEVEL
 	hp = minf(max_hp, hp + B.HERO_HP_PER_LEVEL + max_hp * B.HERO_LEVEL_HEAL)
-	damage *= B.HERO_DAMAGE_PER_LEVEL
-	cooldown = maxf(cooldown * B.HERO_COOLDOWN_PER_LEVEL, B.HERO_MIN_COOLDOWN)
 	powers.apply_level(level, table, quiet)
 	_apply_ranks()
 	_level_fx = 0.6
 
 
 func _apply_ranks() -> void:
+	damage = B.HERO_ARROW_DAMAGE * damage_mult * (1.0 + B.HERO_DAMAGE_PER_LEVEL * (level - 1))
+	var wait := maxf(B.HERO_ARROW_COOLDOWN * (1.0 - B.HERO_COOLDOWN_PER_LEVEL * (level - 1)), B.HERO_MIN_COOLDOWN)
+	cooldown = wait / fire_rate
 	arrows = 1 + level / B.HERO_LEVELS_PER_EXTRA_ARROW + powers.rank("multiple")
 	pierce = B.HERO_ARROW_PIERCE + powers.rank("perforante")
 	speed = B.HERO_SPEED * speed_mult * (1.0 + B.POWER_SPEED * powers.rank("botas"))
