@@ -3,17 +3,20 @@ extends RefCounted
 ## "max" es cuántas veces se puede tomar la misma; "min_stage" desde qué etapa aparece.
 ## Las evoluciones ("weapon" al máximo + "passive" con al menos 1 rango) se toman
 ## una sola vez y, cuando están disponibles, vienen garantizadas en la próxima elección.
+## "filler" (Festín) no tiene máximo y solo aparece si no alcanzan las opciones.
 
 const LIST := {
-	"colmillos": {"name": "Colmillos", "desc": "+25% daño de mordida y escupitajo", "max": 5},
-	"patas": {"name": "Patas ágiles", "desc": "+10% velocidad", "max": 4},
-	"caparazon": {"name": "Caparazón", "desc": "+25% vida máxima y te cura", "max": 5},
-	"glandula": {"name": "Glándula ácida", "desc": "Escupís 20% más seguido", "max": 4},
+	"colmillos": {"name": "Colmillos", "desc": "+12,5% daño de mordida y escupitajo", "max": 10},
+	"patas": {"name": "Patas ágiles", "desc": "+5% velocidad", "max": 8},
+	"caparazon": {"name": "Caparazón", "desc": "+12,5% vida máxima y te cura", "max": 10},
+	"glandula": {"name": "Glándula ácida", "desc": "Escupís 10% más seguido", "max": 8},
 	"doble": {"name": "Escupitajo múltiple", "desc": "+1 escupitajo por disparo", "max": 2},
-	"iman": {"name": "Imán de carne", "desc": "Los cadáveres cercanos vuelan hacia vos", "max": 3},
+	"iman": {"name": "Imán de carne", "desc": "Los cadáveres cercanos vuelan hacia vos (+30 de radio)", "max": 6},
 	"frenesi": {"name": "Frenesí", "desc": "Comer seguido arma un combo que multiplica la biomasa", "max": 2},
-	"rey": {"name": "Rey de la horda", "desc": "Los compañeros cerca tuyo van más rápido y pegan más (cada rango agranda el aura)", "max": 3, "min_stage": 1},
-	"vampiro": {"name": "Mordida vampírica", "desc": "La mordida te cura un 20% del daño", "max": 2},
+	"rey": {"name": "Rey de la horda", "desc": "Los compañeros cerca tuyo van más rápido y pegan más (cada rango agranda el aura)", "max": 6, "min_stage": 1},
+	"vampiro": {"name": "Mordida vampírica", "desc": "La mordida te cura un 10% del daño", "max": 4},
+	# Relleno: solo aparece si no alcanzan las opciones (todo al máximo)
+	"festin": {"name": "Festín", "desc": "Te cura 30% y +5% de daño", "max": 0, "filler": true},
 	# Evoluciones
 	"lluvia": {"name": "Lluvia ácida", "desc": "Cada escupitajo deja un charco que quema y frena al héroe", "max": 1,
 		"weapon": "doble", "passive": "glandula"},
@@ -61,7 +64,7 @@ static func roll(ranks: Dictionary, stage: int, rng: RandomNumberGenerator, coun
 		out.append(evos[rng.randi_range(0, evos.size() - 1)])
 	var pool: Array = []
 	for id in LIST:
-		if is_evolution(id):
+		if is_evolution(id) or LIST[id].get("filler", false):
 			continue
 		if ranks.get(id, 0) < LIST[id].max and stage >= LIST[id].get("min_stage", 0):
 			pool.append(id)
@@ -69,4 +72,6 @@ static func roll(ranks: Dictionary, stage: int, rng: RandomNumberGenerator, coun
 		var i := rng.randi_range(0, pool.size() - 1)
 		out.append(pool[i])
 		pool.remove_at(i)
+	if out.size() < count:
+		out.append("festin")
 	return out

@@ -52,14 +52,14 @@ func next_name() -> String:
 
 
 ## Nivel con el que llega el héroe "i": el Arquero en 1; los demás a la altura
-## del más fuerte entre los héroes anteriores y vos, más su "level_bonus".
+## del más fuerte entre los héroes anteriores y vos (nivel equivalente), más su "level_bonus".
 func arrival_level(i: int) -> int:
 	var cfg: Dictionary = B.HEROES[i]
 	if not cfg.has("level_bonus"):
 		return cfg.level
 	for h in list:
 		_best_level = maxi(_best_level, h.level)
-	return maxi(_best_level, world.player.level) + cfg.level_bonus
+	return maxi(_best_level, world.player.power_level()) + cfg.level_bonus
 
 
 func nearest(pos: Vector2):

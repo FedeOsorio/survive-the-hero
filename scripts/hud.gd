@@ -180,7 +180,7 @@ func _draw_choices(font: Font, p) -> void:
 		_view.draw_rect(r, Color(0.2, 0.15, 0.05, 0.95) if evo else Color(0.12, 0.1, 0.16, 0.95))
 		_view.draw_rect(r, Color(1.0, 0.8, 0.25) if evo else Color(0.6, 0.9, 1.0, 0.8), false, 3.0 if evo else 2.0)
 		_text(font, r.position + Vector2(14, 30), "%d. %s" % [i + 1, m.name], 20, Color(1.0, 0.85, 0.35) if evo else Color.WHITE)
-		_text(font, r.position + Vector2(14, 56), "EVOLUCIÓN" if evo else "Rango %d/%d" % [p.rank(id) + 1, m.max], 13, Color(1.0, 0.8, 0.3) if evo else Color(0.7, 0.7, 0.8))
+		_text(font, r.position + Vector2(14, 56), "EVOLUCIÓN" if evo else ("Rango %d" % (p.rank(id) + 1) if m.max == 0 else "Rango %d/%d" % [p.rank(id) + 1, m.max]), 13, Color(1.0, 0.8, 0.3) if evo else Color(0.7, 0.7, 0.8))
 		_view.draw_multiline_string(font, r.position + Vector2(14, 86), Mutations.desc(id), HORIZONTAL_ALIGNMENT_LEFT, w - 28, 16, -1, Color(0.9, 0.9, 0.95))
 
 

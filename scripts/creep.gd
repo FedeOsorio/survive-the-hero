@@ -84,7 +84,7 @@ func _recalc_stats() -> void:
 	max_hp = d.hp * (1.0 + rank("caparazon") * B.MUT_HP)
 	hp = max_hp * ratio
 	speed = d.speed * (1.0 + rank("patas") * B.MUT_SPEED)
-	bite = d.bite * (1.0 + rank("colmillos") * B.MUT_DAMAGE)
+	bite = d.bite * (1.0 + rank("colmillos") * B.MUT_DAMAGE + rank("festin") * B.FEAST_DAMAGE)
 
 
 func bite_range() -> float:
@@ -114,8 +114,13 @@ func hunger() -> float:
 	var hero = world.hero
 	if hero == null:
 		return 1.0
-	var gap: int = hero.level - (level + 3 * stage)
+	var gap: int = hero.level - (power_level() + 3 * stage)
 	return clampf(1.0 + gap * B.HUNGER_PER_LEVEL, 1.0, B.HUNGER_MAX)
+
+
+## Nivel equivalente para medir tu fuerza contra los héroes (subís muchos más niveles que ellos).
+func power_level() -> int:
+	return roundi(level * B.CREEP_LEVEL_EQUIV)
 
 
 func mut_xp_needed() -> float:
@@ -351,6 +356,9 @@ func choose_mutation(index: int) -> void:
 	if id == "caparazon":
 		_recalc_stats()
 		hp = minf(max_hp, hp + max_hp * B.MUT_HP)
+	elif id == "festin":
+		_recalc_stats()
+		hp = minf(max_hp, hp + max_hp * B.FEAST_HEAL)
 	else:
 		_recalc_stats()
 	get_tree().paused = world.escaping # si amaneció, el resto sigue quieto

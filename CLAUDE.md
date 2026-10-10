@@ -27,7 +27,7 @@ Survivor estilo Vampire Survivors al revés, en Godot 4 (GDScript), pixel art 2D
 - `scripts/minion.gd`, `corpse.gd`, `gem.gd`, `projectile.gd`: horda, cadáveres, gemas de XP y flechas.
 - `scripts/spit.gd`: escupitajos del creep y disparos de los arqueros de la horda.
 - `scripts/civilian.gd`: civiles que huyen del creep (comida extra).
-- `scripts/mutations.gd`: lista de mutaciones y evoluciones del creep, y sorteo de 3 opciones (evolución garantizada si está disponible).
+- `scripts/mutations.gd`: lista de mutaciones y evoluciones del creep, y sorteo de 3 opciones (evolución garantizada si está disponible; Festín de relleno).
 - Modos de prueba: `-- --sim` (creep invulnerable) y `-- --bot` (bot juega). Federico prueba él mismo: no correr el bot en cada cambio.
 - `scripts/hud.gd`, `arena.gd`: interfaz y fondo.
 - Los `*.gd.uid` los genera Godot: no los leas ni los edites a mano.

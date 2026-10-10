@@ -28,14 +28,20 @@ const SPIT_RANGE := 380.0
 const HEAL_PER_BIOMASS := 2.0
 # Mutaciones: la biomasa también llena una barra de nivel; al subir elegís 1 de 3.
 static func mutation_xp_for_level(level: int) -> float:
-	return 12.0 + level * 14.0
+	return 10.0 + level * 5.0
 
-const MUT_DAMAGE := 0.25
-const MUT_SPEED := 0.10
-const MUT_HP := 0.25
-const MUT_SPIT_RATE := 0.20
-const MUT_VAMPIRE := 0.20
-const MAGNET_RADIUS_PER_RANK := 60.0
+# Rinden la mitad por rango y se toman el doble de veces que antes (máximos en mutations.gd).
+const MUT_DAMAGE := 0.125
+const MUT_SPEED := 0.05
+const MUT_HP := 0.125
+const MUT_SPIT_RATE := 0.10
+const MUT_VAMPIRE := 0.10
+const FEAST_HEAL := 0.3 # Festín (relleno cuando todo está al máximo): cura y daño, sin máximo
+const FEAST_DAMAGE := 0.05
+# Nivel equivalente del creep (redondear(nivel × esto)) para medir su fuerza contra los
+# héroes: nivel de llegada y hambre. La tabla y el HUD siguen mostrando el nivel real.
+const CREEP_LEVEL_EQUIV := 0.6
+const MAGNET_RADIUS_PER_RANK := 30.0
 const MAGNET_PULL_SPEED := 350.0
 const COMBO_WINDOW := 1.5 # segundos entre bocados para mantener el combo
 const COMBO_WINDOW_PER_RANK := 0.75
@@ -44,10 +50,10 @@ const COMBO_MAX := 2.5
 
 # Liderazgo (solo con la mutación Rey de la horda): los compañeros cerca tuyo se potencian.
 const LEAD_RADIUS := 140.0
-const LEAD_RADIUS_PER_RANK := 40.0
+const LEAD_RADIUS_PER_RANK := 20.0
 const LEAD_SPEED_MULT := 1.4
 const LEAD_DAMAGE_MULT := 1.5
-const LEAD_DAMAGE_PER_RANK := 0.25
+const LEAD_DAMAGE_PER_RANK := 0.125
 
 # Civiles: comida que huye de vos, lejos del héroe.
 const CIVILIANS_START := 20
