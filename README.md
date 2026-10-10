@@ -15,7 +15,6 @@ Un survivor al revés: sos un creep de la horda, los héroes los controla la IA.
 | Moverse | WASD o flechas | Stick izquierdo |
 | Embestida | Espacio o Shift | RB |
 | Camuflaje (el héroe te pierde de vista, 1 vez por minuto) | Q | LB |
-| Evolucionar | E | Y |
 | Elegir mutación | 1 / 2 / 3 | X / A / B |
 | Reiniciar | R | Start |
 
@@ -29,7 +28,7 @@ La mordida y el escupitajo son automáticos: salen solos cuando el héroe o un c
 - **Al morir, cada creep deja:**
   - un cadáver: pasá por encima para absorberlo y ganar biomasa y vida;
   - una gema celeste: es la única forma en que el héroe sube de nivel. Las que caen cerca suyo vuelan hacia él. Si la pisás antes que él, te la comés: te da un poco de biomasa (tu imán no las atrae).
-- **Evolución:** con suficiente biomasa apretá E. Hay 4 etapas: Slime, Esqueleto, Cultista y Demonio.
+- **Evolución:** apenas juntás la biomasa, evolucionás solo (si estás eligiendo mutación, al cerrarla). Hay 4 etapas: Slime, Esqueleto, Cultista y Demonio.
 - **Te ve, te caza:** cada héroe farmea y te ignora mientras estés lejos. Si te acercás a menos de 420 (sin camuflaje), te ve: aparece un ojo rojo abierto sobre vos y te caza. Si te alejás a más de 520 o te camuflás, te busca 5 segundos en tu última posición (ojo entrecerrado) y, si no te encuentra, vuelve a farmear (ojo cerrado). Cada héroe decide solo: que uno te cace no significa que te cacen todos.
 - **Hambre:** si vas atrás del héroe en poder, cada bocado rinde más (se ve en el HUD).
 - **Élites dorados:** aparecen cada 45 segundos. Cuando el héroe mata uno, deja un corazón rojo: si lo comés, ganás una mutación al instante. Él también lo va a buscar: si lo agarra primero, sube un nivel y se cura.

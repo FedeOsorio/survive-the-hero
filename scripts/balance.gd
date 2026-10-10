@@ -185,7 +185,9 @@ const HUNT_SHARE_RADIUS := 150.0 # con creeps así de cerca, alterna un disparo 
 # Tres héroes en 15 minutos: llegan a horario fijo, haya muerto o no el anterior.
 # Ganás matando a los tres. "hp", "speed" y "damage" multiplican la vida, la velocidad
 # y el daño de las flechas; "powers" son los poderes con los que llega (rango 1).
-# "level_bonus": llega en máx(nivel más alto de los héroes anteriores, tu nivel) + esto.
+# "level_bonus": llega en HERO_CURVE (ese minuto) + esto + bonus por ir adelantado, nunca
+# por debajo del héroe más fuerte que hubo. Bonus: (tu nivel equivalente − CREEP_CURVE) / 2,
+# redondeado, entre 0 y ARRIVAL_AHEAD_BONUS_MAX.
 # "table": +1 rango del poder de cada nivel (índice 0 = nivel 2, hasta el 20; después solo stats).
 # Al llegar se aplican en silencio todas las filas hasta su nivel de llegada.
 const MATCH_MINUTES := 15.0 # amanece: los héroes vivos escapan y termina la partida
@@ -193,6 +195,23 @@ const HERO_ESCAPE_TIME := 2.0 # suben en una columna de luz; todo lo demás qued
 const HORDE_IDLE_DIST := 120.0 # sin héroes vivos, la horda te sigue a esta distancia
 const HERO_ARRIVAL_WARNING := 5.0 # banner y portal antes de que llegue
 const HERO_NEXT_AFTER_KILL := 60.0 # si matás a uno, el siguiente llega a más tardar en estos segundos
+# Curvas objetivo [minuto, nivel] (del plan maestro), interpoladas lineal entre minutos.
+const HERO_CURVE := [[0, 1], [1, 3], [3, 6], [5, 9], [8, 14], [10, 17], [12, 22], [15, 25]]
+const CREEP_CURVE := [[0, 1], [1, 3], [3, 6], [5, 9], [8, 13], [10, 16], [12, 19], [15, 23]] # nivel equivalente
+const ARRIVAL_AHEAD_BONUS_MAX := 2
+
+
+## Nivel de una curva [minuto, nivel] en "minute", interpolando lineal.
+static func curve_at(curve: Array, minute: float) -> float:
+	if minute <= curve[0][0]:
+		return curve[0][1]
+	for i in range(1, curve.size()):
+		if minute <= curve[i][0]:
+			var a: Array = curve[i - 1]
+			var b: Array = curve[i]
+			return lerpf(a[1], b[1], (minute - a[0]) / float(b[0] - a[0]))
+	return curve[-1][1]
+
 const HERO_ARRIVAL_WAVE_RADIUS := 300.0 # onda sagrada al llegar: mata a los menores, empuja a brutos y élites
 const HERO_ARRIVAL_SHIELD := 3.0 # segundos invulnerable al llegar (brilla dorado)
 const HERO_GEM_PILE_EVERY := 0.3 # cada cuánto recalcula el mejor montón de gemas
@@ -374,6 +393,7 @@ const DMG_TICK_EVERY := 0.5 # charcos y sangrado: un número sumado cada tanto
 const HERO_HIT_FLASH := 0.08
 const SHAKE_PX := 4.0
 const SHAKE_TIME := 0.12
+const EVOLVE_FLASH := 0.3 # destello blanco al evolucionar de etapa
 
 
 # --- Tanda 02: Infamia y Paladín del cielo --------------------------------------

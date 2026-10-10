@@ -134,14 +134,11 @@ func _process(delta: float) -> void:
 		return
 	var input := Vector2.ZERO
 	var want_dash := false
-	var want_evolve := false
 	if world.bot_mode:
 		input = CreepBot.move(self)
-		want_evolve = can_evolve()
 	elif not world.sim_mode:
 		input = Input.get_vector("move_left", "move_right", "move_up", "move_down")
 		want_dash = Input.is_action_just_pressed("dash")
-		want_evolve = Input.is_action_just_pressed("evolve")
 		if Input.is_action_just_pressed("stealth") and stealth_cd <= 0.0:
 			stealth_cd = B.STEALTH_COOLDOWN
 			stealth_t = B.STEALTH_TIME
@@ -183,7 +180,8 @@ func _process(delta: float) -> void:
 		_dash_dir = _facing
 		_dash_hit = false
 		_dash_victims.clear()
-	if want_evolve and can_evolve():
+	# la evolución de etapa es automática (si hay una elección de mutación abierta, al cerrarla)
+	if can_evolve() and pending_choices.is_empty():
 		_evolve()
 
 	_absorb(delta)
@@ -284,6 +282,8 @@ func _evolve() -> void:
 	biomass -= evolve_cost()
 	_apply_stage(stage + 1)
 	world.hud.banner("Evolucionaste: %s" % stage_name())
+	_flash = B.EVOLVE_FLASH
+	world.shake()
 
 
 # --- Comer --------------------------------------------------------------------

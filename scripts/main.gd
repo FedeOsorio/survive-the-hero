@@ -469,7 +469,6 @@ func _setup_input() -> void:
 	_add_action("move_up", [KEY_W, KEY_UP], [[JOY_AXIS_LEFT_Y, -1.0]], [JOY_BUTTON_DPAD_UP])
 	_add_action("move_down", [KEY_S, KEY_DOWN], [[JOY_AXIS_LEFT_Y, 1.0]], [JOY_BUTTON_DPAD_DOWN])
 	_add_action("dash", [KEY_SPACE, KEY_SHIFT], [], [JOY_BUTTON_RIGHT_SHOULDER])
-	_add_action("evolve", [KEY_E, KEY_L], [], [JOY_BUTTON_Y])
 	_add_action("stealth", [KEY_Q], [], [JOY_BUTTON_LEFT_SHOULDER])
 	_add_action("pick_1", [KEY_1, KEY_KP_1], [], [JOY_BUTTON_X])
 	_add_action("pick_2", [KEY_2, KEY_KP_2], [], [JOY_BUTTON_A])

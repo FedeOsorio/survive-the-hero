@@ -51,15 +51,19 @@ func next_name() -> String:
 	return B.HEROES[_next].name if _next < total() else ""
 
 
-## Nivel con el que llega el héroe "i": el Arquero en 1; los demás a la altura
-## del más fuerte entre los héroes anteriores y vos (nivel equivalente), más su "level_bonus".
+## Nivel con el que llega el héroe "i": el Arquero en 1; los demás según HERO_CURVE en
+## ese minuto + "level_bonus" + 0 a 2 si vas adelantado de CREEP_CURVE, nunca por
+## debajo del héroe más fuerte que hubo.
 func arrival_level(i: int) -> int:
 	var cfg: Dictionary = B.HEROES[i]
 	if not cfg.has("level_bonus"):
 		return cfg.level
 	for h in list:
 		_best_level = maxi(_best_level, h.level)
-	return maxi(_best_level, world.player.power_level()) + cfg.level_bonus
+	var minute: float = world.elapsed / 60.0
+	var ahead: float = (world.player.power_level() - B.curve_at(B.CREEP_CURVE, minute)) / 2.0
+	var bonus := clampi(roundi(ahead), 0, B.ARRIVAL_AHEAD_BONUS_MAX)
+	return maxi(_best_level, roundi(B.curve_at(B.HERO_CURVE, minute)) + cfg.level_bonus + bonus)
 
 
 func nearest(pos: Vector2):

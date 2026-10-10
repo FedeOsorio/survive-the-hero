@@ -76,8 +76,6 @@ func _draw_hud() -> void:
 	var cost: float = p.evolve_cost()
 	if cost > 0.0:
 		_bar(Rect2(20, 76, 260, 14), p.biomass / cost, Color(0.75, 0.45, 0.9), "Evolución %d/%d" % [int(p.biomass), int(cost)])
-		if p.can_evolve():
-			_text(font, Vector2(20, 112), "¡Pulsá E para evolucionar!", 18, Color(1, 0.9, 0.3))
 	else:
 		_text(font, Vector2(20, 88), "Forma final", 14, Color(0.9, 0.8, 0.8))
 	var st := "Camuflaje (Q): listo" if p.stealth_cd <= 0.0 else "Camuflaje (Q): %ds" % int(ceil(p.stealth_cd))
