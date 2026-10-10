@@ -86,8 +86,7 @@ func on_paladin_killed(p) -> void:
 	c.holy_mutations = B.CAPTAIN_HEART_MUTATIONS if p.captain else 1
 	c.value = 0.0
 	c.radius = 12.0
-	world.corpses.append(c)
-	world.add_entity(c)
+	world.add_corpse(c)
 	p.queue_free()
 
 

@@ -91,7 +91,7 @@ func remove_chest() -> void:
 # --- Oleadas -----------------------------------------------------------------
 
 func _room() -> int:
-	return maxi(B.MAX_MINIONS - world.minions.size(), 0)
+	return maxi(world.minion_cap() - world.minions.size(), 0)
 
 
 ## Una fila ancha de ratas sale de un costado y corre hacia el héroe.

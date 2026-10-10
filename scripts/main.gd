@@ -133,7 +133,7 @@ func _process(delta: float) -> void:
 	_spawn_accum += B.spawns_per_second(minute) * delta
 	while _spawn_accum >= 1.0:
 		_spawn_accum -= 1.0
-		if minions.size() < B.MAX_MINIONS:
+		if minions.size() < minion_cap():
 			spawn_minion(B.pick_minion_type(minute, rng))
 
 	_civilian_t -= delta
@@ -233,8 +233,7 @@ func on_civilian_killed(c) -> void:
 	corpse.value = B.CIVILIAN_BIOMASS
 	corpse.radius = 9.0
 	corpse.color = Color(0.95, 0.8, 0.6)
-	corpses.append(corpse)
-	_entities.add_child(corpse)
+	add_corpse(corpse)
 	c.queue_free()
 
 
@@ -246,7 +245,7 @@ func on_minion_killed(m) -> void:
 		m.queue_free()
 		return
 	kills += 1
-	if player.rank("carronia") > 0 and not m.elite and raised_count < B.RAISE_MAX and minions.size() < B.MAX_MINIONS \
+	if player.rank("carronia") > 0 and not m.elite and raised_count < B.RAISE_MAX and minions.size() < minion_cap() \
 			and m.position.distance_to(player.position) < B.RAISE_RADIUS:
 		var z = spawn_minion(m.type_name, false, m.position)
 		z.max_hp = m.max_hp
@@ -259,8 +258,7 @@ func on_minion_killed(m) -> void:
 	c.heart = m.elite
 	c.radius = m.radius
 	c.color = m.color
-	corpses.append(c)
-	_entities.add_child(c)
+	add_corpse(c)
 
 	var g = Gem.new()
 	g.world = self
@@ -268,7 +266,25 @@ func on_minion_killed(m) -> void:
 	g.xp = m.xp
 	gems.append(g)
 	_entities.add_child(g)
+	if gems.size() > B.MAX_GEMS:
+		remove_gem(gems[0])
 	m.queue_free()
+
+
+## Horda viva máxima: menor si no hay héroes vivos (nadie la mata).
+func minion_cap() -> int:
+	return B.MAX_MINIONS if heroes.list.size() > 0 else B.MAX_MINIONS_NO_HERO
+
+
+## Agrega un cadáver; si hay más de MAX_CORPSES se va el más viejo que no sea corazón.
+func add_corpse(c) -> void:
+	corpses.append(c)
+	add_entity(c)
+	if corpses.size() > B.MAX_CORPSES:
+		for old in corpses:
+			if not old.heart and not old.holy:
+				remove_corpse(old)
+				break
 
 
 func remove_corpse(c) -> void:

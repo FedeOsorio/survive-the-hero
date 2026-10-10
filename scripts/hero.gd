@@ -26,6 +26,9 @@ var _move_dir := Vector2.ZERO
 var _aim := Vector2.RIGHT
 var _fire_t := 0.0
 var _think_t := 0.0
+var _pile_t := 0.0 # hasta recalcular el mejor montón de gemas
+var _pile = null
+var shield_t := 0.0 # invulnerable al llegar
 var _flash := 0.0
 var _hurt := 0.0
 var _level_fx := 0.0
@@ -90,6 +93,8 @@ func setup(cfg: Dictionary, start_level: int) -> void:
 func _process(delta: float) -> void:
 	if not world.running:
 		return
+	shield_t = maxf(shield_t - delta, 0.0)
+	_pile_t -= delta
 	_update_sight(delta)
 	if status.stunned():
 		_aim_windup = 0.0
@@ -306,7 +311,10 @@ func _think() -> void:
 		elif sight == Sight.SEARCH or (world.alarm_t > 0.0 and not hunting):
 			seek = B.ALARM_GEM_RADIUS
 			pull = B.ALARM_GEM_PULL
-		var gem = _best_gem_pile(seek)
+		if _pile_t <= 0.0 or not is_instance_valid(_pile) or position.distance_to(_pile.position) > seek:
+			_pile_t = B.HERO_GEM_PILE_EVERY
+			_pile = _best_gem_pile(seek)
+		var gem = _pile if is_instance_valid(_pile) else null
 		if gem != null:
 			steer += (gem.position - position).normalized() * pull
 
@@ -417,17 +425,20 @@ func _pick_hunt_target():
 
 
 ## La gema a menos de "seek" con más XP alrededor (HERO_GEM_CLUSTER_RADIUS),
-## dividida por (distancia + HERO_GEM_DIST_BIAS).
+## dividida por (distancia + HERO_GEM_DIST_BIAS). Mira solo las HERO_GEM_PILE_LOOK más cercanas.
 func _best_gem_pile(seek: float):
 	var near: Array = []
 	for g in world.gems:
 		if position.distance_to(g.position) < seek:
 			near.append(g)
+	if near.size() > B.HERO_GEM_PILE_LOOK:
+		near.sort_custom(func(a, b): return position.distance_squared_to(a.position) < position.distance_squared_to(b.position))
+		near.resize(B.HERO_GEM_PILE_LOOK)
 	var best = null
 	var best_score := 0.0
 	for g in near:
 		var xp_sum := 0.0
-		for o in world.gems:
+		for o in near:
 			if g.position.distance_to(o.position) < B.HERO_GEM_CLUSTER_RADIUS:
 				xp_sum += o.xp
 		var score: float = xp_sum / (position.distance_to(g.position) + B.HERO_GEM_DIST_BIAS)
@@ -516,7 +527,7 @@ func of_name() -> String:
 
 
 func take_damage(amount: float, from_player: bool, melee := false, tick := false) -> void:
-	if hp <= 0.0:
+	if hp <= 0.0 or shield_t > 0.0:
 		return
 	if from_player:
 		status.log_damage(amount, melee)
@@ -555,6 +566,10 @@ func _draw() -> void:
 		draw_line(Vector2.ZERO, _aim_locked * B.HERO_RANGE, Color(1, 0.25, 0.2, 0.55), 2.0)
 	if _roll_t > 0.0:
 		body = Color(body, 0.45)
+	if shield_t > 0.0:
+		var glow := 0.35 + 0.25 * sin(shield_t * 12.0)
+		draw_circle(Vector2.ZERO, radius + 9.0, Color(1.0, 0.85, 0.3, glow))
+		body = body.lerp(Color(1.0, 0.85, 0.3), 0.5)
 	draw_rect(Rect2(Vector2(-radius, -radius), Vector2(radius, radius) * 2.0), Color(0.05, 0.05, 0.1))
 	draw_rect(Rect2(Vector2(-radius + 2, -radius + 2), Vector2(radius - 2, radius - 2) * 2.0), body)
 	draw_line(Vector2.ZERO, _aim * (radius + 10.0), Color(1, 0.95, 0.7), 3.0)

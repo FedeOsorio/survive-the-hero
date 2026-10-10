@@ -20,6 +20,8 @@ var _best_level := 1 # el nivel más alto que alcanzó un héroe en la partida
 var _escape_t := -1.0 # escapando al amanecer: todo lo demás queda en pausa
 var history: Array = [] # {name, arrive, arrive_level, died, died_level, escaped}
 var _early_at := -1.0 # si matás a uno, el siguiente se adelanta a este segundo
+var wave_fx := 0.0 # onda sagrada de llegada
+var _wave_pos := Vector2.ZERO
 
 
 func _ready() -> void:
@@ -87,6 +89,7 @@ func _process(delta: float) -> void:
 		return
 	if get_tree().paused:
 		return
+	wave_fx = maxf(wave_fx - delta, 0.0)
 	var t: float = world.elapsed
 	for h in list:
 		_best_level = maxi(_best_level, h.level)
@@ -157,12 +160,31 @@ func _spawn(pos: Vector2) -> void:
 	h.position = pos
 	world.add_entity(h)
 	h.setup(B.HEROES[_next], arrival_level(_next))
+	h.shield_t = B.HERO_ARRIVAL_SHIELD
+	_arrival_wave(pos)
 	if _next > 0:
 		world.hud.banner("Llegó %s %s (nv %d): %s" % [h.article, h.title, h.level, h.powers.summary()])
 	history.append({"name": h.title, "arrive": world.elapsed, "arrive_level": h.level, "died": -1.0, "died_level": 0, "escaped": false})
 	list.append(h)
 	_next += 1
 	_early_at = -1.0
+
+
+## Onda sagrada al llegar: mata a los creeps menores cerca del portal (dejan
+## cadáver y gema) y empuja a brutos y élites hasta HERO_ARRIVAL_WAVE_RADIUS.
+func _arrival_wave(pos: Vector2) -> void:
+	var r := B.HERO_ARRIVAL_WAVE_RADIUS
+	for m in world.minions.duplicate():
+		var to_m: Vector2 = m.position - pos
+		if to_m.length() >= r:
+			continue
+		if m.elite or m.type_name == "bruto":
+			var dir := to_m.normalized() if to_m.length() > 0.01 else Vector2.RIGHT
+			m.position = pos + dir * r
+		else:
+			world.on_minion_killed(m)
+	wave_fx = 0.4
+	_wave_pos = pos
 
 
 func on_hero_killed(h) -> void:
@@ -188,6 +210,10 @@ func _draw() -> void:
 		for h in list:
 			draw_rect(Rect2(h.position + Vector2(-18, -700), Vector2(36, 720)), Color(1.0, 0.9, 0.45, 0.2 + 0.4 * k))
 			draw_circle(h.position, 30.0, Color(1.0, 0.95, 0.6, 0.3 + 0.4 * k))
+	if wave_fx > 0.0:
+		var wr := B.HERO_ARRIVAL_WAVE_RADIUS * (1.0 - wave_fx / 0.4 * 0.7)
+		draw_circle(_wave_pos, wr, Color(1.0, 0.9, 0.5, 0.15 * wave_fx / 0.4))
+		draw_arc(_wave_pos, wr, 0.0, TAU, 48, Color(1.0, 0.95, 0.7, 0.9), 6.0)
 	if not _portal_open:
 		return
 	var k := clampf(1.0 - (next_arrival() - world.elapsed) / B.HERO_ARRIVAL_WARNING, 0.0, 1.0)

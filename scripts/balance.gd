@@ -187,6 +187,10 @@ const HERO_ESCAPE_TIME := 2.0 # suben en una columna de luz; todo lo demás qued
 const HORDE_IDLE_DIST := 120.0 # sin héroes vivos, la horda te sigue a esta distancia
 const HERO_ARRIVAL_WARNING := 5.0 # banner y portal antes de que llegue
 const HERO_NEXT_AFTER_KILL := 60.0 # si matás a uno, el siguiente llega a más tardar en estos segundos
+const HERO_ARRIVAL_WAVE_RADIUS := 300.0 # onda sagrada al llegar: mata a los menores, empuja a brutos y élites
+const HERO_ARRIVAL_SHIELD := 3.0 # segundos invulnerable al llegar (brilla dorado)
+const HERO_GEM_PILE_EVERY := 0.3 # cada cuánto recalcula el mejor montón de gemas
+const HERO_GEM_PILE_LOOK := 40 # cuántas gemas cercanas mira para elegir montón
 const HERO_PORTAL_MIN := 600.0 # distancia del portal a vos
 const HERO_PORTAL_MAX := 900.0
 const HEROES := [
@@ -253,7 +257,10 @@ const MINION_TYPES := {
 		"range": 260.0, "shot_cooldown": 2.2, "shot_damage": 4.0},
 	"bruto": {"hp": 60.0, "speed": 60.0, "dps": 14.0, "radius": 16.0, "xp": 5.0, "biomass": 5.0, "color": Color(0.6, 0.3, 0.3)},
 }
-const MAX_MINIONS := 300
+const MAX_MINIONS := 180
+const MAX_MINIONS_NO_HERO := 60 # sin héroes vivos no aparecen más (los que están te siguen)
+const MAX_GEMS := 150 # al pasarse, desaparece la más vieja
+const MAX_CORPSES := 120 # al pasarse, desaparece el más viejo (los corazones no)
 const CORPSE_LIFETIME := 20.0
 const GEM_LIFETIME := 25.0
 const SPAWN_MIN_DIST := 650.0
