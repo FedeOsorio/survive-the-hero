@@ -189,10 +189,11 @@ const HERO_FURY_HP := 0.3
 const HERO_SUSPICION_START_ON_FURY := 50.0
 const HERO_FURY_RUN_TIME := 3.0
 const HERO_FURY_ATTACK_MULT := 0.6
-# Furia propia de cada héroe (07-g, hero_fury.gd), desde que termina la carrera.
-const HERO_FURY_ARCHER_FIRE_MULT := 0.5 # Arquero: espera entre flechas
+# Furia propia de cada héroe (07-g, hero_fury.gd), desde que se enfurece.
+const HERO_FURY_SHIELD_TIME := 1.5 # invulnerable al enfurecerse, para que se vea la furia
+const HERO_FURY_ARCHER_FIRE_MULT := 0.35 # Arquero: espera entre flechas
 const HERO_FURY_ARCHER_MIN_COOLDOWN := 0.15
-const HERO_FURY_ARCHER_HEAL_PER_KILL := 0.005 # de su vida máxima por creep que mata
+const HERO_FURY_ARCHER_HEAL_PER_KILL := 0.01 # de su vida máxima por creep que mata
 const HERO_FURY_KNIGHT_LIFESTEAL := 0.15 # Caballero: del daño cuerpo a cuerpo que hace
 const HERO_FURY_MAGE_SHIELD := 0.5 # Maga: escudo de maná, × su vida máxima, no vuelve
 const HERO_FURY_MAGE_SPELL_EVERY := 1.5 # hechizo extra al azar: rayo, bola de fuego o hielo

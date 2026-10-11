@@ -197,10 +197,10 @@ func _strike(z: Dictionary) -> void:
 	var hit: bool = _inside(z, p.position, p.radius)
 	if hit:
 		dealt += _hit_you(z)
-	if z.cfg.get("melee", false):
-		hero.on_melee_damage(dealt) # furia del Caballero: robo de vida
 	elif z.inside:
 		hero.suspect(B.SUSPICION_DODGE) # un creep común no esquiva
+	if z.cfg.get("melee", false):
+		hero.on_melee_damage(dealt) # furia del Caballero: robo de vida
 	if z.cfg.get("dash", false):
 		var end: Vector2 = z.pos + z.dir * z.cfg.length
 		_dash = {"from": hero.position, "to": end.clamp(Vector2(hero.radius, hero.radius), B.ARENA_SIZE - Vector2(hero.radius, hero.radius)), "t": 0.0}

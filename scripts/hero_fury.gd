@@ -1,6 +1,6 @@
 extends Node2D
 ## Furia propia de cada héroe (hijo del nodo del héroe). Se suma a la furia común
-## (hero_combat._enrage) y vale desde que termina la carrera de la furia hasta que muere:
+## (hero_combat._enrage) y vale desde que se enfurece (también durante la carrera) hasta que muere:
 ## Arquero: dispara el doble de rápido, se cura por cada creep que mata y deja estela amarilla.
 ## Caballero: sus golpes cuerpo a cuerpo (tajo y Tajo giratorio) le roban vida.
 ## Maga: escudo de maná que absorbe daño y no vuelve, y hechizos extra (rayo, bola de fuego, hielo).
@@ -25,7 +25,7 @@ func _ready() -> void:
 
 
 func active() -> bool:
-	return hero.fury and hero._fury_run_t <= 0.0
+	return hero.fury
 
 
 # --- Arquero -----------------------------------------------------------------------

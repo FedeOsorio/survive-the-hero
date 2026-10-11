@@ -119,6 +119,7 @@ func _enrage() -> void:
 	aware = true
 	suspicion = B.HERO_SUSPICION_START_ON_FURY
 	_fury_run_t = B.HERO_FURY_RUN_TIME
+	shield_t = maxf(shield_t, B.HERO_FURY_SHIELD_TIME)
 	attacks.every *= B.HERO_FURY_ATTACK_MULT
 	attacks.unlock_all = true
 	world.hud.banner("¡%s se enfurece!" % full_name())
