@@ -177,6 +177,7 @@ func _update_zones(delta: float) -> void:
 		if z.cfg.shape == "donut":
 			z.grow_t = 0.0
 			world.fx.boss_strike(z.pos)
+			world.bushes.burn_zone(self, z) # el anillo va a barrer todo su radio
 			world.shake()
 			continue
 		_strike(z)
