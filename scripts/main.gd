@@ -119,7 +119,9 @@ func _ready() -> void:
 	player.add_child(cam)
 	camera = cam
 
-	while civilians.size() < B.CIVILIANS_START:
+	for i in B.CIVILIANS_START: # con tope: un caserío sin lugar no aparece
+		if civilians.size() >= B.CIVILIANS_START:
+			break
 		spawn_civilian_group()
 
 	hud = Hud.new()
