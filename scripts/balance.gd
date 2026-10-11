@@ -296,18 +296,18 @@ const HEROES := [
 	{"name": "Arquero", "article": "el", "minute": 0.0, "level": 1, "hp": 1.0, "speed": 1.0, "damage": 1.0, "fire_rate": 1.0,
 		"attacks": ["lluvia_flechas", "disparo_cargado", "abanico"], "attack_every": 7.0,
 		"powers": [], "color": Color(0.3, 0.55, 1.0),
-		"table": ["perforante", "multiple", "botas", "rayo", "perforante", "multiple", "orbes", "rayo", "botas",
-			"perforante", "multiple", "rayo", "orbes", "botas", "rayo", "orbes", "rayo", "orbes", "orbes"]},
+		"table": ["perforante", "multiple", "botas", "rayo", "perforante", "multiple", "trampa", "rayo", "botas",
+			"perforante", "multiple", "rayo", "trampa", "botas", "rayo", "trampa", "rayo", "trampa", "trampa"]},
 	{"name": "Caballero", "article": "el", "minute": 5.0, "level_bonus": 2, "hp": 1.5, "speed": 0.9, "damage": 0.8, "fire_rate": 0.5,
 		"attacks": ["tajo_giratorio", "embestida", "terremoto"], "attack_every": 6.0,
 		"powers": ["aura", "nova"], "color": Color(0.78, 0.8, 0.88),
-		"table": ["aura", "orbes", "nova", "aura", "botas", "orbes", "rayo", "nova", "aura",
-			"orbes", "botas", "nova", "rayo", "aura", "orbes", "nova", "botas", "rayo", "orbes"]},
+		"table": ["aura", "escudo", "nova", "aura", "botas", "escudo", "rayo", "nova", "aura",
+			"escudo", "botas", "nova", "rayo", "aura", "escudo", "nova", "botas", "rayo", "escudo"]},
 	{"name": "Maga", "article": "la", "minute": 10.0, "level_bonus": 4, "hp": 0.8, "speed": 1.05, "damage": 1.15, "fire_rate": 0.7,
 		"attacks": ["meteoros", "cruz_rayos", "anillo_fuego"], "attack_every": 5.0,
 		"powers": ["rayo", "orbes"], "color": Color(0.72, 0.4, 0.95),
-		"table": ["rayo", "orbes", "multiple", "rayo", "nova", "orbes", "aura", "rayo", "multiple",
-			"nova", "orbes", "rayo", "aura", "nova", "multiple", "orbes", "nova", "aura", "nova"]},
+		"table": ["rayo", "orbes", "parpadeo", "rayo", "nova", "orbes", "aura", "rayo", "parpadeo",
+			"nova", "orbes", "rayo", "aura", "nova", "parpadeo", "orbes", "nova", "aura", "nova"]},
 ]
 
 # Poderes del héroe: cada nivel sube el de su fila en la tabla de su héroe (HEROES.table).
@@ -514,6 +514,36 @@ const CAPTAIN_RADIUS := 24.0
 const CAPTAIN_WAVE_RADIUS := 90.0 # el martillazo además pega en este radio, con el mismo aviso
 const CAPTAIN_HEART_MUTATIONS := 2
 const HOLY_HEART_BIOMASS := 0.2 # x costo de tu próxima evolución
+
+# Mecánica propia de cada héroe (hero_traits.gd). Los rangos (trampa, escudo, parpadeo)
+# los sube su tabla; el rango 0 es la versión base, desde nivel 1.
+# Arquero: rueda más seguido y donde termina deja una trampa.
+const ARCHER_ROLL_COOLDOWN := 2.0
+const TRAP_RADIUS := 40.0
+const TRAP_RADIUS_PER_RANK := 8.0
+const TRAP_TIME := 6.0
+const TRAP_ROOT := 1.0 # te inmoviliza
+const TRAP_ROOT_PER_RANK := 0.2
+const TRAP_DAMAGE := 0.15 # × tu vida máxima
+const TRAP_MAX := 4
+const TRAP_MAX_PER_RANK := 1
+# Caballero: escudo al frente; de frente tus golpes hacen SHIELD_BLOCK_MULT.
+const SHIELD_ARC := 120.0
+const SHIELD_ARC_PER_RANK := 10.0
+const SHIELD_TURN := 120.0 # grados por segundo
+const SHIELD_TURN_PER_RANK := 15.0
+const SHIELD_BLOCK_MULT := 0.2
+const SHIELD_DASH_PUSH := 40.0 # embestirlo de frente lo empuja sin dañarlo
+# Maga: si la mordés BLINK_HITS veces en BLINK_WINDOW, se teletransporta y deja una nova.
+const BLINK_HITS := 3
+const BLINK_WINDOW := 4.0
+const BLINK_DIST := 350.0
+const BLINK_NOVA_RADIUS := 120.0
+const BLINK_NOVA_RADIUS_PER_RANK := 20.0
+const BLINK_NOVA_WARN := 0.5
+const BLINK_NOVA_DAMAGE := 0.25
+const BLINK_COOLDOWN := 8.0
+const BLINK_COOLDOWN_PER_RANK := 1.5
 
 # --- FX (jugo visual, tanda S2; los maneja el programador de sistemas) ---------
 const FX_MAX_PARTICLES := 400 # tope de partículas vivas; se van las más viejas

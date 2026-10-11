@@ -36,7 +36,19 @@ func setup(cfg: Dictionary) -> void:
 
 ## Cargando un ataque o embistiendo: el héroe no se mueve ni dispara.
 func busy() -> bool:
-	return not _zones.is_empty() or not _dash.is_empty()
+	if not _dash.is_empty():
+		return true
+	for z in _zones:
+		if not z.get("free", false):
+			return true
+	return false
+
+
+## Zona suelta que no lo deja quieto ni corta su ciclo (la nova del parpadeo de la Maga).
+func spawn_zone(cfg: Dictionary, pos: Vector2) -> void:
+	_serial += 1
+	_add_zone(cfg, pos, Vector2.RIGHT)
+	_zones[-1].free = true
 
 
 func _process(delta: float) -> void:
@@ -80,7 +92,7 @@ func _available() -> Array:
 ## HERO_ATTACK_CLUSTER_RADIUS, a menos de HERO_ATTACK_TARGET_RANGE. null si no hay.
 func _pick_target():
 	var p = world.player
-	if hero.hunting_you() and (p.stealth_t <= 0.0 or hero.ignores_stealth()):
+	if hero.hunting_you() and (not world.player_hidden() or hero.ignores_stealth()):
 		return p.position
 	var best = null
 	var best_n := 0
@@ -164,6 +176,7 @@ func _update_zones(delta: float) -> void:
 			continue
 		if z.cfg.shape == "donut":
 			z.grow_t = 0.0
+			world.fx.boss_strike(z.pos)
 			world.shake()
 			continue
 		_strike(z)
@@ -171,6 +184,7 @@ func _update_zones(delta: float) -> void:
 
 
 func _strike(z: Dictionary) -> void:
+	world.fx.boss_strike(z.pos)
 	world.shake()
 	_fx.append({"zone": z, "t": B.HERO_ATTACK_FLASH})
 	for m in world.minions.duplicate():

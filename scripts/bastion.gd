@@ -83,6 +83,10 @@ func suspect(_amount: float) -> void:
 	pass
 
 
+func blocks_from(_from: Vector2) -> bool:
+	return false
+
+
 func ignores_stealth() -> bool:
 	return true # el camuflaje no sirve contra él
 

@@ -13,6 +13,10 @@ const LIST := {
 	"perforante": {"name": "Flechas perforantes", "max": 3, "short": "Perforantes"},
 	"multiple": {"name": "Lluvia de flechas", "max": 3, "short": "Lluvia"},
 	"botas": {"name": "Botas aladas", "max": 3, "short": "Botas"},
+	# mecánicas propias (hero_traits.gd): la versión base ya la tienen, la tabla las sube
+	"trampa": {"name": "Trampas", "max": 5, "short": "Trampas", "trait": true},
+	"escudo": {"name": "Escudo", "max": 5, "short": "Escudo", "trait": true},
+	"parpadeo": {"name": "Parpadeo", "max": 3, "short": "Parpadeo", "trait": true},
 }
 
 var hero
@@ -49,7 +53,7 @@ func apply_level(level: int, table: Array, quiet := false) -> String:
 		return ""
 	ranks[id] = rank(id) + 1
 	if not quiet:
-		if ranks[id] == 1:
+		if ranks[id] == 1 and not LIST[id].get("trait", false):
 			world.hud.banner("%s aprendió %s" % [hero.full_name(), LIST[id].name])
 		else:
 			world.hud.banner("%s %s sube a %d" % [LIST[id].name, hero.of_name(), ranks[id]])
