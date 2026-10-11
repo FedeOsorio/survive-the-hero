@@ -559,6 +559,17 @@ const BLINK_NOVA_DAMAGE := 0.25
 const BLINK_COOLDOWN := 8.0
 const BLINK_COOLDOWN_PER_RANK := 1.5
 
+# Hachas giratorias del Caballero (09-d B, hero_traits.gd): golpean horda y a vos.
+const KNIGHT_AXES := 2
+const KNIGHT_AXES_FURY := 4
+const KNIGHT_AXE_RADIUS := 85.0
+const KNIGHT_AXE_RADIUS_FURY := 100.0
+const KNIGHT_AXE_SPIN := 1.4 # segundos por vuelta
+const KNIGHT_AXE_SPIN_FURY := 0.9
+const KNIGHT_AXE_DAMAGE_MULT := 0.8 # × daño de flecha
+const KNIGHT_AXE_HIT_EVERY := 0.5 # como mucho un golpe por blanco cada tanto
+const KNIGHT_AXE_SIZE := 12.0 # radio de golpe de cada hacha
+
 # --- FX (jugo visual, tanda S2; los maneja el programador de sistemas) ---------
 const FX_MAX_PARTICLES := 400 # tope de partículas vivas; se van las más viejas
 const FX_PARTICLE_TIME := 0.4

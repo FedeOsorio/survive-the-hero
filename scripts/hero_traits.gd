@@ -2,6 +2,7 @@ extends Node2D
 ## Mecánica propia de cada héroe (hijo del nodo del héroe), según su título:
 ## Arquero: rueda más seguido y donde termina deja una trampa (solo vos la activás).
 ## Caballero: escudo al frente que gira hacia su blanco; de frente tus golpes casi no le hacen.
+##   Además, hachas que giran a su alrededor y golpean lo que tocan (más en furia).
 ## Maga: si la mordés seguido se teletransporta y deja una nova.
 ## Sus rangos ("trampa", "escudo", "parpadeo") viven en hero_powers y los sube la tabla.
 
@@ -16,6 +17,8 @@ var _block_fx := 0.0
 var _hits: Array = [] # Maga: momentos de tus últimos golpes cuerpo a cuerpo
 var _blink_cd := 0.0
 var _blink_fx := {} # {from, t}
+var _axe_angle := 0.0 # Caballero: ángulo de la primera hacha
+var _axe_hits := {} # blanco -> segundos hasta que una hacha le pueda volver a pegar
 
 
 func _ready() -> void:
@@ -94,6 +97,60 @@ func _update_shield(delta: float) -> void:
 	facing = facing.rotated(clampf(diff, -turn, turn))
 
 
+# --- Caballero: hachas giratorias ---------------------------------------------------
+
+func axe_count() -> int:
+	return B.KNIGHT_AXES_FURY if hero.fury else B.KNIGHT_AXES
+
+
+func _axe_pos(i: int) -> Vector2:
+	var r: float = B.KNIGHT_AXE_RADIUS_FURY if hero.fury else B.KNIGHT_AXE_RADIUS
+	return hero.position + Vector2.from_angle(_axe_angle + TAU * i / axe_count()) * r
+
+
+## Cada hacha le pega a lo que toca (horda y vos), a cada blanco como mucho cada
+## KNIGHT_AXE_HIT_EVERY. En furia el daño cuenta para su robo de vida.
+func _update_axes(delta: float) -> void:
+	var spin: float = B.KNIGHT_AXE_SPIN_FURY if hero.fury else B.KNIGHT_AXE_SPIN
+	_axe_angle = fposmod(_axe_angle + TAU / spin * delta, TAU)
+	for k in _axe_hits.keys():
+		_axe_hits[k] -= delta
+		if _axe_hits[k] <= 0.0 or not is_instance_valid(k):
+			_axe_hits.erase(k)
+	var dmg: float = hero.damage * B.KNIGHT_AXE_DAMAGE_MULT
+	var dealt := 0.0
+	var p = world.player
+	for i in axe_count():
+		var at := _axe_pos(i)
+		var victims: Array = world.minions_near(at)
+		victims.append(p)
+		for v in victims:
+			if _axe_hits.has(v) or at.distance_to(v.position) > B.KNIGHT_AXE_SIZE + v.radius:
+				continue
+			_axe_hits[v] = B.KNIGHT_AXE_HIT_EVERY
+			dealt += minf(dmg, v.hp)
+			v.take_damage(dmg)
+			if v != p and v.hp <= 0.0:
+				hero.rage.on_kill()
+	hero.rage.on_melee_damage(dealt)
+
+
+func _draw_axes() -> void:
+	var n := axe_count()
+	var spin: float = B.KNIGHT_AXE_SPIN_FURY if hero.fury else B.KNIGHT_AXE_SPIN
+	var c := to_local(hero.position)
+	var r: float = B.KNIGHT_AXE_RADIUS_FURY if hero.fury else B.KNIGHT_AXE_RADIUS
+	for i in n:
+		var ang := _axe_angle + TAU * i / n
+		# estela: el arco que acaba de recorrer
+		draw_arc(c, r, ang - TAU / spin * 0.12, ang, 8, Color(0.8, 0.8, 0.85, 0.35), 6.0)
+		var at := c + Vector2.from_angle(ang) * r
+		var fwd := Vector2.from_angle(ang + PI * 0.5)
+		var out := Vector2.from_angle(ang)
+		draw_line(at - out * 9.0, at + out * 5.0, Color(0.45, 0.32, 0.2), 3.0)
+		draw_colored_polygon(PackedVector2Array([at + out * 2.0 - fwd * 2.0, at + out * 9.0 + fwd * 7.0, at + out * 9.0 - fwd * 7.0]), Color(0.75, 0.77, 0.82))
+
+
 # --- Daño que recibe -----------------------------------------------------------------
 
 ## Le pegaste: el escudo del Caballero baja tus golpes de frente (no los ticks);
@@ -148,6 +205,7 @@ func _process(delta: float) -> void:
 			_update_traps(delta)
 		"Caballero":
 			_update_shield(delta)
+			_update_axes(delta)
 	queue_redraw()
 
 
@@ -162,6 +220,7 @@ func _draw() -> void:
 			var ang := TAU * i / 8.0
 			draw_line(c + Vector2.from_angle(ang) * r * 0.45, c + Vector2.from_angle(ang) * r * 0.8, Color(0.85, 0.85, 0.9, 0.9 * a), 2.0)
 	if kind == "Caballero":
+		_draw_axes()
 		var c := to_local(hero.position)
 		var half := shield_arc() * 0.5
 		var col := Color(1, 1, 0.8, 1.0) if _block_fx > 0.0 else Color(0.8, 0.85, 0.95, 0.85)

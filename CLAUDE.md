@@ -23,7 +23,7 @@ Survivor estilo Vampire Survivors al revés, en Godot 4 (GDScript), pixel art 2D
   - `hero_brain.gd`: sospecha, estados de vista (farmear, cazarte, buscarte) y `_think` (a qué tirar, adónde ir, gemas).
   - `hero.gd`: `_ready`, `setup`, `_process` y `_draw`. Es el que se instancia (heroes.gd).
 - `scripts/bastion.gd`: Último Bastión (jefe final 1 contra 1: pared de luz, fases, carne, barra de vida en capa propia; reusa `hero_attacks.gd`).
-- `scripts/hero_traits.gd`: mecánica propia de cada héroe (trampas del Arquero, escudo del Caballero, parpadeo de la Maga).
+- `scripts/hero_traits.gd`: mecánica propia de cada héroe (trampas del Arquero, escudo y hachas giratorias del Caballero, parpadeo de la Maga).
 - `scripts/hero_fury.gd` (`hero.rage`): furia propia de cada héroe (Arquero: dispara el doble y se cura al matar; Caballero: robo de vida cuerpo a cuerpo; Maga: escudo de maná y hechizos extra).
 - `scripts/hero_attacks.gd`: ataques de jefe del héroe (zona roja, golpe a la horda y a vos, esquive que te delata; tabla `HERO_ATTACKS` en balance).
 - `scripts/hero_status.gd`: estados del héroe (sangrado, aturdido, lento) y registro de daño cuerpo a cuerpo / distancia.
