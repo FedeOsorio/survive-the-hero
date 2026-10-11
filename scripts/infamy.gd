@@ -64,7 +64,9 @@ func add(amount: float) -> void:
 func _heal_hero(delta: float) -> void:
 	for hero in world.heroes.list:
 		if nearest_paladin(hero.position, B.PALADIN_HEAL_RADIUS) != null:
-			hero.hp = minf(hero.max_hp, hero.hp + hero.max_hp * B.PALADIN_HEAL * delta)
+			var cap: float = hero.max_hp * B.PALADIN_HEAL_CAP
+			if hero.hp < cap:
+				hero.hp = minf(cap, hero.hp + hero.max_hp * B.PALADIN_HEAL * delta)
 
 
 func _spawn_paladin() -> void:
