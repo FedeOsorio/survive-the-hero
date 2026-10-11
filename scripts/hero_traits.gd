@@ -1,6 +1,6 @@
 extends Node2D
 ## Mecánica propia de cada héroe (hijo del nodo del héroe), según su título:
-## Arquero: rueda más seguido y donde termina deja una trampa (te inmoviliza y te lastima).
+## Arquero: rueda más seguido y donde termina deja una trampa (solo vos la activás).
 ## Caballero: escudo al frente que gira hacia su blanco; de frente tus golpes casi no le hacen.
 ## Maga: si la mordés seguido se teletransporta y deja una nova.
 ## Sus rangos ("trampa", "escudo", "parpadeo") viven en hero_powers y los sube la tabla.
@@ -45,8 +45,7 @@ func trap_radius() -> float:
 	return B.TRAP_RADIUS + B.TRAP_RADIUS_PER_RANK * _rank("trampa")
 
 
-## El cepo se cierra con lo primero que lo pisa: a vos te inmoviliza y te lastima,
-## a un creep menor lo mata.
+## El cepo se cierra solo con vos (la horda pasa por encima): te inmoviliza y te lastima.
 func _update_traps(delta: float) -> void:
 	var p = world.player
 	var r := trap_radius()
@@ -60,12 +59,6 @@ func _update_traps(delta: float) -> void:
 			p.root(B.TRAP_ROOT + B.TRAP_ROOT_PER_RANK * _rank("trampa"))
 			p.take_damage(p.max_hp * B.TRAP_DAMAGE)
 			world.shake()
-			continue
-		for m in world.minions_near(tr.pos):
-			if not m.elite and m.type_name != "bruto" and tr.pos.distance_to(m.position) < r + m.radius:
-				_traps.erase(tr)
-				m.take_damage(m.hp + 1.0)
-				break
 
 
 # --- Caballero: escudo ---------------------------------------------------------------
