@@ -50,8 +50,9 @@ func _read_input(n: int) -> void:
 		_selected = posmod(_selected - 1, n)
 	elif Input.is_action_just_pressed("ui_right") or Input.is_action_just_pressed("move_right"):
 		_selected = posmod(_selected + 1, n)
-	# A del joystick es ui_accept y pick_2 a la vez: gana el resaltado
-	if Input.is_action_just_pressed("ui_accept"):
+	# A del joystick es pick_confirm y pick_2 a la vez: gana el resaltado.
+	# No usa ui_accept porque trae Espacio, que es la embestida.
+	if Input.is_action_just_pressed("pick_confirm"):
 		_pick(_selected)
 		return
 	for i in n:
