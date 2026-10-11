@@ -208,6 +208,7 @@ func _process(delta: float) -> void:
 	if _combo_t <= 0.0:
 		combo = 1.0
 
+	_trample_civilians()
 	_auto_attack()
 	if want_dash and _dash_cd <= 0.0 and root_t <= 0.0:
 		_dash_cd = B.DASH_COOLDOWN
@@ -248,6 +249,13 @@ func _closest(list: Array, max_dist: float):
 			best_d = d
 			best = n
 	return best
+
+
+## Pasarle por encima a un civil lo come al instante (sin esperar la mordida, en cualquier etapa).
+func _trample_civilians() -> void:
+	for c in world.civilians.duplicate():
+		if position.distance_to(c.position) < radius + c.radius + B.CIVILIAN_TRAMPLE_MARGIN:
+			c.take_damage(c.hp + 1.0)
 
 
 ## Mordida y escupitajo automáticos. Prioridad: héroe, Paladín y civiles (con la mordida y, sin héroe a tiro, el escupitajo).

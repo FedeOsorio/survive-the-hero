@@ -72,6 +72,7 @@ const CIVILIAN_DODGE_SPEED := 0.6
 const CIVILIAN_HP := 8.0
 const CIVILIAN_SPEED := 85.0
 const CIVILIAN_FLEE_RADIUS := 220.0
+const CIVILIAN_TRAMPLE_MARGIN := 4.0 # tocar un civil (suma de radios + esto) lo come al instante
 const CIVILIAN_FREEZE_RADIUS := 50.0 # con el creep tan cerca se paraliza de miedo
 const CIVILIAN_BIOMASS := 12.0
 # Comer civiles hace ruido: el héroe va a investigar el lugar.
