@@ -10,11 +10,17 @@ var pierce := 0
 var shooter # el héroe que la tiró (furia del Arquero: se cura al matar)
 var _hit := []
 var _travelled := 0.0
+var _trail := false # flechas de nivel alto dejan estela
 
 
 func _ready() -> void:
 	z_index = 3
 	rotation = direction.angle()
+	if shooter != null:
+		var lv: int = shooter.level
+		var s := minf(1.0 + B.HERO_ARROW_GROW_PER_LEVEL * (lv - 1), B.HERO_ARROW_GROW_MAX)
+		scale = Vector2(s, s)
+		_trail = lv >= B.HERO_ARROW_TRAIL_LEVEL
 
 
 func _process(delta: float) -> void:
@@ -47,5 +53,8 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
+	if _trail:
+		draw_line(Vector2(-30, 0), Vector2(-18, 0), Color(1.0, 0.85, 0.3, 0.15), 3.0)
+		draw_line(Vector2(-18, 0), Vector2(-8, 0), Color(1.0, 0.85, 0.3, 0.4), 3.0)
 	draw_line(Vector2(-8, 0), Vector2(4, 0), Color(1.0, 0.9, 0.4), 2.0)
 	draw_colored_polygon(PackedVector2Array([Vector2(7, 0), Vector2(3, -3), Vector2(3, 3)]), Color(1.0, 0.95, 0.6))

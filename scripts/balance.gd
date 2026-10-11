@@ -151,14 +151,22 @@ const HERO_GEM_PULL_SPEED := 350.0
 const HERO_HEART_PICKUP := 35.0 # los corazones de élite los tiene que pisar (más el radio del corazón)
 const HERO_HEART_PICKUP_PER_LEVEL := 1.0
 const GEM_SCATTER := 30.0 # las gemas saltan un poco al caer, lejos del cadáver
-# Por nivel sobre el 1, lineal: daño de flecha +6%, espera entre disparos −1,5% (mínimo
+# Por nivel sobre el 1, lineal: daño de flecha +12%, espera entre disparos −1,5% (mínimo
 # HERO_MIN_COOLDOWN), y después se divide por el "fire_rate" del héroe.
-const HERO_DAMAGE_PER_LEVEL := 0.06
+const HERO_DAMAGE_PER_LEVEL := 0.12 # 09-f: era 0,06
 const HERO_COOLDOWN_PER_LEVEL := 0.015
 const HERO_MIN_COOLDOWN := 0.30
-const HERO_LEVELS_PER_EXTRA_ARROW := 6
-# Cada flecha atraviesa a este número de enemigos extra (Flechas perforantes suma más).
+const HERO_LEVELS_PER_EXTRA_ARROW := 3 # una flecha más en nivel 4, 7, 10...
+const HERO_MAX_EXTRA_ARROWS := 6 # tope de las que da el nivel
+const HERO_ARROW_SPREAD := 10.0 # grados entre flechas del abanico
+# Cada flecha atraviesa a este número de enemigos extra (Flechas perforantes suma más),
+# más uno cada HERO_PIERCE_PER_LEVELS niveles.
 const HERO_ARROW_PIERCE := 1
+const HERO_PIERCE_PER_LEVELS := 5
+# Dibujo de la flecha: crece por nivel hasta un tope y desde un nivel deja estela.
+const HERO_ARROW_GROW_PER_LEVEL := 0.04
+const HERO_ARROW_GROW_MAX := 1.6
+const HERO_ARROW_TRAIL_LEVEL := 8
 # Tajo de espada: ataque cuerpo a cuerpo en arco, con aviso previo para poder esquivarlo.
 # Apagado por ahora: los poderes extra del héroe se definen cuando el creep
 # tenga habilidades para contrarrestarlos.
