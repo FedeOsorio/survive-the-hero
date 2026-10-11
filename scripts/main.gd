@@ -249,7 +249,8 @@ func on_civilian_killed(c) -> void:
 	civilians_eaten += 1
 	suspect_all(B.SUSPICION_CIVILIAN) # la horda no toca civiles
 	infamy.add(B.INFAMY_PER_CIVILIAN)
-	raise_alarm(c.position)
+	if not player_hidden(): # escondido, nadie vio quién fue
+		raise_alarm(c.position)
 	var corpse = Corpse.new()
 	corpse.world = self
 	corpse.position = c.position

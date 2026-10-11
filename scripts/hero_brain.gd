@@ -79,6 +79,7 @@ func _think() -> void:
 	var hunting: bool = hunting_you() and not world.player_hidden(self)
 	target = _pick_hunt_target() if hunting else _pick_target()
 	var low_hp := _fury_run_t > 0.0 # la carrera corta al enfurecerse
+	var alarm: bool = aware and world.alarm_t > 0.0 # sin reconocimiento ignora los gritos
 	var mistake := _rng.randf() < B.HERO_MISTAKE_CHANCE
 
 	# 1. alejarse de la horda (kitear). Con poca vida, mucho más fuerte.
@@ -108,7 +109,7 @@ func _think() -> void:
 		if hunting:
 			seek = B.HUNT_GEM_RADIUS
 			pull = B.HUNT_GEM_PULL
-		elif sight == Sight.SEARCH or (world.alarm_t > 0.0 and not hunting):
+		elif sight == Sight.SEARCH or (alarm and not hunting):
 			seek = B.ALARM_GEM_RADIUS
 			pull = B.ALARM_GEM_PULL
 		if _pile_t <= 0.0 or not is_instance_valid(_pile) or position.distance_to(_pile.position) > seek:
@@ -137,8 +138,9 @@ func _think() -> void:
 		else:
 			steer = Vector2.ZERO # quieto encima para abrirlo
 
-	# 2b. si un civil gritó, va hacia ahí a buscar al creep (a los civiles no los toca)
-	if world.alarm_t > 0.0 and not low_hp and not hunting:
+	# 2b. si un civil gritó, va hacia ahí a buscar al creep (a los civiles no los toca).
+	#     Solo con el reconocimiento encendido; antes sigue farmeando.
+	if alarm and not low_hp and not hunting:
 		var to_alarm: Vector2 = world.alarm_pos - position
 		if to_alarm.length() > 40.0:
 			steer += to_alarm.normalized() * B.ALARM_PULL
