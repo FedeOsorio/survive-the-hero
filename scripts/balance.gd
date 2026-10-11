@@ -137,7 +137,7 @@ const HERO_HP_PER_LEVEL := 60.0
 const HERO_LEVEL_HEAL := 0.05 # al subir de nivel recupera este % de su vida máxima (no tiene regeneración)
 const HERO_SPEED := 150.0
 const HERO_RADIUS := 14.0
-const HERO_ARROW_DAMAGE := 20.0
+const HERO_ARROW_DAMAGE := 25.0 # 09-a: ×1,25 (era 20)
 const HERO_ARROW_COOLDOWN := 0.45
 const HERO_ARROW_SPEED := 520.0
 const HERO_RANGE := 420.0
@@ -361,7 +361,7 @@ const MINION_TYPES := {
 		"range": 260.0, "shot_cooldown": 2.2, "shot_damage": 4.0},
 	"bruto": {"hp": 60.0, "speed": 60.0, "dps": 14.0, "radius": 16.0, "xp": 5.0, "biomass": 5.0, "color": Color(0.6, 0.3, 0.3)},
 }
-const MAX_MINIONS := 180
+const MAX_MINIONS := 198 # 09-a: +10%
 const MAX_MINIONS_NO_HERO := 60 # sin héroes vivos no aparecen más (los que están te siguen)
 const MAX_GEMS := 150 # al pasarse, desaparece la más vieja
 const MAX_CORPSES := 120 # al pasarse, desaparece el más viejo (los corazones no)
@@ -393,7 +393,7 @@ static func minion_speed_mult(minute: float) -> float:
 
 
 static func spawns_per_second(minute: float) -> float:
-	return 2.0 + minute * 0.9
+	return 2.2 + minute * 0.99 # 09-a: +10%
 
 
 static func pick_minion_type(minute: float, rng: RandomNumberGenerator) -> String:
