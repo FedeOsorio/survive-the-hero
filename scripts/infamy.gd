@@ -12,7 +12,7 @@ var bar := 0.0
 var paladins: Array = []
 var _spawned := 0
 var _arrival_t := 0.0 # columna de luz: el Paladín está por llegar
-var arrival_pos := Vector2.ZERO
+var arrival_pos: Array = [] # una columna de luz por soldado que llega
 
 
 ## Cuántos soldados del cielo mandó en la partida.
@@ -34,7 +34,8 @@ func _process(delta: float) -> void:
 	if _arrival_t > 0.0:
 		_arrival_t -= delta
 		if _arrival_t <= 0.0:
-			_spawn_paladin()
+			for pos in arrival_pos:
+				_spawn_paladin(pos)
 		return
 	if world.detected:
 		add(B.INFAMY_PER_SECOND_DETECTED * B.INFAMY_STAGE_MULT[world.player.stage] * delta)
@@ -48,9 +49,19 @@ func _process(delta: float) -> void:
 		_arrival_t = B.PALADIN_ARRIVAL
 		var hero = world.hero
 		var base: Vector2 = hero.position if hero != null else world.player.position
-		arrival_pos = (base + Vector2.from_angle(world.rng.randf() * TAU) * B.PALADIN_SPAWN_DIST) \
-				.clamp(Vector2(30, 30), B.ARENA_SIZE - Vector2(30, 30))
-		if Paladin.is_captain(_spawned):
+		# en Cultista y Demonio llegan de a varios (sin pasar el tope de vivos)
+		var count := mini(B.PALADIN_PER_CALL[world.player.stage], B.PALADIN_MAX_ALIVE - paladins.size())
+		arrival_pos = []
+		var a0: float = world.rng.randf() * TAU
+		for i in count:
+			arrival_pos.append((base + Vector2.from_angle(a0 + TAU * i / count) * B.PALADIN_SPAWN_DIST) \
+					.clamp(Vector2(30, 30), B.ARENA_SIZE - Vector2(30, 30)))
+		var captain := false
+		for i in count:
+			captain = captain or Paladin.is_captain(_spawned + i)
+		if count > 1:
+			world.hud.banner("El cielo envía %d soldados%s" % [count, ", con un Capitán" if captain else ""])
+		elif captain:
 			world.hud.banner("El cielo envía a un Capitán")
 		else:
 			world.hud.banner("El cielo envía refuerzos" if not paladins.is_empty() else "El cielo envía a un Paladín")
@@ -76,12 +87,12 @@ func _heal_hero(delta: float) -> void:
 				hero.hp = minf(cap, hero.hp + hero.max_hp * B.PALADIN_HEAL * delta)
 
 
-func _spawn_paladin() -> void:
+func _spawn_paladin(pos: Vector2) -> void:
 	var p = Paladin.new()
 	p.world = world
 	p.setup(world.player, _spawned)
 	_spawned += 1
-	p.position = arrival_pos
+	p.position = pos
 	paladins.append(p)
 	world.add_entity(p)
 
@@ -115,6 +126,7 @@ func _draw() -> void:
 	if _arrival_t <= 0.0:
 		return
 	var k := 1.0 - _arrival_t / B.PALADIN_ARRIVAL
-	draw_rect(Rect2(arrival_pos + Vector2(-14, -600), Vector2(28, 600)), Color(1.0, 0.95, 0.6, 0.15 + 0.35 * k))
-	draw_circle(arrival_pos, 26.0, Color(1.0, 0.95, 0.6, 0.2 + 0.4 * k))
-	draw_arc(arrival_pos, 26.0, 0.0, TAU, 28, Color(1.0, 0.9, 0.4, 0.9), 2.0)
+	for pos in arrival_pos:
+		draw_rect(Rect2(pos + Vector2(-14, -600), Vector2(28, 600)), Color(1.0, 0.95, 0.6, 0.15 + 0.35 * k))
+		draw_circle(pos, 26.0, Color(1.0, 0.95, 0.6, 0.2 + 0.4 * k))
+		draw_arc(pos, 26.0, 0.0, TAU, 28, Color(1.0, 0.9, 0.4, 0.9), 2.0)

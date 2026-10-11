@@ -517,7 +517,9 @@ const PALADIN_CHARGE_DIST := 420.0
 const PALADIN_HEAL_RADIUS := 150.0
 const PALADIN_HEAL := 0.01 # x vida máxima del héroe por segundo
 const PALADIN_HEAL_CAP := 0.6 # no lo cura por encima de este % de su vida máxima
-const PALADIN_MAX_ALIVE := 3
+const PALADIN_MAX_ALIVE := 5
+const PALADIN_STAGE_MULT := [1.0, 1.3, 1.8, 2.5] # vida y daño x tu etapa al aparecer (Slime..Demonio)
+const PALADIN_PER_CALL := [1, 1, 2, 3] # soldados por llamado según tu etapa
 # Escalón: cada PALADIN_TIER_EVERY soldados enviados (el 1.º al 3.º son escalón 0).
 const PALADIN_TIER_EVERY := 3
 const PALADIN_TIER_HP := 0.3 # +30% de vida por escalón

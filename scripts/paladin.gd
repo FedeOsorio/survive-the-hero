@@ -28,12 +28,13 @@ var _healing := false
 var captain := false
 
 
-## Stats según el creep al aparecer; "index" es cuántos soldados vinieron antes.
+## Stats según el creep al aparecer (vida, velocidad y etapa); "index" es cuántos soldados vinieron antes.
 func setup(creep, index: int) -> void:
 	var tier := index / B.PALADIN_TIER_EVERY
 	captain = is_captain(index)
-	var hp_scale := (1.0 + B.PALADIN_TIER_HP * tier) * (B.CAPTAIN_HP_MULT if captain else 1.0)
-	var dmg_scale := (1.0 + B.PALADIN_TIER_DAMAGE * tier) * (B.CAPTAIN_DAMAGE_MULT if captain else 1.0)
+	var stage_mult: float = B.PALADIN_STAGE_MULT[creep.stage]
+	var hp_scale := (1.0 + B.PALADIN_TIER_HP * tier) * (B.CAPTAIN_HP_MULT if captain else 1.0) * stage_mult
+	var dmg_scale := (1.0 + B.PALADIN_TIER_DAMAGE * tier) * (B.CAPTAIN_DAMAGE_MULT if captain else 1.0) * stage_mult
 	if captain:
 		radius = B.CAPTAIN_RADIUS
 	max_hp = creep.max_hp * B.PALADIN_HP_MULT * hp_scale
