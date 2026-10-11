@@ -1,5 +1,5 @@
 extends Node2D
-## Civil que deambula por el mapa. Huye del creep; comerlo da mucha biomasa.
+## Civil que deambula por el mapa. Huye del creep (no si estás escondido); comerlo da mucha biomasa.
 ## Al empezar a huir grita y atrae al héroe, que viene a buscarte (a los civiles no los toca).
 
 const B := preload("res://scripts/balance.gd")
@@ -27,6 +27,9 @@ func _process(delta: float) -> void:
 	var spd := B.CIVILIAN_SPEED
 	_scream_cd = maxf(_scream_cd - delta, 0.0)
 	var flee := d < B.CIVILIAN_FLEE_RADIUS and d > 0.01
+	if flee and world.player_hidden():
+		# camuflado o en un arbusto no te ven: solo sigue huyendo el que ya gritó, hasta calmarse
+		flee = _fleeing and _scream_cd > 0.0
 	if flee and not _fleeing and _scream_cd <= 0.0:
 		_scream_cd = B.CIVILIAN_SCREAM_COOLDOWN
 		world.raise_alarm(position)
