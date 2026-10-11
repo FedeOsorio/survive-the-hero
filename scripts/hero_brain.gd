@@ -101,17 +101,11 @@ func _think() -> void:
 		if away_p.length() > 0.01:
 			steer += away_p.normalized() * 3.0 # furia: primero toma distancia de vos
 
-	# 2. juntar experiencia: va al montón de gemas que más vale. Cazándote o yendo
-	#    a un grito mira más cerca y tira menos, pero igual se desvía por un montón.
+	# 2. juntar experiencia: siempre va al montón de gemas que más vale (cazándote,
+	#    yendo a un grito o enfurecido también; solo no en la carrera de la furia).
 	if not low_hp:
 		var seek := B.HERO_GEM_SEEK_RADIUS
 		var pull := B.HERO_GEM_PULL if danger < B.HERO_GEM_DANGER else B.HERO_GEM_PULL_DANGER
-		if hunting:
-			seek = B.HUNT_GEM_RADIUS
-			pull = B.HUNT_GEM_PULL
-		elif sight == Sight.SEARCH or (alarm and not hunting):
-			seek = B.ALARM_GEM_RADIUS
-			pull = B.ALARM_GEM_PULL
 		if _pile_t <= 0.0 or not is_instance_valid(_pile) or position.distance_to(_pile.position) > seek:
 			_pile_t = B.HERO_GEM_PILE_EVERY
 			_pile = _best_gem_pile(seek)
@@ -142,7 +136,8 @@ func _think() -> void:
 	if alarm and not low_hp and not hunting:
 		var to_alarm: Vector2 = world.alarm_pos - position
 		if to_alarm.length() > 40.0:
-			steer += to_alarm.normalized() * B.ALARM_PULL
+			# con gemas a mano primero las junta: el grito tira menos
+			steer += to_alarm.normalized() * (B.ALARM_PULL_WITH_GEMS if is_instance_valid(_pile) else B.ALARM_PULL)
 
 	# 2c. te perdió de vista: va a tu última posición vista
 	if sight == Sight.SEARCH and not low_hp:
