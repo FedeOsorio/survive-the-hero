@@ -82,7 +82,7 @@ const CREEP_BIOMASS_MULT := 0.7
 # El grito empieza apenas un civil sale corriendo de vos, no cuando muere.
 # Cada grito nuevo actualiza el lugar. La alarma dura hasta que llega (a ALARM_ARRIVE_DIST)
 # y ALARM_SEARCH_TIME más buscando, con un máximo de ALARM_MAX_TIME desde el último grito.
-const ALARM_CLOSE_DIST := 400.0 # 09-h: más cerca que esto el grito le gana a cofre, corazón y gemas; más lejos, va después
+const ALARM_CLOSE_DIST := 700.0 # 09-h: más cerca que esto el grito le gana a cofre, corazón y gemas; más lejos, va después
 const ALARM_ARRIVE_DIST := 80.0
 const ALARM_SEARCH_TIME := 3.0
 const ALARM_MAX_TIME := 12.0
@@ -151,10 +151,10 @@ const HERO_GEM_PULL_SPEED := 350.0
 const HERO_HEART_PICKUP := 35.0 # los corazones de élite los tiene que pisar (más el radio del corazón)
 const HERO_HEART_PICKUP_PER_LEVEL := 1.0
 const GEM_SCATTER := 30.0 # las gemas saltan un poco al caer, lejos del cadáver
-# Por nivel sobre el 1, lineal: daño de flecha +6%, espera entre disparos −1,5% (mínimo
+# Por nivel sobre el 1, lineal: daño de flecha +6%, espera entre disparos −2,5% (mínimo
 # HERO_MIN_COOLDOWN), y después se divide por el "fire_rate" del héroe.
 const HERO_DAMAGE_PER_LEVEL := 0.06
-const HERO_COOLDOWN_PER_LEVEL := 0.015
+const HERO_COOLDOWN_PER_LEVEL := 0.025
 const HERO_MIN_COOLDOWN := 0.30
 const HERO_LEVELS_PER_EXTRA_ARROW := 6
 # Cada flecha atraviesa a este número de enemigos extra (Flechas perforantes suma más).
@@ -307,7 +307,7 @@ const HERO_GEM_PILE_LOOK := 40 # cuántas gemas cercanas mira para elegir montó
 const HERO_PORTAL_MIN := 600.0 # distancia del portal a vos
 const HERO_PORTAL_MAX := 900.0
 const HEROES := [
-	{"name": "Arquero", "article": "el", "minute": 0.0, "level": 1, "hp": 1.0, "speed": 1.0, "damage": 1.0, "fire_rate": 1.0,
+	{"name": "Arquero", "article": "el", "minute": 0.0, "level": 1, "hp": 1.0, "speed": 1.0, "damage": 1.0, "fire_rate": 0.55,
 		"attacks": ["lluvia_flechas", "disparo_cargado", "abanico"], "attack_every": 7.0,
 		"powers": [], "color": Color(0.3, 0.55, 1.0),
 		"table": ["perforante", "multiple", "botas", "rayo", "perforante", "multiple", "trampa", "rayo", "botas",
@@ -375,10 +375,10 @@ const MINION_TYPES := {
 }
 const MAX_MINIONS_BY_STAGE := [198, 220, 220, 220] # 09-f: según tu etapa (280 pasaba los 16,6 ms)
 const MAX_MINIONS_NO_HERO := 60 # sin héroes vivos no aparecen más (los que están te siguen)
-const MAX_GEMS := 150 # al pasarse, desaparece la más vieja
+const MAX_GEMS := 225 # 09-h: era 150, con gemas más largas el tope las borraba; al pasarse, desaparece la más vieja
 const MAX_CORPSES := 120 # al pasarse, desaparece el más viejo (los corazones no)
 const CORPSE_LIFETIME := 20.0
-const GEM_LIFETIME := 25.0
+const GEM_LIFETIME := 37.5 # 09-h: era 25
 const SPAWN_MIN_DIST := 650.0
 const SPAWN_MAX_DIST := 900.0
 
