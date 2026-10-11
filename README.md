@@ -17,7 +17,7 @@ Un survivor al revés: sos un creep de la horda, los héroes los controla la IA.
 | Camuflaje (el héroe te pierde de vista, 1 vez por minuto) | Q | LB |
 | Elegir mutación | 1 / 2 / 3 | X / A / B |
 | Pausa (Seguir, Opciones, Volver al menú) | Esc | Start |
-| Reiniciar | R | Back |
+| Reintentar (pantalla final) | R | Back |
 
 La mordida y el escupitajo son automáticos: salen solos cuando el héroe o un civil está a tiro.
 

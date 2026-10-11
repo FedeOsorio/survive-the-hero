@@ -43,7 +43,7 @@ func banner(text: String) -> void:
 
 
 func _process(delta: float) -> void:
-	if Input.is_action_just_pressed("restart"):
+	if Input.is_action_just_pressed("restart") and not world.running: # R solo en la pantalla final
 		get_tree().paused = false
 		get_tree().reload_current_scene()
 		return
