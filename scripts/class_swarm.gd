@@ -6,7 +6,7 @@ extends "res://scripts/creep_class.gd"
 ## protegen). Desde Esqueleto, Nube: todo el enjambre envuelve al héroe y lo ciega.
 
 var home := B.SWARM_START
-var _sortie = null # {target, n, t}
+var _sorties: Array = [] # {target, n, t}: salen cada SWARM_SEND_EVERY y pican STING_TIME (se pueden pisar)
 var _send_cd := 1.0
 var _cloud = null # {target, n, t}
 var _cloud_cd := B.SWARM_CLOUD_EVERY
@@ -26,7 +26,10 @@ func max_insects() -> int:
 
 
 func away() -> int:
-	return (_sortie.n if _sortie != null else 0) + (_cloud.n if _cloud != null else 0)
+	var n: int = _cloud.n if _cloud != null else 0
+	for s in _sorties:
+		n += s.n
+	return n
 
 
 func _per_insect() -> float:
@@ -81,15 +84,14 @@ func _process(delta: float) -> void:
 # --- Arma inicial: salida a picar -------------------------------------------------
 
 func _update_sortie(delta: float) -> void:
-	if _sortie != null:
-		var t = _sortie.target
-		_sortie.t -= delta
-		if _sortie.t <= 0.0 or not is_instance_valid(t) or not t in targets():
-			home += _sortie.n
-			_sortie = null
+	for s in _sorties.duplicate():
+		var t = s.target
+		s.t -= delta
+		if s.t <= 0.0 or not is_instance_valid(t) or not t in targets():
+			home += s.n
+			_sorties.erase(s)
 		else:
-			hurt(t, _sortie.n * creep.bite * B.SWARM_STING_DPS * delta, true)
-		return
+			hurt(t, s.n * creep.bite * B.SWARM_STING_DPS * delta, true)
 	_send_cd -= delta
 	if _send_cd > 0.0:
 		return
@@ -101,7 +103,7 @@ func _update_sortie(delta: float) -> void:
 		return # sin insectos de sobra no sale nadie
 	_send_cd = B.SWARM_SEND_EVERY
 	home -= n
-	_sortie = {"target": t, "n": n, "t": B.SWARM_STING_TIME}
+	_sorties.append({"target": t, "n": n, "t": B.SWARM_STING_TIME})
 	if creep.rank("aguijon") > 0 and not is_paladin(t):
 		t.status.bleed(n * creep.bite * B.SWARM_STINGER_BLEED * B.SWARM_STINGER_TIME)
 	if creep.rank("zumbido") > 0 and is_paladin(t):
@@ -139,8 +141,9 @@ func _draw() -> void:
 		var a: float = TAU * i / maxf(mini(home, 60), 1.0) + t * (1.5 + (i % 3) * 0.4)
 		var r: float = creep.radius + 8.0 + (i % 4) * 4.0 + 2.0 * sin(t * 7.0 + i)
 		draw_circle(creep.position + Vector2.from_angle(a) * r, 1.8, col)
-	if _sortie != null and is_instance_valid(_sortie.target):
-		_swarm_at(_sortie.target.position, _sortie.target.radius + 6.0, mini(_sortie.n, 40), Color(0.2, 0.16, 0.05))
+	for s in _sorties:
+		if is_instance_valid(s.target):
+			_swarm_at(s.target.position, s.target.radius + 6.0, mini(s.n, 40), Color(0.2, 0.16, 0.05))
 	if _cloud != null and is_instance_valid(_cloud.target):
 		var p: Vector2 = _cloud.target.position
 		draw_circle(p, _cloud.target.radius + 30.0, Color(0.1, 0.08, 0.03, 0.45))
