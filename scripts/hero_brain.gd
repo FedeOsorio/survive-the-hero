@@ -75,98 +75,73 @@ func recognize() -> void:
 	_last_seen = p.position
 
 
+## Un solo objetivo por vez, el primero que aplica (la carga de un ataque de jefe ya lo deja
+## quieto en hero.gd): 1) carrera de la furia: lejos de vos y de la horda; 2) cazándote: a
+## distancia de tiro; 3) rodeado o con poca vida: lejos de la horda; 4) _goal (grito cerca,
+## cofre, corazón, gemas, grito lejos, tu última posición, farmear). Siempre se aparta un poco
+## de la horda (salvo si se distrae) y de las paredes.
 func _think() -> void:
 	var hunting: bool = hunting_you() and not world.player_hidden(self)
 	target = _pick_hunt_target() if hunting else _pick_target()
-	var low_hp := _fury_run_t > 0.0 # la carrera corta al enfurecerse
-	var alarm: bool = world.alarm_t > 0.0 # un civil gritó o murió: va a defenderlos
-	var mistake := _rng.randf() < B.HERO_MISTAKE_CHANCE
-
-	# 1. alejarse de la horda (kitear). Con poca vida, mucho más fuerte.
-	var steer := Vector2.ZERO
+	var away := Vector2.ZERO # alejarse de la horda, más fuerte cuanto más cerca y más grande
 	var danger := 0.0
-	var sense := 180.0
 	for m in world.minions:
-		var away: Vector2 = position - m.position
-		var d := away.length()
-		if d < sense and d > 0.01:
-			var w: float = (sense - d) / sense * (m.radius / 10.0)
-			steer += away / d * w
+		var off: Vector2 = position - m.position
+		var d := off.length()
+		if d < 180.0 and d > 0.01:
+			var w: float = (180.0 - d) / 180.0 * (m.radius / 10.0)
+			away += off / d * w
 			danger += w
-	if mistake:
-		steer *= 0.2 # se distrae y se mete donde no debe
-	elif low_hp:
-		steer *= 2.5
-		var away_p: Vector2 = position - world.player.position
-		if away_p.length() > 0.01:
-			steer += away_p.normalized() * 3.0 # furia: primero toma distancia de vos
-
-	# 2. juntar experiencia: siempre va al montón de gemas que más vale (cazándote,
-	#    yendo a un grito o enfurecido también; solo no en la carrera de la furia).
-	if not low_hp:
-		var seek := B.HERO_GEM_SEEK_RADIUS
-		var pull := B.HERO_GEM_PULL if danger < B.HERO_GEM_DANGER else B.HERO_GEM_PULL_DANGER
-		if _pile_t <= 0.0 or not is_instance_valid(_pile) or position.distance_to(_pile.position) > seek:
-			_pile_t = B.HERO_GEM_PILE_EVERY
-			_pile = _best_gem_pile(seek)
-		var gem = _pile if is_instance_valid(_pile) and not status.blinded() else null
-		if gem != null:
-			steer += (gem.position - position).normalized() * pull
-
-	# 2a. un corazón de élite vale más que cualquier gema
-	if not low_hp:
-		var best_heart = null
-		var best_d := B.HERO_HEART_SEEK_RADIUS
-		for c in world.corpses:
-			if c.heart and position.distance_to(c.position) < best_d:
-				best_d = position.distance_to(c.position)
-				best_heart = c
-		if best_heart != null:
-			steer += (best_heart.position - position).normalized() * B.HERO_HEART_PULL
-
-	# 2c. un cofre es lo que más le importa: lo hace subir de nivel
-	if not low_hp and world.chest != null and position.distance_to(world.chest.position) < B.CHEST_HERO_SEEK_RADIUS:
-		var to_chest: Vector2 = world.chest.position - position
-		if to_chest.length() > B.CHEST_OPEN_RADIUS * 0.5:
-			steer += to_chest.normalized() * B.CHEST_HERO_PULL
-		else:
-			steer = Vector2.ZERO # quieto encima para abrirlo
-
-	# 2b. si un civil gritó, va hacia ahí a buscar al creep (a los civiles no los toca)
-	if alarm and not low_hp and not hunting:
-		var to_alarm: Vector2 = world.alarm_pos - position
-		if to_alarm.length() > 40.0:
-			# con gemas a mano primero las junta: el grito tira menos
-			steer += to_alarm.normalized() * (B.ALARM_PULL_WITH_GEMS if is_instance_valid(_pile) else B.ALARM_PULL)
-
-	# 2c. te perdió de vista: va a tu última posición vista
-	if sight == Sight.SEARCH and not low_hp:
-		var to_seen: Vector2 = _last_seen - position
-		if to_seen.length() > 40.0:
-			steer += to_seen.normalized() * B.HUNT_SEARCH_PULL
-
-	# 3. cacería: con el jugador detectado lo persigue a distancia de tiro.
-	#    A la horda no la busca (ya viene sola), solo se aleja si está muy encima.
-	if hunting and not low_hp:
-		var to_p: Vector2 = world.player.position - position
-		var d := to_p.length()
-		if d > B.HUNT_IDEAL_DIST + 60.0:
-			steer += to_p / d * (B.HUNT_PULL_CROWDED if danger > B.HUNT_CROWDED_DANGER else B.HUNT_PULL)
-		elif d < B.HUNT_IDEAL_DIST - 60.0 and d > 0.01:
-			steer -= to_p / d * 0.8
-	elif _target_valid() and not low_hp:
-		var to_t: Vector2 = target.position - position
-		var d := to_t.length()
-		if d < B.HERO_RANGE * 0.5 - 60.0 and d > 0.01:
-			steer -= to_t / d * 0.8
-
-	# 4. no quedarse contra la pared
+	var steer := Vector2.ZERO
+	if _fury_run_t > 0.0:
+		steer = away + _toward(world.player.position) * -3.0
+	elif hunting:
+		var d := position.distance_to(world.player.position)
+		if absf(d - B.HUNT_IDEAL_DIST) > 60.0:
+			steer = _toward(world.player.position) * signf(d - B.HUNT_IDEAL_DIST)
+	elif danger >= B.HERO_SURROUNDED_DANGER or hp / max_hp < B.HERO_PRIORITY_HP:
+		steer = away
+	else:
+		var goal = _goal()
+		if goal == null: # encima del cofre: quieto para abrirlo
+			_move_dir = Vector2.ZERO
+			return
+		steer = goal
+	if _fury_run_t <= 0.0 and _rng.randf() >= B.HERO_MISTAKE_CHANCE: # a veces se distrae y se mete
+		steer += away.limit_length(1.0) * B.HERO_HORDE_SEPARATION
 	var margin := 200.0
-	var center := B.ARENA_SIZE * 0.5
 	if position.x < margin or position.y < margin or position.x > B.ARENA_SIZE.x - margin or position.y > B.ARENA_SIZE.y - margin:
-		steer += (center - position).normalized() * 1.5
-
+		steer += _toward(B.ARENA_SIZE * 0.5) * 1.5
 	_move_dir = steer.normalized() if steer.length() > 0.15 else Vector2.ZERO
+
+
+## Hacia dónde ir sin apuro (dirección; null = quedarse quieto encima del cofre).
+func _goal():
+	var alarm: bool = world.alarm_t > 0.0 and position.distance_to(world.alarm_pos) > 40.0
+	if alarm and position.distance_to(world.alarm_pos) < B.ALARM_CLOSE_DIST:
+		return _toward(world.alarm_pos)
+	var chest = world.chest
+	if chest != null and position.distance_to(chest.position) < B.CHEST_HERO_SEEK_RADIUS:
+		return _toward(chest.position) if position.distance_to(chest.position) > B.CHEST_OPEN_RADIUS * 0.5 else null
+	var heart = _nearest(world.corpses.filter(func(c): return c.heart), B.HERO_HEART_SEEK_RADIUS)
+	if heart != null:
+		return _toward(heart.position)
+	if _pile_t <= 0.0 or not is_instance_valid(_pile) or position.distance_to(_pile.position) > B.HERO_GEM_SEEK_RADIUS:
+		_pile_t = B.HERO_GEM_PILE_EVERY
+		_pile = _best_gem_pile(B.HERO_GEM_SEEK_RADIUS)
+	if is_instance_valid(_pile) and not status.blinded():
+		return _toward(_pile.position)
+	if alarm:
+		return _toward(world.alarm_pos)
+	if sight == Sight.SEARCH and position.distance_to(_last_seen) > 40.0:
+		return _toward(_last_seen)
+	if _target_valid() and position.distance_to(target.position) < B.HERO_RANGE * 0.5 - 60.0:
+		return _toward(target.position) * -0.8 # farmear: no dejar que se le acerque tanto
+	return Vector2.ZERO
+
+
+func _toward(pos: Vector2) -> Vector2:
+	return (pos - position).normalized()
 
 
 func _pick_target():
