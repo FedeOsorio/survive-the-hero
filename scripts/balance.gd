@@ -599,3 +599,13 @@ const RALLY_TIME := 3.0
 const RALLY_COOLDOWN := [12.0, 10.0, 8.0] # por rango
 const RALLY_AIM_DIST := 250.0 # con stick, el punto queda a esta distancia
 const ARM_WEIGHT := 3 # en el sorteo, las mutaciones de arma pesan esto contra las de +%
+
+# --- Arbustos (tanda S5; los maneja el programador de sistemas) ---------------
+const BUSH_COUNT := 14
+const BUSH_RADIUS := 70.0
+const BUSH_MIN_GAP := 250.0 # entre matas
+const BUSH_CENTER_CLEAR := 300.0 # lejos de donde arrancás
+const BUSH_HIDE_TIME := 8.0 # s de uso seguido antes de marchitarse
+const BUSH_WITHER_TIME := 20.0 # marchita (o quemada por un ataque de jefe) no esconde
+const BUSH_REVEAL_ON_ATTACK := 2.0 # atacar desde adentro te deja a la vista
+const BUSH_HUNT_ESCAPE_DIST := 250.0 # cazándote, te pierde en el arbusto solo si estás más lejos

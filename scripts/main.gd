@@ -21,6 +21,7 @@ const Bastion := preload("res://scripts/bastion.gd")
 const Hud := preload("res://scripts/hud.gd")
 const Pause := preload("res://scripts/pause.gd")
 const Fx := preload("res://scripts/fx.gd")
+const Bushes := preload("res://scripts/bushes.gd")
 
 const GRID_CELL := 64.0
 
@@ -63,6 +64,7 @@ var _alarm_arrived := false # el héroe ya llegó al lugar del grito
 
 var hud
 var fx # fx.gd: partículas, números de daño, hit-stop
+var bushes # bushes.gd: matas donde esconderte
 var _entities: Node2D
 var _spawn_accum := 0.0
 var _grid := {}
@@ -101,6 +103,9 @@ func _ready() -> void:
 	player.position = center + Vector2(-350, 0)
 	player.invulnerable = sim_mode and not bot_mode
 	_entities.add_child(player)
+	bushes = Bushes.new()
+	bushes.world = self
+	add_child(bushes)
 
 	heroes.start(center + Vector2(350, 0))
 
@@ -389,9 +394,10 @@ func sight_level() -> int:
 	return level
 
 
-## El jugador no se ve: camuflaje (la S5 suma arbustos acá).
-func player_hidden() -> bool:
-	return player.stealth_t > 0.0
+## El jugador no se ve: camuflaje, o escondido en un arbusto ("h": el héroe que mira;
+## si te está cazando, el arbusto solo te esconde lejos de él).
+func player_hidden(h = null) -> bool:
+	return player.stealth_t > 0.0 or (bushes != null and bushes.hides_from(h))
 
 
 ## Hiciste algo que un creep común no hace: suma sospecha a cada héroe que te ve.

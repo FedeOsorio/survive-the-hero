@@ -194,7 +194,7 @@ func _process(delta: float) -> void:
 	stealth_cd = maxf(stealth_cd - delta, 0.0)
 	stealth_t = maxf(stealth_t - delta, 0.0)
 	root_t = maxf(root_t - delta, 0.0)
-	modulate.a = 0.35 if stealth_t > 0.0 else 1.0
+	modulate.a = 0.35 if stealth_t > 0.0 else (0.5 if world.bushes.hiding() else 1.0)
 	_combo_t -= delta
 	if _combo_t <= 0.0:
 		combo = 1.0
@@ -206,6 +206,7 @@ func _process(delta: float) -> void:
 		_dash_dir = _facing
 		_dash_hit = false
 		_dash_victims.clear()
+		world.bushes.reveal()
 	# la evolución de etapa es automática (si hay una elección de mutación abierta, al cerrarla)
 	if can_evolve() and pending_choices.is_empty():
 		_evolve()
@@ -260,6 +261,7 @@ func _auto_attack() -> void:
 				hero.take_damage(bite, true, true)
 				world.shake()
 				world.fx.melee_hit()
+				world.bushes.reveal()
 				if rank("mandibula") > 0:
 					hero.status.bleed(bite * B.BLEED_MULT)
 			else:
@@ -277,6 +279,7 @@ func _auto_attack() -> void:
 			target = _closest(world.infamy.paladins, B.SPIT_RANGE) # a los civiles nunca: mordida o embestida
 		if target != null:
 			_spit_cd = spit_cooldown()
+			world.bushes.reveal()
 			var dir: Vector2 = (target.position - position).normalized()
 			var shots := 1 + rank("doble")
 			for i in shots:

@@ -102,7 +102,7 @@ func _target_valid() -> bool:
 	if target == null or not is_instance_valid(target):
 		return false
 	if target == world.player:
-		return not world.player_hidden()
+		return not world.player_hidden(self)
 	return world.minions.has(target)
 
 

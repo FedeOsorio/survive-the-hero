@@ -22,7 +22,7 @@ func _update_sight(delta: float) -> void:
 		suspicion = maxf(suspicion - B.SUSPICION_DECAY * delta, 0.0)
 	if sight == Sight.HUNT:
 		_hunt_t -= delta
-		if world.player_hidden() or position.distance_to(p.position) > B.HUNT_LOSE_DIST or _hunt_t <= 0.0:
+		if world.player_hidden(self) or position.distance_to(p.position) > B.HUNT_LOSE_DIST or _hunt_t <= 0.0:
 			sight = Sight.SEARCH
 			_search_t = B.HUNT_SEARCH_TIME
 			suspicion = B.SUSPICION_AFTER_HUNT
@@ -36,7 +36,7 @@ func _update_sight(delta: float) -> void:
 
 
 func _sees(p) -> bool:
-	return not world.player_hidden() and position.distance_to(p.position) < B.RECOGNIZE_RANGE
+	return not world.player_hidden(self) and position.distance_to(p.position) < B.RECOGNIZE_RANGE
 
 
 ## Hiciste algo que un creep común no hace (comer, robar una gema, esquivar, matar un
@@ -71,7 +71,7 @@ func recognize() -> void:
 
 
 func _think() -> void:
-	var hunting: bool = hunting_you() and not world.player_hidden()
+	var hunting: bool = hunting_you() and not world.player_hidden(self)
 	target = _pick_hunt_target() if hunting else _pick_target()
 	var low_hp := _fury_run_t > 0.0 # la carrera corta al enfurecerse
 	var mistake := _rng.randf() < B.HERO_MISTAKE_CHANCE
@@ -173,7 +173,7 @@ func _pick_target():
 	var best_score := -INF
 	var reach := B.HERO_RANGE * 1.3
 	var candidates: Array = world.minions.duplicate()
-	if not world.player_hidden():
+	if not world.player_hidden(self):
 		candidates.append(world.player)
 	for c in candidates:
 		var d := position.distance_to(c.position)

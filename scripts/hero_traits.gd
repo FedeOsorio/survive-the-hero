@@ -80,7 +80,7 @@ func blocks(from: Vector2) -> bool:
 func _update_shield(delta: float) -> void:
 	var aim = null
 	var p = world.player
-	if hero.hunting_you() and not world.player_hidden():
+	if hero.hunting_you() and not world.player_hidden(hero):
 		aim = p.position
 	else:
 		var close = hero._nearest(world.minions_near(hero.position), INF)

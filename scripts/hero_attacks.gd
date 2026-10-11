@@ -92,7 +92,7 @@ func _available() -> Array:
 ## HERO_ATTACK_CLUSTER_RADIUS, a menos de HERO_ATTACK_TARGET_RANGE. null si no hay.
 func _pick_target():
 	var p = world.player
-	if hero.hunting_you() and (not world.player_hidden() or hero.ignores_stealth()):
+	if hero.hunting_you() and (not world.player_hidden(hero) or hero.ignores_stealth()):
 		return p.position
 	var best = null
 	var best_n := 0
@@ -185,6 +185,7 @@ func _update_zones(delta: float) -> void:
 
 func _strike(z: Dictionary) -> void:
 	world.fx.boss_strike(z.pos)
+	world.bushes.burn_zone(self, z) # los arbustos que toca se queman
 	world.shake()
 	_fx.append({"zone": z, "t": B.HERO_ATTACK_FLASH})
 	for m in world.minions.duplicate():
