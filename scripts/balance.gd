@@ -378,7 +378,7 @@ const MINION_TYPES := {
 		"range": 260.0, "shot_cooldown": 2.2, "shot_damage": 4.0},
 	"bruto": {"hp": 60.0, "speed": 60.0, "dps": 14.0, "radius": 16.0, "xp": 5.0, "biomass": 5.0, "color": Color(0.6, 0.3, 0.3)},
 }
-const MAX_MINIONS_BY_STAGE := [198, 220, 250, 280] # 09-f: según tu etapa
+const MAX_MINIONS_BY_STAGE := [198, 220, 220, 220] # 09-f: según tu etapa (280 pasaba los 16,6 ms)
 const MAX_MINIONS_NO_HERO := 60 # sin héroes vivos no aparecen más (los que están te siguen)
 const MAX_GEMS := 150 # al pasarse, desaparece la más vieja
 const MAX_CORPSES := 120 # al pasarse, desaparece el más viejo (los corazones no)
