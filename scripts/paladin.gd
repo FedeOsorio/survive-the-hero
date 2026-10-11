@@ -26,6 +26,7 @@ var _charge_hit := false
 var _flash := 0.0
 var _healing := false
 var captain := false
+var _confused_t := 0.0 # Ancla, Aplastar o Zumbido: pierde el objetivo
 
 
 ## Stats según el creep al aparecer (vida, velocidad y etapa); "index" es cuántos soldados vinieron antes.
@@ -72,6 +73,13 @@ func _process(delta: float) -> void:
 	_healing = world.heroes.any_within(position, B.PALADIN_HEAL_RADIUS)
 
 	_crush()
+	if _confused_t > 0.0:
+		_confused_t -= delta
+		_charge_left = 0.0
+		_charge_aim = 0.0
+		_hammer_t = 0.0
+		queue_redraw()
+		return
 	if _charge_left > 0.0:
 		var step := B.PALADIN_CHARGE_SPEED * delta
 		position += _charge_dir * step
@@ -123,6 +131,10 @@ func _hammer() -> void:
 		hit = true
 	if hit:
 		p.take_damage(hammer_damage)
+
+
+func confuse(time: float) -> void:
+	_confused_t = maxf(_confused_t, time)
 
 
 func take_damage(amount: float) -> void:

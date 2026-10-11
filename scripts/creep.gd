@@ -7,6 +7,7 @@ const B := preload("res://scripts/balance.gd")
 const Mutations := preload("res://scripts/mutations.gd")
 const CreepBot := preload("res://scripts/creep_bot.gd")
 const CreepAbilities := preload("res://scripts/creep_abilities.gd")
+const CreepClass := preload("res://scripts/creep_class.gd")
 
 var world
 var invulnerable := false
@@ -48,12 +49,17 @@ var _slow := 0.0
 var _dash_victims: Array = []
 var _rng := RandomNumberGenerator.new()
 var abilities # creep_abilities.gd: habilidades por etapa y mutaciones de arma
+var klass # creep_class.gd: la clase elegida en el menú (Engendro, Abisal, Reina)
 
 
 func _ready() -> void:
 	z_index = 2
 	_rng.randomize()
+	klass = CreepClass.make(CreepClass.chosen())
+	klass.creep = self
+	klass.world = world
 	_apply_stage(0)
+	add_child(klass)
 	abilities = CreepAbilities.new()
 	abilities.creep = self
 	abilities.world = world
@@ -109,7 +115,7 @@ func _apply_stage(s: int) -> void:
 func _recalc_stats() -> void:
 	var d: Dictionary = B.CREEP_STAGES[stage]
 	var ratio := hp / max_hp if max_hp > 0.0 else 1.0
-	max_hp = d.hp * (1.0 + rank("caparazon") * B.MUT_HP)
+	max_hp = d.hp * klass.hp_mult() * (1.0 + rank("caparazon") * B.MUT_HP)
 	hp = max_hp * ratio
 	speed = d.speed * (1.0 + rank("patas") * B.MUT_SPEED)
 	bite = d.bite * (1.0 + rank("colmillos") * B.MUT_DAMAGE + rank("festin") * B.FEAST_DAMAGE)
@@ -288,7 +294,7 @@ func _auto_attack() -> void:
 			elif rank("vampiro") > 0:
 				hp = minf(max_hp, hp + bite * B.MUT_VAMPIRE * rank("vampiro"))
 
-	if _spit_cd <= 0.0:
+	if _spit_cd <= 0.0 and not klass.replaces_kit(): # las otras clases traen su arma
 		var target = null
 		if hero != null and position.distance_to(hero.position) <= B.SPIT_RANGE:
 			target = hero
@@ -350,13 +356,14 @@ func _absorb(delta: float) -> void:
 			if c.heart:
 				_queued_levels += 1
 				world.hud.banner("¡Corazón de élite! Mutación extra")
+			klass.on_eat(c)
 			_eat(c.value)
 			world.remove_corpse(c)
 			world.suspect_all(B.SUSPICION_EAT)
 		elif d < radius + magnet:
 			c.position = c.position.move_toward(position, B.MAGNET_PULL_SPEED * delta)
 	# las gemas son la XP del héroe: pisarlas se las roba y te alimenta (el imán no las atrae)
-	for g in world.gems.duplicate():
+	for g in (world.gems.duplicate() if klass.eats_gems() else []):
 		if position.distance_to(g.position) < radius + B.GEM_EAT_RANGE:
 			_eat(g.xp * B.GEM_BIOMASS)
 			world.remove_gem(g)
@@ -389,7 +396,7 @@ func grant_mutation() -> void:
 
 func _offer_mutation() -> void:
 	_queued_levels -= 1
-	pending_choices = Mutations.roll(ranks, stage, _rng)
+	pending_choices = Mutations.roll(ranks, stage, _rng, 3, klass.id)
 	if pending_choices.is_empty():
 		return
 	if world.sim_mode:
@@ -421,12 +428,23 @@ func choose_mutation(index: int) -> void:
 func take_damage(amount: float) -> void:
 	if invulnerable or _dash_t > 0.0: # la embestida te hace invulnerable
 		return
-	hp -= amount
 	_flash = B.FX_FLASH
 	world.fx.player_hit(amount)
+	if klass.take_hit(amount): # la Reina no tiene vida normal
+		return
+	hp -= amount
 	if hp <= 0.0:
-		hp = 0.0
-		world.end_game("derrota", "Te mataron siendo %s nivel %d." % [stage_name(), level])
+		die()
+
+
+func die() -> void:
+	hp = 0.0
+	world.end_game("derrota", "Te mataron siendo %s nivel %d." % [stage_name(), level])
+
+
+## Corta la embestida (el viaje del Abisal).
+func stop_dash() -> void:
+	_dash_t = 0.0
 
 
 func _draw() -> void:

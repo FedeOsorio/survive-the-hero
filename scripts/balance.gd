@@ -634,3 +634,67 @@ const BUSH_HIDE_TIME := 8.0 # s de uso seguido antes de marchitarse
 const BUSH_WITHER_TIME := 20.0 # marchita (o quemada por un ataque de jefe) no esconde
 const BUSH_REVEAL_ON_ATTACK := 2.0 # atacar desde adentro te deja a la vista
 const BUSH_HUNT_ESCAPE_DIST := 250.0 # cazándote, te pierde en el arbusto solo si estás más lejos
+
+
+# --- Clases del Anti Hero (tanda S7, programador de sistemas) -------------------
+# Daños × mordida de la etapa; "hp" × vida de la etapa. Se elige en el menú.
+
+const CLASSES_ALL_UNLOCKED := true # para probar; apagado, cada victoria desbloquea la siguiente de CLASS_UNLOCK_ORDER
+const CLASS_ORDER := ["engendro", "abisal", "reina"] # las que salen en el menú, en orden
+const CLASS_UNLOCK_ORDER := ["nigromante", "glotona", "espectral", "abisal", "reina"]
+const CLASSES := {
+	"engendro": {"name": "Engendro", "hp": 1.0, "rule": "El de siempre: escupe, muerde y evoluciona.",
+		"weapon": "Escupitajo, y Huesos, Detonar cadáver y Aliento por etapa."},
+	"abisal": {"name": "Abisal", "hp": 1.0, "rule": "Abrí grietas (C): sus tentáculos frenan, y viajás entre ellas (doble embestida).",
+		"weapon": "Azote: un tentáculo golpea el piso en línea hacia el héroe."},
+	"reina": {"name": "Reina del enjambre", "hp": 1.0, "rule": "Tu vida es tu enjambre: los golpes matan insectos y comer cría más.",
+		"weapon": "Manda parte del enjambre a picar al héroe."},
+}
+
+# Abisal
+const ABYSS_RIFT_COOLDOWN := 6.0
+const ABYSS_RIFT_MAX := 3 # la más vieja se cierra
+const ABYSS_RIFT_RADIUS := 60.0
+const ABYSS_GRAB_RADIUS := 100.0 # Agarre: héroe o Paladín a esta distancia de una grieta
+const ABYSS_GRAB_SLOW := 0.35
+const ABYSS_GRAB_DPS := 0.25 # × mordida por segundo
+const ABYSS_DEEP_PER_RANK := 0.25 # Abismo hondo: +radio de grietas y tentáculos
+const ABYSS_TIDE_SLOW := 0.25 # Marea negra: líneas entre grietas
+const ABYSS_TIDE_WIDTH := 24.0
+const ABYSS_TELEPORT_COOLDOWN := 5.0
+const ABYSS_DOUBLE_TAP := 0.3 # s entre los dos toques de embestida
+const ABYSS_LASH_EVERY := 2.5 # Azote (arma inicial)
+const ABYSS_LASH_RANGE := 350.0
+const ABYSS_LASH_LENGTH := 260.0
+const ABYSS_LASH_WIDTH := 36.0
+const ABYSS_LASH_WARN := 0.5
+const ABYSS_LASH_DAMAGE := 1.4
+const ABYSS_LASH_PUSH := 40.0
+const ABYSS_ANCHOR_STUN := 0.6 # Ancla: aturde en vez de empujar
+const ABYSS_MAW_EVERY := 14.0 # Fauces (desde Esqueleto)
+const ABYSS_MAW_TIME := 4.0
+const ABYSS_MAW_DPS := 2.0 # × mordida por segundo
+const ABYSS_MAW_SLOW := 0.6
+const ABYSS_SLAM_RADIUS := 120.0 # Aplastar (desde Cultista, al cerrarse Fauces)
+const ABYSS_SLAM_DAMAGE := 2.0
+const ABYSS_SLAM_STUN := 0.5
+
+# Reina del enjambre
+const SWARM_START := 20
+const SWARM_MAX := [20, 35, 55, 80] # por etapa
+const SWARM_PER_CORPSE := 1
+const SWARM_PER_CIVILIAN := 3
+const SWARM_BREED_EVERY := 4.0 # cría pasiva (Colmena: -1 s por rango)
+const SWARM_HIVE_PER_RANK := 1.0
+const SWARM_SEND_SHARE := 0.25 # arma inicial: parte del enjambre que sale a picar
+const SWARM_SEND_MIN := 3
+const SWARM_SEND_RANGE := 320.0
+const SWARM_SEND_EVERY := 5.0 # una salida a la vez: 4 s picando y vuelven
+const SWARM_STING_TIME := 4.0
+const SWARM_STING_DPS := 0.12 # × mordida por segundo, por insecto
+const SWARM_STINGER_BLEED := 0.05 # Aguijón: × mordida por segundo, 3 s
+const SWARM_STINGER_TIME := 3.0
+const SWARM_BUZZ_CONFUSE := 1.0 # Zumbido: el Paladín picado pierde el objetivo
+const SWARM_CLOUD_EVERY := 15.0 # Nube (desde Esqueleto)
+const SWARM_CLOUD_RANGE := 300.0
+const SWARM_CLOUD_TIME := [3.0, 3.0, 3.5, 4.0] # por etapa

@@ -5,6 +5,8 @@ extends RefCounted
 ## una sola vez y, cuando están disponibles, vienen garantizadas en la próxima elección.
 ## "filler" (Festín) no tiene máximo y solo aparece si no alcanzan las opciones.
 ## "arm" (mutaciones de arma) pesan ARM_WEIGHT en el sorteo contra las de +%.
+## "class": solo sale para esa clase del Anti Hero. "spit": solo para el Engendro
+## (las demás clases no escupen).
 
 const B := preload("res://scripts/balance.gd")
 
@@ -12,8 +14,8 @@ const LIST := {
 	"colmillos": {"name": "Colmillos", "desc": "+12,5% daño de mordida y escupitajo", "max": 10},
 	"patas": {"name": "Patas ágiles", "desc": "+5% velocidad", "max": 8},
 	"caparazon": {"name": "Caparazón", "desc": "+12,5% vida máxima y te cura", "max": 10},
-	"glandula": {"name": "Glándula ácida", "desc": "Escupís 10% más seguido", "max": 8},
-	"doble": {"name": "Escupitajo múltiple", "desc": "+1 escupitajo por disparo", "max": 2, "arm": true},
+	"glandula": {"name": "Glándula ácida", "desc": "Escupís 10% más seguido", "max": 8, "spit": true},
+	"doble": {"name": "Escupitajo múltiple", "desc": "+1 escupitajo por disparo", "max": 2, "arm": true, "spit": true},
 	"espinas": {"name": "Espinas", "desc": "Durante la embestida, todo lo que tocás recibe mordida x0,6 (+0,3 por rango)", "max": 3, "arm": true},
 	"pegote": {"name": "Pegote", "desc": "Cada 3 s dejás un charco pegajoso que frena al héroe 25% (+10% por rango)", "max": 3, "arm": true},
 	"llamado": {"name": "Llamado", "desc": "C o RT: la horda cercana corre hacia donde apuntás, x1,8 de velocidad (recarga 12 s, -2 s por rango)", "max": 3, "arm": true},
@@ -21,6 +23,14 @@ const LIST := {
 	"frenesi": {"name": "Frenesí", "desc": "Comer seguido arma un combo que multiplica la biomasa", "max": 2},
 	"rey": {"name": "Rey de la horda", "desc": "Los compañeros cerca tuyo van más rápido y pegan más (cada rango agranda el aura)", "max": 6, "min_stage": 1},
 	"vampiro": {"name": "Mordida vampírica", "desc": "La mordida te cura un 10% del daño", "max": 4},
+	# Abisal
+	"hondo": {"name": "Abismo hondo", "desc": "+25% radio de grietas y tentáculos", "max": 2, "arm": true, "class": "abisal"},
+	"ancla": {"name": "Ancla", "desc": "El Azote aturde al héroe 0,6 s en vez de empujarlo", "max": 1, "arm": true, "class": "abisal"},
+	"marea": {"name": "Marea negra", "desc": "Las grietas se unen con líneas que frenan al héroe 25%", "max": 1, "arm": true, "class": "abisal"},
+	# Reina del enjambre
+	"colmena": {"name": "Colmena", "desc": "Criás más rápido: un insecto cada 3 s (2 s en rango 2)", "max": 2, "arm": true, "class": "reina"},
+	"aguijon": {"name": "Aguijón", "desc": "Cada salida a picar hace sangrar al héroe", "max": 1, "arm": true, "class": "reina"},
+	"zumbido": {"name": "Zumbido", "desc": "Los Paladines picados pierden el objetivo 1 s", "max": 1, "arm": true, "class": "reina"},
 	# Relleno: solo aparece si no alcanzan las opciones (todo al máximo)
 	"festin": {"name": "Festín", "desc": "Te cura 30% y +5% de daño", "max": 0, "filler": true},
 	# Evoluciones
@@ -63,7 +73,7 @@ static func available_evolutions(ranks: Dictionary) -> Array:
 	return out
 
 
-static func roll(ranks: Dictionary, stage: int, rng: RandomNumberGenerator, count: int = 3) -> Array:
+static func roll(ranks: Dictionary, stage: int, rng: RandomNumberGenerator, count: int = 3, klass := "engendro") -> Array:
 	var out: Array = []
 	var evos := available_evolutions(ranks)
 	if not evos.is_empty():
@@ -71,6 +81,8 @@ static func roll(ranks: Dictionary, stage: int, rng: RandomNumberGenerator, coun
 	var pool: Array = []
 	for id in LIST:
 		if is_evolution(id) or LIST[id].get("filler", false):
+			continue
+		if LIST[id].get("class", klass) != klass or (LIST[id].get("spit", false) and klass != "engendro"):
 			continue
 		if ranks.get(id, 0) < LIST[id].max and stage >= LIST[id].get("min_stage", 0):
 			pool.append(id)

@@ -66,8 +66,9 @@ func _draw_hud() -> void:
 	var p = world.player
 
 	# Creep: arriba a la izquierda
-	_text(font, Vector2(20, 30), "%s (etapa %d)" % [p.stage_name(), p.stage + 1], 20, p.color)
-	_bar(Rect2(20, 40, 260, 14), p.hp / p.max_hp, Color(0.35, 0.85, 0.35), "Vida %d/%d" % [int(p.hp), int(p.max_hp)])
+	var klass: String = "" if p.klass.id == "engendro" else p.klass.title() + " · "
+	_text(font, Vector2(20, 30), "%s%s (etapa %d)" % [klass, p.stage_name(), p.stage + 1], 20, p.color)
+	_bar(Rect2(20, 40, 260, 14), p.hp / p.max_hp, Color(0.35, 0.85, 0.35), p.klass.hp_text())
 	_bar(Rect2(20, 60, 260, 10), p.mut_xp / p.mut_xp_needed(), Color(0.3, 0.75, 1.0), "")
 	_text(font, Vector2(286, 70), "Nv %d" % p.level, 13, Color(0.6, 0.85, 1.0))
 	var cost: float = p.evolve_cost()
@@ -137,7 +138,7 @@ func _draw_end(font: Font, p) -> void:
 	var size := _view.size
 	_view.draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.75))
 	var col := Color(1, 0.35, 0.3) if world.result == "derrota" else Color(0.4, 1, 0.5)
-	_text_centered(font, Vector2(size.x * 0.5, 70), RESULT_TITLES.get(world.result, ""), 44, col)
+	_text_centered(font, Vector2(size.x * 0.5, 70), "%s (%s)" % [RESULT_TITLES.get(world.result, ""), p.klass.title()], 44, col)
 	_text_centered(font, Vector2(size.x * 0.5, 100), world.end_reason, 18, Color.WHITE)
 	# de peor a mejor, con el obtenido resaltado
 	var parts: Array = []

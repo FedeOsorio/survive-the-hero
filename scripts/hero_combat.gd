@@ -67,6 +67,9 @@ func _fire() -> void:
 ## Con "extra" (creeps cercanos), la primera flecha va a "base" y las demás a esos creeps.
 func _fire_dir(base: Vector2, extra: Array = []) -> void:
 	var dir := base.rotated(deg_to_rad(_rng.randf_range(-B.HERO_AIM_ERROR_DEG, B.HERO_AIM_ERROR_DEG)))
+	if status.blinded(): # Nube de la Reina: tira para cualquier lado
+		dir = Vector2.from_angle(_rng.randf() * TAU)
+		extra = []
 	_aim = dir
 	var spread := deg_to_rad(12.0)
 	for i in arrows:

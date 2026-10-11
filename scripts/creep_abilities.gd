@@ -43,21 +43,25 @@ func _process(delta: float) -> void:
 		return
 	_update_bones(delta)
 	_update_goo(delta)
-	if creep.stage >= 1:
+	var kit: bool = not creep.klass.replaces_kit() # Huesos, Detonar y Aliento son del Engendro
+	if kit and creep.stage >= 1:
 		_bones_cd -= delta
 		if _bones_cd <= 0.0 and _throw_bones():
 			_bones_cd = B.BONES_EVERY
-	if creep.stage >= 2:
+	if kit and creep.stage >= 2:
 		_blast_cd -= delta
 		if _blast_cd <= 0.0 and _corpse_blast():
 			_blast_cd = B.CORPSE_BLAST_EVERY
-	if creep.stage >= 3:
+	if kit and creep.stage >= 3:
 		_update_breath(delta)
 	_thorns()
 	rally_cd = maxf(rally_cd - delta, 0.0)
 	_rally_fx = maxf(_rally_fx - delta, 0.0)
-	if creep.rank("llamado") > 0 and rally_cd <= 0.0 and not world.sim_mode and Input.is_action_just_pressed("rally"):
-		_rally()
+	# C o RT: Llamado y la habilidad de la clase (las grietas del Abisal) salen juntos
+	if not world.sim_mode and Input.is_action_just_pressed("rally"):
+		if creep.rank("llamado") > 0 and rally_cd <= 0.0:
+			_rally()
+		creep.klass.ability()
 	queue_redraw()
 
 
@@ -221,6 +225,10 @@ func _rally() -> void:
 		if m.position.distance_to(creep.position) < B.RALLY_RADIUS:
 			m.rally_t = B.RALLY_TIME
 			m.rally_pos = _rally_at
+
+
+func aiming_with_mouse() -> bool:
+	return _aim_mouse
 
 
 func _aim_point() -> Vector2:

@@ -257,6 +257,7 @@ func on_civilian_killed(c) -> void:
 	corpse.value = B.CIVILIAN_BIOMASS
 	corpse.radius = 9.0
 	corpse.color = Color(0.95, 0.8, 0.6)
+	corpse.set_meta("civilian", true) # la Reina cría más con civiles
 	add_corpse(corpse)
 	c.queue_free()
 
@@ -495,7 +496,7 @@ func _stats_row(when: String) -> Array:
 func stats_text() -> String:
 	var titles := {"derrota": "Derrota", "escape": "Victoria por escape", "victoria": "Victoria", "total": "Victoria total"}
 	var t := int(elapsed)
-	var lines: Array = ["Survive the Hero: %s (%d:%02d). %s" % [titles.get(result, "En curso"), t / 60, t % 60, end_reason], "",
+	var lines: Array = ["Survive the Hero: %s (%s, %d:%02d). %s" % [titles.get(result, "En curso"), player.klass.title(), t / 60, t % 60, end_reason], "",
 			"Min | Creep (nivel / etapa) | Héroes vivos (nivel) | Horda viva"]
 	for r in stats_rows:
 		lines.append(" | ".join(r))

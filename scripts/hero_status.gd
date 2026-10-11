@@ -1,5 +1,6 @@
 extends Node2D
 ## Estados del héroe (hijo del nodo del héroe): sangrado, aturdimiento,
+## ceguera (Nube de la Reina: dispara para cualquier lado y no ve gemas),
 ## lentitud de los charcos ácidos y el registro del daño que le hace el jugador
 ## (cuerpo a cuerpo o a distancia).
 
@@ -12,6 +13,7 @@ var _stun_t := 0.0
 var _stun_immune := 0.0
 var _slow_t := 0.0
 var _slow_amount := 0.0
+var _blind_t := 0.0
 var _log: Array = [] # {time, amount, melee}
 var _drip := 0.0
 var _numbers: Array = [] # {amount, t, big}
@@ -45,6 +47,14 @@ func stun(time: float) -> void:
 		return
 	_stun_t = time
 	_stun_immune = time + B.HERO_STUN_IMMUNE
+
+
+func blind(time: float) -> void:
+	_blind_t = maxf(_blind_t, time)
+
+
+func blinded() -> bool:
+	return _blind_t > 0.0
 
 
 func bleed(total: float) -> void:
@@ -102,6 +112,7 @@ func _process(delta: float) -> void:
 	_stun_t = maxf(_stun_t - delta, 0.0)
 	_stun_immune = maxf(_stun_immune - delta, 0.0)
 	_slow_t = maxf(_slow_t - delta, 0.0)
+	_blind_t = maxf(_blind_t - delta, 0.0)
 	for b in _bleeds.duplicate():
 		b.t -= delta
 		hero.take_damage(b.dps * delta, true, true, true)

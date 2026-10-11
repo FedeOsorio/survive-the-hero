@@ -109,7 +109,7 @@ func _think() -> void:
 		if _pile_t <= 0.0 or not is_instance_valid(_pile) or position.distance_to(_pile.position) > seek:
 			_pile_t = B.HERO_GEM_PILE_EVERY
 			_pile = _best_gem_pile(seek)
-		var gem = _pile if is_instance_valid(_pile) else null
+		var gem = _pile if is_instance_valid(_pile) and not status.blinded() else null
 		if gem != null:
 			steer += (gem.position - position).normalized() * pull
 
@@ -223,6 +223,8 @@ func _pick_hunt_target():
 ## La gema a menos de "seek" con más XP alrededor (HERO_GEM_CLUSTER_RADIUS),
 ## dividida por (distancia + HERO_GEM_DIST_BIAS). Mira solo las HERO_GEM_PILE_LOOK más cercanas.
 func _best_gem_pile(seek: float):
+	if status.blinded(): # Nube de la Reina: no ve gemas
+		return null
 	var near: Array = []
 	for g in world.gems:
 		if position.distance_to(g.position) < seek:
