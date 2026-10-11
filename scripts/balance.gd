@@ -75,6 +75,9 @@ const CIVILIAN_FLEE_RADIUS := 220.0
 const CIVILIAN_TRAMPLE_MARGIN := 4.0 # tocar un civil (suma de radios + esto) lo come al instante
 const CIVILIAN_FREEZE_RADIUS := 50.0 # con el creep tan cerca se paraliza de miedo
 const CIVILIAN_BIOMASS := 7.0 # 09-d: era 12
+# 09-g: todo lo que comés (civiles, horda, gemas, cadáveres) da esto × su valor; también
+# escala la cura por biomasa y el avance a la próxima mutación. 1.0 = como antes.
+const CREEP_BIOMASS_MULT := 0.7
 # Comer civiles hace ruido: el héroe va a investigar el lugar.
 # El grito empieza apenas un civil sale corriendo de vos, no cuando muere.
 # Cada grito nuevo actualiza el lugar. La alarma dura hasta que llega (a ALARM_ARRIVE_DIST)

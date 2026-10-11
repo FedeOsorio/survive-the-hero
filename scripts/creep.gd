@@ -375,7 +375,7 @@ func _eat(value: float) -> void:
 		if _combo_t > 0.0:
 			combo = minf(combo + B.COMBO_STEP, B.COMBO_MAX + 0.5 * (rank("frenesi") - 1))
 		_combo_t = B.COMBO_WINDOW + B.COMBO_WINDOW_PER_RANK * (rank("frenesi") - 1)
-	var gained := value * combo * hunger()
+	var gained := value * combo * hunger() * B.CREEP_BIOMASS_MULT
 	biomass += gained
 	hp = minf(max_hp, hp + gained * B.HEAL_PER_BIOMASS)
 	mut_xp += gained
