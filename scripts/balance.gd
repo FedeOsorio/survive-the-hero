@@ -82,8 +82,7 @@ const CREEP_BIOMASS_MULT := 0.7
 # El grito empieza apenas un civil sale corriendo de vos, no cuando muere.
 # Cada grito nuevo actualiza el lugar. La alarma dura hasta que llega (a ALARM_ARRIVE_DIST)
 # y ALARM_SEARCH_TIME más buscando, con un máximo de ALARM_MAX_TIME desde el último grito.
-const ALARM_PULL := 4.0 # más que cofres (3,0) y corazones (2,8)
-const ALARM_PULL_WITH_GEMS := 1.5 # 09-d C: con un montón de gemas en su radio, las gemas mandan
+const ALARM_CLOSE_DIST := 400.0 # 09-h: más cerca que esto el grito le gana a cofre, corazón y gemas; más lejos, va después
 const ALARM_ARRIVE_DIST := 80.0
 const ALARM_SEARCH_TIME := 3.0
 const ALARM_MAX_TIME := 12.0
@@ -117,7 +116,6 @@ const SUSPICION_GAZE_EVERY := 2.0 # cada tanto, chance sospecha/100 × esto de r
 const SUSPICION_GAZE_CHANCE := 0.25
 const HUNT_LOSE_DIST := 600.0
 const HUNT_SEARCH_TIME := 5.0
-const HUNT_SEARCH_PULL := 3.0
 const HUNT_SEEN_BANNER_EVERY := 10.0 # "¡El Arquero te reconoció!" como mucho cada tantos segundos
 const GEM_BIOMASS := 0.5 # pisar una gema te alimenta: biomasa por punto de XP (el imán no las atrae)
 const GEM_EAT_RANGE := 12.0 # se suma a tu radio
@@ -134,7 +132,6 @@ const ELITE_HP_MULT := 8.0
 const ELITE_HEART_BIOMASS := 10.0
 # Si el héroe agarra el corazón primero: sube un nivel y se cura este %.
 const ELITE_HEART_HERO_HEAL := 0.1
-const HERO_HEART_PULL := 2.8 # prioridad de ir a buscar un corazón (más que las gemas)
 const HERO_HEART_SEEK_RADIUS := 700.0
 
 # --- Héroe -------------------------------------------------------------------
@@ -210,17 +207,16 @@ const HERO_FURY_MAGE_ICE := {"name": "Hielo", "shape": "circle", "radius": 140.0
 const HERO_MISTAKE_CHANCE := 0.06
 const HERO_DETECTED_TARGET_BONUS := 150.0 # chico: si tiene creeps encima, se defiende primero
 # Cacería: con el jugador detectado, el héroe va por vos.
-const HUNT_PULL := 3.0
-const HUNT_PULL_CROWDED := 1.5 # con mucha horda encima
-const HUNT_CROWDED_DANGER := 3.0
 const HUNT_IDEAL_DIST := 220.0
 # Gemas: va al montón que más vale (XP a HERO_GEM_CLUSTER_RADIUS / (distancia + HERO_GEM_DIST_BIAS)).
 const HERO_GEM_CLUSTER_RADIUS := 100.0
 const HERO_GEM_DIST_BIAS := 150.0
 const HERO_GEM_SEEK_RADIUS := 600.0 # libre
-const HERO_GEM_PULL := 4.5 # sin peligro (09-d C: era 2,6)
-const HERO_GEM_PULL_DANGER := 3.0 # con horda encima (09-d C: era 1,6)
-const HERO_GEM_DANGER := 3.0 # libre: con este peligro o más usa HERO_GEM_PULL_DANGER
+# 09-h: solo rodeado (peligro HERO_SURROUNDED_DANGER) o con menos de HERO_PRIORITY_HP de vida
+# manda alejarse de la horda; si no, va a su objetivo apartándose HERO_HORDE_SEPARATION.
+const HERO_PRIORITY_HP := 0.5
+const HERO_SURROUNDED_DANGER := 6.0
+const HERO_HORDE_SEPARATION := 0.4 # × su objetivo (1,0)
 const HUNT_ESCAPE_RADIUS := 80.0 # con tantos creeps así de cerca, primero zafa
 const HUNT_ESCAPE_COUNT := 2
 const HUNT_SHARE_RADIUS := 150.0 # con creeps así de cerca, alterna un disparo a vos y uno a la horda
@@ -464,7 +460,6 @@ const CHEST_OPEN_RADIUS := 30.0
 const CHEST_OPEN_TIME := 1.0
 const CHEST_LIFETIME := 30.0
 const CHEST_HERO_HEAL := 0.1
-const CHEST_HERO_PULL := 3.0
 const CHEST_HERO_SEEK_RADIUS := 900.0
 
 # Eventos de oleada, en rotación: estampida, asedio, luna de sangre.
