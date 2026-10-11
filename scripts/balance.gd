@@ -88,12 +88,17 @@ const STEALTH_COOLDOWN := 60.0
 const STEALTH_TIME := 4.0 # segundos en que el héroe no te puede apuntar
 
 # --- Te ve, te caza ----------------------------------------------------------
-# Cada héroe te caza si estás a menos de HERO_RANGE y sin camuflaje. A más de
-# HUNT_LOSE_DIST (o camuflado) va HUNT_SEARCH_TIME a tu última posición y vuelve a farmear.
-const HUNT_LOSE_DIST := 520.0
+# Te reconoce por lo que hacés (a menos de RECOGNIZE_RANGE y sin camuflaje): morderlo,
+# escupirle o embestirlo, esquivar un ataque de jefe, matar un civil o ser Demonio.
+# Te caza RECOGNIZE_TIME (cada delación lo reinicia). Al vencer, a más de HUNT_LOSE_DIST
+# o camuflado, va HUNT_SEARCH_TIME a tu última posición y vuelve a tratarte como horda.
+const RECOGNIZE_RANGE := 500.0
+const RECOGNIZE_TIME := 12.0
+const RECOGNIZE_ALERT_FX := 1.5 # "!" sobre el héroe
+const HUNT_LOSE_DIST := 600.0
 const HUNT_SEARCH_TIME := 5.0
 const HUNT_SEARCH_PULL := 3.0
-const HUNT_SEEN_BANNER_EVERY := 10.0 # "¡El Arquero te vio!" como mucho cada tantos segundos
+const HUNT_SEEN_BANNER_EVERY := 10.0 # "¡El Arquero te reconoció!" como mucho cada tantos segundos
 const GEM_BIOMASS := 0.5 # pisar una gema te alimenta: biomasa por punto de XP (el imán no las atrae)
 const GEM_EAT_RANGE := 12.0 # se suma a tu radio
 
@@ -108,14 +113,14 @@ const ELITE_EVERY := 45.0
 const ELITE_HP_MULT := 8.0
 const ELITE_HEART_BIOMASS := 10.0
 # Si el héroe agarra el corazón primero: sube un nivel y se cura este %.
-const ELITE_HEART_HERO_HEAL := 0.3
+const ELITE_HEART_HERO_HEAL := 0.1
 const HERO_HEART_PULL := 2.8 # prioridad de ir a buscar un corazón (más que las gemas)
 const HERO_HEART_SEEK_RADIUS := 700.0
 
 # --- Héroe -------------------------------------------------------------------
-const HERO_HP := 320.0
-const HERO_HP_PER_LEVEL := 40.0
-const HERO_LEVEL_HEAL := 0.3 # al subir de nivel recupera este % de su vida máxima (no tiene regeneración)
+const HERO_HP := 600.0
+const HERO_HP_PER_LEVEL := 60.0
+const HERO_LEVEL_HEAL := 0.05 # al subir de nivel recupera este % de su vida máxima (no tiene regeneración)
 const HERO_SPEED := 150.0
 const HERO_RADIUS := 14.0
 const HERO_ARROW_DAMAGE := 20.0
@@ -186,7 +191,8 @@ const HUNT_SHARE_RADIUS := 150.0 # con creeps así de cerca, alterna un disparo 
 
 # Tres héroes en 15 minutos: llegan a horario fijo, haya muerto o no el anterior.
 # Ganás matando a los tres. "hp", "speed" y "damage" multiplican la vida, la velocidad
-# y el daño de las flechas; "fire_rate" multiplica cuántas tira por segundo; "powers" son los poderes con los que llega (rango 1).
+# y el daño de las flechas; "fire_rate" multiplica cuántas tira por segundo; "attacks" son sus
+# ataques de jefe (HERO_ATTACKS; el 3.º desde HERO_ATTACK_THIRD_LEVEL), uno cada "attack_every" s; "powers" son los poderes con los que llega (rango 1).
 # "level_bonus": llega en HERO_CURVE (ese minuto) + esto + bonus por ir adelantado, nunca
 # por debajo del héroe más fuerte que hubo. Bonus: (tu nivel equivalente − CREEP_CURVE) / 2,
 # redondeado, entre 0 y ARRIVAL_AHEAD_BONUS_MAX.
@@ -196,7 +202,7 @@ const MATCH_MINUTES := 15.0 # amanece: los héroes vivos escapan y termina la pa
 const HERO_ESCAPE_TIME := 2.0 # suben en una columna de luz; todo lo demás queda quieto
 const HORDE_IDLE_DIST := 120.0 # sin héroes vivos, la horda te sigue a esta distancia
 const HERO_ARRIVAL_WARNING := 5.0 # banner y portal antes de que llegue
-const HERO_NEXT_AFTER_KILL := 60.0 # si matás a uno, el siguiente llega a más tardar en estos segundos
+const HERO_NEXT_AFTER_KILL := 30.0 # si matás a uno, el siguiente llega a más tardar en estos segundos
 # Curvas objetivo [minuto, nivel] (del plan maestro), interpoladas lineal entre minutos.
 const HERO_CURVE := [[0, 1], [1, 3], [3, 6], [5, 9], [8, 14], [10, 17], [12, 22], [15, 25]]
 const CREEP_CURVE := [[0, 1], [1, 3], [3, 6], [5, 9], [8, 13], [10, 16], [12, 19], [15, 23]] # nivel equivalente
@@ -214,6 +220,32 @@ static func curve_at(curve: Array, minute: float) -> float:
 			return lerpf(a[1], b[1], (minute - a[0]) / float(b[0] - a[0]))
 	return curve[-1][1]
 
+# Ataques de jefe (hero_attacks.gd): zona roja que se llena durante "warn" y después golpea.
+# Formas: "circle" (radius), "line" (length, width), "cone" (length, angle en grados),
+# "donut" (crece desde el héroe hasta radius en "grow" segundos, frente de "width").
+# "center": "hero" (alrededor suyo), "target" (sobre el blanco) o "line" (desde él hacia el blanco).
+# "count"/"spread"/"stagger": varias zonas (meteoros, terremoto); "cross": dos líneas en cruz.
+# "player_damage": × tu vida máxima (una vez por ataque). "dash": el héroe recorre la línea al golpear.
+const HERO_ATTACKS := {
+	"lluvia_flechas": {"name": "Lluvia de flechas", "shape": "circle", "center": "target", "radius": 160.0, "warn": 1.2, "player_damage": 0.3},
+	"disparo_cargado": {"name": "Disparo cargado", "shape": "line", "center": "line", "length": 1400.0, "width": 40.0, "warn": 1.0, "player_damage": 0.3},
+	"abanico": {"name": "Abanico", "shape": "cone", "center": "line", "length": 450.0, "angle": 70.0, "warn": 0.8, "player_damage": 0.4},
+	"tajo_giratorio": {"name": "Tajo giratorio", "shape": "circle", "center": "hero", "radius": 200.0, "warn": 0.8, "player_damage": 0.3},
+	"embestida": {"name": "Embestida", "shape": "line", "center": "line", "length": 500.0, "width": 60.0, "warn": 1.0, "player_damage": 0.3, "dash": true},
+	"terremoto": {"name": "Terremoto", "shape": "circle", "center": "line", "radius": 110.0, "warn": 0.8, "player_damage": 0.4,
+		"count": 3, "stagger": 0.6},
+	"meteoros": {"name": "Meteoros", "shape": "circle", "center": "target", "radius": 130.0, "warn": 1.5, "player_damage": 0.3,
+		"count": 3, "spread": 150.0},
+	"cruz_rayos": {"name": "Cruz de rayos", "shape": "line", "center": "target", "length": 900.0, "width": 40.0, "warn": 1.2, "player_damage": 0.3, "cross": true},
+	"anillo_fuego": {"name": "Anillo de fuego", "shape": "donut", "center": "hero", "radius": 350.0, "width": 40.0, "warn": 1.0, "grow": 0.6, "player_damage": 0.4},
+}
+const HERO_ATTACK_THIRD_LEVEL := 8 # el ataque 3 aparece desde este nivel
+const HERO_ATTACK_TARGET_RANGE := 500.0 # sin cazarte, apunta al montón de horda más denso a esta distancia
+const HERO_ATTACK_CLUSTER_RADIUS := 120.0 # "montón": el creep con más vecinos a esta distancia
+const HERO_ATTACK_RETRY := 1.0 # sin blanco, vuelve a probar en estos segundos
+const HERO_ATTACK_BIG_DAMAGE := 0.6 # brutos y élites pierden esto de su vida máxima (los menores mueren)
+const HERO_ATTACK_DASH_TIME := 0.2 # la Embestida recorre la línea en estos segundos
+const HERO_ATTACK_FLASH := 0.15
 const HERO_ARRIVAL_WAVE_RADIUS := 300.0 # onda sagrada al llegar: mata a los menores, empuja a brutos y élites
 const HERO_ARRIVAL_SHIELD := 3.0 # segundos invulnerable al llegar (brilla dorado)
 const HERO_GEM_PILE_EVERY := 0.3 # cada cuánto recalcula el mejor montón de gemas
@@ -222,14 +254,17 @@ const HERO_PORTAL_MIN := 600.0 # distancia del portal a vos
 const HERO_PORTAL_MAX := 900.0
 const HEROES := [
 	{"name": "Arquero", "article": "el", "minute": 0.0, "level": 1, "hp": 1.0, "speed": 1.0, "damage": 1.0, "fire_rate": 1.0,
+		"attacks": ["lluvia_flechas", "disparo_cargado", "abanico"], "attack_every": 7.0,
 		"powers": [], "color": Color(0.3, 0.55, 1.0),
 		"table": ["perforante", "multiple", "botas", "rayo", "perforante", "multiple", "orbes", "rayo", "botas",
 			"perforante", "multiple", "rayo", "orbes", "botas", "rayo", "orbes", "rayo", "orbes", "orbes"]},
 	{"name": "Caballero", "article": "el", "minute": 5.0, "level_bonus": 2, "hp": 1.5, "speed": 0.9, "damage": 0.8, "fire_rate": 0.5,
+		"attacks": ["tajo_giratorio", "embestida", "terremoto"], "attack_every": 6.0,
 		"powers": ["aura", "nova"], "color": Color(0.78, 0.8, 0.88),
 		"table": ["aura", "orbes", "nova", "aura", "botas", "orbes", "rayo", "nova", "aura",
 			"orbes", "botas", "nova", "rayo", "aura", "orbes", "nova", "botas", "rayo", "orbes"]},
 	{"name": "Maga", "article": "la", "minute": 10.0, "level_bonus": 4, "hp": 0.8, "speed": 1.05, "damage": 1.15, "fire_rate": 0.7,
+		"attacks": ["meteoros", "cruz_rayos", "anillo_fuego"], "attack_every": 5.0,
 		"powers": ["rayo", "orbes"], "color": Color(0.72, 0.4, 0.95),
 		"table": ["rayo", "orbes", "multiple", "rayo", "nova", "orbes", "aura", "rayo", "multiple",
 			"nova", "orbes", "rayo", "aura", "nova", "multiple", "orbes", "nova", "aura", "nova"]},
@@ -365,7 +400,7 @@ const CHEST_MAX_DIST := 700.0
 const CHEST_OPEN_RADIUS := 30.0
 const CHEST_OPEN_TIME := 1.0
 const CHEST_LIFETIME := 30.0
-const CHEST_HERO_HEAL := 0.2
+const CHEST_HERO_HEAL := 0.1
 const CHEST_HERO_PULL := 3.0
 const CHEST_HERO_SEEK_RADIUS := 900.0
 
@@ -425,7 +460,8 @@ const PALADIN_CHARGE_DAMAGE := 0.25 # x tu vida máxima
 const PALADIN_CHARGE_SPEED := 650.0
 const PALADIN_CHARGE_DIST := 420.0
 const PALADIN_HEAL_RADIUS := 150.0
-const PALADIN_HEAL := 0.02 # x vida máxima del héroe por segundo
+const PALADIN_HEAL := 0.01 # x vida máxima del héroe por segundo
+const PALADIN_HEAL_CAP := 0.6 # no lo cura por encima de este % de su vida máxima
 const PALADIN_MAX_ALIVE := 3
 # Escalón: cada PALADIN_TIER_EVERY soldados enviados (el 1.º al 3.º son escalón 0).
 const PALADIN_TIER_EVERY := 3

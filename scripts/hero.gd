@@ -2,12 +2,13 @@ extends Node2D
 ## Un héroe controlado por la IA (Arquero, Caballero o Maga: ver heroes.gd).
 ## Farmea la horda, kitea, junta experiencia, sube de nivel, esquiva proyectiles
 ## y se retira con poca vida. No se regenera: solo se cura al subir de nivel.
-## Al jugador lo trata como un creep más hasta que lo detecta.
+## Al jugador lo trata como un creep más hasta que lo reconoce por lo que hace.
 ## En cada nivel sube el poder de su tabla fija (ver hero_powers.gd y B.HEROES).
 
 const B := preload("res://scripts/balance.gd")
 const HeroPowers := preload("res://scripts/hero_powers.gd")
 const HeroStatus := preload("res://scripts/hero_status.gd")
+const HeroAttacks := preload("res://scripts/hero_attacks.gd")
 
 var world
 var hp := B.HERO_HP
@@ -45,6 +46,7 @@ var _horde_turn := false # cazando: el próximo disparo va a la horda
 var _rng := RandomNumberGenerator.new()
 var powers # hero_powers.gd: orbes, rayo, aura, nova, etc.
 var status # hero_status.gd: sangrado, aturdimiento, lentitud
+var attacks # hero_attacks.gd: ataques de jefe con zona roja
 var damage_taken := {"jugador": 0.0, "horda": 0.0} # para los reportes de --sim
 var title := "Arquero"
 var article := "el"
@@ -58,6 +60,8 @@ enum Sight { FARM, HUNT, SEARCH }
 var sight := Sight.FARM # te caza si te ve; si te pierde, te busca un rato
 var _last_seen := Vector2.ZERO
 var _search_t := 0.0
+var _hunt_t := 0.0 # cuánto le queda cazándote si no te volvés a delatar
+var _alert_fx := 0.0 # "!" al reconocerte
 
 
 func _ready() -> void:
@@ -67,6 +71,10 @@ func _ready() -> void:
 	powers.hero = self
 	powers.world = world
 	add_child(powers)
+	attacks = HeroAttacks.new()
+	attacks.hero = self
+	attacks.world = world
+	add_child(attacks)
 	status = HeroStatus.new()
 	status.hero = self
 	status.world = world
@@ -83,6 +91,7 @@ func setup(cfg: Dictionary, start_level: int) -> void:
 	damage_mult = cfg.damage
 	fire_rate = cfg.fire_rate
 	table = cfg.table
+	attacks.setup(cfg)
 	for id in cfg.powers:
 		powers.ranks[id] = 1
 	for i in start_level - 1:
@@ -112,7 +121,7 @@ func _process(delta: float) -> void:
 	if _roll_t > 0.0:
 		_roll_t -= delta
 		position += _roll_dir * B.HERO_ROLL_SPEED * delta
-	else:
+	elif not attacks.busy(): # cargando un ataque de jefe se queda quieto
 		_check_roll()
 		position += _move_dir * speed * status.speed_mult() * delta
 	position = position.clamp(Vector2(radius, radius), B.ARENA_SIZE - Vector2(radius, radius))
@@ -132,7 +141,9 @@ func _process(delta: float) -> void:
 			world.remove_corpse(c)
 
 	_fire_t -= delta
-	if _aim_windup > 0.0:
+	if attacks.busy():
+		_aim_windup = 0.0
+	elif _aim_windup > 0.0:
 		_aim_windup -= delta
 		if _aim_windup <= 0.0:
 			_fire_t = cooldown
@@ -155,7 +166,7 @@ func _process(delta: float) -> void:
 			_fire_t = cooldown
 			_fire()
 
-	if B.HERO_SLASH_ENABLED and level >= B.HERO_SLASH_LEVEL:
+	if B.HERO_SLASH_ENABLED and level >= B.HERO_SLASH_LEVEL and not attacks.busy():
 		_update_slash(delta)
 
 	_flash = maxf(_flash - delta, 0.0)
@@ -249,19 +260,16 @@ func _target_valid() -> bool:
 
 # --- Decisiones --------------------------------------------------------------
 
-## Te ve si estás a HERO_RANGE y sin camuflaje: te caza. A más de HUNT_LOSE_DIST
-## (o camuflado) te busca HUNT_SEARCH_TIME en tu última posición y vuelve a farmear.
+## Te caza RECOGNIZE_TIME desde la última delación (ver recognize). Al vencer, a más de
+## HUNT_LOSE_DIST o camuflado, te busca HUNT_SEARCH_TIME en tu última posición y vuelve a farmear.
 func _update_sight(delta: float) -> void:
 	var p = world.player
-	var d := position.distance_to(p.position)
-	var hidden: bool = p.stealth_t > 0.0
-	if not hidden and d < B.HERO_RANGE:
-		if sight != Sight.HUNT:
-			world.on_hero_saw_you(self)
-		sight = Sight.HUNT
-		_last_seen = p.position
-	elif sight == Sight.HUNT:
-		if hidden or d > B.HUNT_LOSE_DIST:
+	_alert_fx = maxf(_alert_fx - delta, 0.0)
+	if p.stage == B.CREEP_STAGES.size() - 1:
+		recognize() # un Demonio no pasa desapercibido
+	if sight == Sight.HUNT:
+		_hunt_t -= delta
+		if p.stealth_t > 0.0 or position.distance_to(p.position) > B.HUNT_LOSE_DIST or _hunt_t <= 0.0:
 			sight = Sight.SEARCH
 			_search_t = B.HUNT_SEARCH_TIME
 		else:
@@ -271,6 +279,20 @@ func _update_sight(delta: float) -> void:
 		if _search_t <= 0.0:
 			sight = Sight.FARM
 			world.hud.banner("Lo perdiste: %s dejó de buscarte" % _the_name())
+
+
+## Te delataste (lo atacaste, esquivaste un ataque, mataste un civil o sos Demonio):
+## si estás a menos de RECOGNIZE_RANGE y sin camuflaje, te caza RECOGNIZE_TIME.
+func recognize() -> void:
+	var p = world.player
+	if p.stealth_t > 0.0 or position.distance_to(p.position) >= B.RECOGNIZE_RANGE:
+		return
+	if sight != Sight.HUNT:
+		world.on_hero_saw_you(self)
+		_alert_fx = B.RECOGNIZE_ALERT_FX
+	sight = Sight.HUNT
+	_hunt_t = B.RECOGNIZE_TIME
+	_last_seen = p.position
 
 
 func hunting_you() -> bool:
@@ -534,6 +556,7 @@ func take_damage(amount: float, from_player: bool, melee := false, tick := false
 	if hp <= 0.0 or shield_t > 0.0:
 		return
 	if from_player:
+		recognize() # ningún creep común lo ataca así
 		status.log_damage(amount, melee)
 		status.show_damage(amount, tick)
 	damage_taken["jugador" if from_player else "horda"] += amount
@@ -579,3 +602,9 @@ func _draw() -> void:
 	draw_line(Vector2.ZERO, _aim * (radius + 10.0), Color(1, 0.95, 0.7), 3.0)
 	if _level_fx > 0.0:
 		draw_arc(Vector2.ZERO, radius + 20.0 * (1.0 - _level_fx), 0.0, TAU, 24, Color(1, 1, 0.5, _level_fx), 2.0)
+	if _alert_fx > 0.0:
+		# "!" al reconocerte
+		var top := Vector2(0, -radius - 34.0)
+		var col := Color(1.0, 0.25, 0.2, minf(_alert_fx * 2.0, 1.0))
+		draw_rect(Rect2(top + Vector2(-3, 0), Vector2(6, 16)), col)
+		draw_rect(Rect2(top + Vector2(-3, 20), Vector2(6, 6)), col)

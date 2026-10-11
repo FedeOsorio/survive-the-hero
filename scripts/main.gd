@@ -225,6 +225,8 @@ func _update_alarm(delta: float) -> void:
 func on_civilian_killed(c) -> void:
 	civilians.erase(c)
 	civilians_eaten += 1
+	for h in heroes.list:
+		h.recognize() # la horda no toca civiles
 	infamy.add(B.INFAMY_PER_CIVILIAN)
 	raise_alarm(c.position)
 	var corpse = Corpse.new()
@@ -370,11 +372,11 @@ func sight_level() -> int:
 	return level
 
 
-## Un héroe te vio y empieza a cazarte (banner como mucho cada HUNT_SEEN_BANNER_EVERY).
+## Un héroe te reconoció y empieza a cazarte (banner como mucho cada HUNT_SEEN_BANNER_EVERY).
 func on_hero_saw_you(h) -> void:
 	if elapsed - _seen_banner_t >= B.HUNT_SEEN_BANNER_EVERY:
 		_seen_banner_t = elapsed
-		hud.banner("¡%s te vio!" % h.full_name())
+		hud.banner("¡%s te reconoció!" % h.full_name())
 
 
 ## Camuflaje del jugador: los héroes te pierden (te buscan un rato) y se borra el rastro.
