@@ -11,6 +11,7 @@ var _bleeds: Array = [] # {dps, t}
 var _stun_t := 0.0
 var _stun_immune := 0.0
 var _slow_t := 0.0
+var _slow_amount := 0.0
 var _log: Array = [] # {time, amount, melee}
 var _drip := 0.0
 var _numbers: Array = [] # {amount, t, big}
@@ -29,11 +30,13 @@ func stunned() -> bool:
 
 
 func speed_mult() -> float:
-	return 1.0 - B.ACID_SLOW if _slow_t > 0.0 else 1.0
+	return 1.0 - _slow_amount if _slow_t > 0.0 else 1.0
 
 
 ## Los charcos lo llaman cada frame mientras está adentro.
-func slow() -> void:
+## Lo frena mientras lo pisan (charcos de Lluvia ácida o de Pegote); gana el más fuerte.
+func slow(amount: float = B.ACID_SLOW) -> void:
+	_slow_amount = amount if _slow_t <= 0.0 else maxf(_slow_amount, amount)
 	_slow_t = 0.1
 
 
@@ -111,7 +114,7 @@ func _process(delta: float) -> void:
 			_add_number(_tick_sum)
 			_tick_sum = 0.0
 	_horde_t += delta
-	if _horde_t >= B.FX_GROUP_EVERY:
+	if _horde_t >= B.FX_GROUP_EVERY and "damage_taken" in hero: # el Bastión no lo tiene
 		_horde_t = 0.0 # la horda pega cada frame: un número gris sumado
 		var horde: float = hero.damage_taken["horda"]
 		if horde - _horde_seen >= 1.0:

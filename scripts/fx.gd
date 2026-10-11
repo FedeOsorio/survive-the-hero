@@ -140,6 +140,13 @@ func civilian_eaten(pos: Vector2) -> void:
 		_particle(pos, dir * _rng.randf_range(40.0, 110.0), Color(0.85, 0.08, 0.08), 2.5, B.FX_PARTICLE_TIME)
 
 
+func explosion(pos: Vector2, radius: float, color: Color) -> void:
+	_ring(pos, 0.35, radius, color, 8.0)
+	for i in 14:
+		var dir := Vector2.from_angle(_rng.randf() * TAU)
+		_particle(pos, dir * _rng.randf_range(100.0, 260.0), color.lightened(_rng.randf() * 0.4), _rng.randf_range(3.0, 5.0), B.FX_PARTICLE_TIME)
+
+
 func mutated(pos: Vector2) -> void:
 	_ring(pos, B.FX_MUTATE_RING.x, B.FX_MUTATE_RING.y, Color(0.4, 0.9, 1.0), 3.0)
 

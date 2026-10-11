@@ -15,6 +15,7 @@ Un survivor al revés: sos un creep de la horda, los héroes los controla la IA.
 | Moverse | WASD o flechas | Stick izquierdo |
 | Embestida | Espacio o Shift | RB |
 | Camuflaje (el héroe te pierde de vista, 1 vez por minuto) | Q | LB |
+| Llamado (con la mutación: la horda cercana corre hacia donde apuntás) | C (apunta el mouse) | RT (apunta el stick derecho) |
 | Elegir mutación | 1 / 2 / 3 | X / A / B |
 | Pausa (Seguir, Opciones, Volver al menú) | Esc | Start |
 | Reintentar (pantalla final) | R | Back |

@@ -4,13 +4,19 @@ extends RefCounted
 ## Las evoluciones ("weapon" al máximo + "passive" con al menos 1 rango) se toman
 ## una sola vez y, cuando están disponibles, vienen garantizadas en la próxima elección.
 ## "filler" (Festín) no tiene máximo y solo aparece si no alcanzan las opciones.
+## "arm" (mutaciones de arma) pesan ARM_WEIGHT en el sorteo contra las de +%.
+
+const B := preload("res://scripts/balance.gd")
 
 const LIST := {
 	"colmillos": {"name": "Colmillos", "desc": "+12,5% daño de mordida y escupitajo", "max": 10},
 	"patas": {"name": "Patas ágiles", "desc": "+5% velocidad", "max": 8},
 	"caparazon": {"name": "Caparazón", "desc": "+12,5% vida máxima y te cura", "max": 10},
 	"glandula": {"name": "Glándula ácida", "desc": "Escupís 10% más seguido", "max": 8},
-	"doble": {"name": "Escupitajo múltiple", "desc": "+1 escupitajo por disparo", "max": 2},
+	"doble": {"name": "Escupitajo múltiple", "desc": "+1 escupitajo por disparo", "max": 2, "arm": true},
+	"espinas": {"name": "Espinas", "desc": "Durante la embestida, todo lo que tocás recibe mordida x0,6 (+0,3 por rango)", "max": 3, "arm": true},
+	"pegote": {"name": "Pegote", "desc": "Cada 3 s dejás un charco pegajoso que frena al héroe 25% (+10% por rango)", "max": 3, "arm": true},
+	"llamado": {"name": "Llamado", "desc": "C o RT: la horda cercana corre hacia donde apuntás, x1,8 de velocidad (recarga 12 s, -2 s por rango)", "max": 3, "arm": true},
 	"iman": {"name": "Imán de carne", "desc": "Los cadáveres cercanos vuelan hacia vos (+30 de radio)", "max": 6},
 	"frenesi": {"name": "Frenesí", "desc": "Comer seguido arma un combo que multiplica la biomasa", "max": 2},
 	"rey": {"name": "Rey de la horda", "desc": "Los compañeros cerca tuyo van más rápido y pegan más (cada rango agranda el aura)", "max": 6, "min_stage": 1},
@@ -69,9 +75,20 @@ static func roll(ranks: Dictionary, stage: int, rng: RandomNumberGenerator, coun
 		if ranks.get(id, 0) < LIST[id].max and stage >= LIST[id].get("min_stage", 0):
 			pool.append(id)
 	while out.size() < count and not pool.is_empty():
-		var i := rng.randi_range(0, pool.size() - 1)
+		var total := 0
+		for id in pool:
+			total += _weight(id)
+		var r := rng.randi_range(1, total)
+		var i := 0
+		while r > _weight(pool[i]):
+			r -= _weight(pool[i])
+			i += 1
 		out.append(pool[i])
 		pool.remove_at(i)
 	if out.size() < count:
 		out.append("festin")
 	return out
+
+
+static func _weight(id: String) -> int:
+	return B.ARM_WEIGHT if LIST[id].get("arm", false) else 1

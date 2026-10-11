@@ -24,6 +24,8 @@ var led := false # cerca del jugador: más rápido y más fuerte
 var raised := false # levantado por Señor de la carroña: dura poco y no deja nada
 var raise_t := 0.0
 var boost_t := 0.0 # estampida: corre más rápido un rato
+var rally_t := 0.0 # Llamado del jugador: corre hacia rally_pos
+var rally_pos := Vector2.ZERO
 
 
 func setup(t: String, minute: float, is_elite := false) -> void:
@@ -93,6 +95,11 @@ func _process(delta: float) -> void:
 
 
 func _separate_and_move(move: Vector2, spd: float, delta: float) -> void:
+	if rally_t > 0.0:
+		rally_t -= delta
+		var to_r := rally_pos - position
+		move = to_r.normalized() if to_r.length() > 12.0 else Vector2.ZERO
+		spd *= B.RALLY_SPEED_MULT
 	# separación barata para que la horda no se apile en un solo punto
 	var push := Vector2.ZERO
 	for other in world.minions_near(position):

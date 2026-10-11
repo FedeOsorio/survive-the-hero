@@ -6,6 +6,7 @@ extends Node2D
 const B := preload("res://scripts/balance.gd")
 const Mutations := preload("res://scripts/mutations.gd")
 const CreepBot := preload("res://scripts/creep_bot.gd")
+const CreepAbilities := preload("res://scripts/creep_abilities.gd")
 
 var world
 var invulnerable := false
@@ -43,12 +44,17 @@ var stealth_cd := 0.0
 var stealth_t := 0.0 # mientras dura, el héroe no te puede apuntar
 var _dash_victims: Array = []
 var _rng := RandomNumberGenerator.new()
+var abilities # creep_abilities.gd: habilidades por etapa y mutaciones de arma
 
 
 func _ready() -> void:
 	z_index = 2
 	_rng.randomize()
 	_apply_stage(0)
+	abilities = CreepAbilities.new()
+	abilities.creep = self
+	abilities.world = world
+	add_child(abilities)
 
 
 func stage_name() -> String:
@@ -66,6 +72,14 @@ func can_evolve() -> bool:
 
 func rank(id: String) -> int:
 	return ranks.get(id, 0)
+
+
+func dashing() -> bool:
+	return _dash_t > 0.0
+
+
+func facing() -> Vector2:
+	return _facing
 
 
 # --- Stats derivados (etapa x mutaciones) ------------------------------------

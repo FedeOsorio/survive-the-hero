@@ -536,3 +536,36 @@ const FX_EVOLVE_RING := Vector2(0.6, 200.0)
 const FX_LEVEL_COLUMN := 0.4 # columna de luz del héroe al subir de nivel
 const FX_PICK_LOCK := 0.3 # s en que la elección de mutación no acepta nada al abrir
 const FX_PICK_ANIM := 0.15 # s de entrada de las cartas
+
+# --- Habilidades del creep (tanda S4; las maneja el programador de sistemas) ---
+# Habilidad por etapa (se suman: el Demonio tiene las tres)
+const BONES_EVERY := 2.5 # Esqueleto: huesos que rebotan entre blancos
+const BONES_COUNT := 3
+const BONES_BOUNCES := 2
+const BONES_DAMAGE := 0.5 # x mordida
+const BONES_RANGE := 350.0 # busca un blanco a esta distancia para tirarlos
+const BONES_BOUNCE_RANGE := 300.0
+const BONES_SPEED := 520.0
+const CORPSE_BLAST_EVERY := 4.0 # Cultista: detonar un cadáver cerca del héroe
+const CORPSE_BLAST_REACH := 120.0 # el cadáver tiene que estar a esta distancia del héroe
+const CORPSE_BLAST_RADIUS := 90.0
+const CORPSE_BLAST_DAMAGE := 1.5 # x mordida
+const BREATH_EVERY := 5.0 # Demonio: aliento en cono
+const BREATH_ANGLE := 60.0 # grados
+const BREATH_LENGTH := 220.0
+const BREATH_TIME := 1.2
+const BREATH_TICK := 0.2
+const BREATH_DAMAGE := 0.6 # x mordida por tick
+# Mutaciones de arma
+const THORNS_DAMAGE := 0.6 # Espinas: x mordida a lo que tocás en la embestida
+const THORNS_PER_RANK := 0.3
+const GOO_EVERY := 3.0 # Pegote: charco pegajoso
+const GOO_RADIUS := 50.0
+const GOO_TIME := 4.0
+const GOO_SLOW := [0.25, 0.35, 0.45] # por rango
+const RALLY_RADIUS := 250.0 # Llamado: la horda a esta distancia corre hacia donde apuntás
+const RALLY_SPEED_MULT := 1.8
+const RALLY_TIME := 3.0
+const RALLY_COOLDOWN := [12.0, 10.0, 8.0] # por rango
+const RALLY_AIM_DIST := 250.0 # con stick, el punto queda a esta distancia
+const ARM_WEIGHT := 3 # en el sorteo, las mutaciones de arma pesan esto contra las de +%

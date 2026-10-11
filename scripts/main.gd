@@ -543,6 +543,7 @@ func _setup_input() -> void:
 	_add_action("pick_2", [KEY_2, KEY_KP_2], [], [JOY_BUTTON_A])
 	_add_action("pick_3", [KEY_3, KEY_KP_3], [], [JOY_BUTTON_B])
 	_add_action("restart", [KEY_R], [], [JOY_BUTTON_BACK]) # Start pausa (Settings)
+	_add_action("rally", [KEY_C], [[JOY_AXIS_TRIGGER_RIGHT, 1.0]], []) # Llamado (RB ya es la embestida)
 
 
 func _add_action(action: String, keys: Array, axes: Array, buttons: Array) -> void:

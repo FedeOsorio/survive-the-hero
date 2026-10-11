@@ -33,6 +33,7 @@ Survivor estilo Vampire Survivors al revés, en Godot 4 (GDScript), pixel art 2D
 - Modos de prueba: `-- --sim` (creep invulnerable) y `-- --bot` (bot juega); como la escena principal es el menú, hay que pasar `res://scenes/main.tscn` antes del `--`. Federico prueba él mismo: no correr el bot en cada cambio.
 - `scripts/hud.gd`, `arena.gd`: interfaz y fondo.
 - `scripts/menu.gd` (`scenes/menu.tscn`), `pause.gd`, `options_menu.gd`, `ui.gd`: menú principal, pausa y botones de la pantalla final, Opciones y piezas de UI compartidas.
+- `scripts/creep_abilities.gd` (`player.abilities`): habilidades por etapa (Huesos, Detonar cadáver, Aliento) y mutaciones de arma (Espinas, Pegote, Llamado). Números en la sección "Habilidades del creep" al final de `balance.gd`.
 - `scripts/mutation_picker.gd`: elección de mutación (hijo del HUD): cartas con clic, stick/flechas + A/Enter, 1/2/3 y X/A/B, bloqueo de 0,3 s al abrir.
 - `scripts/fx.gd` (`world.fx`): jugo visual (partículas al morir, números de daño que recibís, hit-stop, cámara lenta, anillos al mutar/evolucionar, columna al subir el héroe). Números en la sección FX al final de `balance.gd`.
 - `scripts/settings.gd` (autoload `Settings`): opciones en `user://options.cfg`, acción "pause" y contador de FPS. `records.gd`: mejor resultado en `user://records.cfg`.
