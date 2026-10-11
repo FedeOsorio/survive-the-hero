@@ -71,7 +71,7 @@ func _fire_dir(base: Vector2, extra: Array = []) -> void:
 		dir = Vector2.from_angle(_rng.randf() * TAU)
 		extra = []
 	_aim = dir
-	var spread := deg_to_rad(12.0)
+	var spread := deg_to_rad(B.HERO_ARROW_SPREAD)
 	for i in arrows:
 		var d := dir.rotated((i - (arrows - 1) * 0.5) * spread)
 		if not extra.is_empty():
@@ -149,6 +149,6 @@ func _apply_ranks() -> void:
 	damage = B.HERO_ARROW_DAMAGE * damage_mult * (1.0 + B.HERO_DAMAGE_PER_LEVEL * (level - 1))
 	var wait := maxf(B.HERO_ARROW_COOLDOWN * (1.0 - B.HERO_COOLDOWN_PER_LEVEL * (level - 1)), B.HERO_MIN_COOLDOWN)
 	cooldown = wait / fire_rate
-	arrows = 1 + level / B.HERO_LEVELS_PER_EXTRA_ARROW + powers.rank("multiple")
-	pierce = B.HERO_ARROW_PIERCE + powers.rank("perforante")
+	arrows = 1 + mini((level - 1) / B.HERO_LEVELS_PER_EXTRA_ARROW, B.HERO_MAX_EXTRA_ARROWS) + powers.rank("multiple")
+	pierce = B.HERO_ARROW_PIERCE + level / B.HERO_PIERCE_PER_LEVELS + powers.rank("perforante")
 	speed = B.HERO_SPEED * speed_mult * (1.0 + B.POWER_SPEED * powers.rank("botas"))
