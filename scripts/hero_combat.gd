@@ -107,9 +107,11 @@ func take_damage(amount: float, from_player: bool, melee := false, tick := false
 
 
 ## Bajo HERO_FURY_HP: corre unos segundos alejándose y después ataca más seguido,
-## con el ataque 3 aunque no tenga nivel. No hay más retirada.
+## con el ataque 3 aunque no tenga nivel. No hay más retirada. Enciende el reconocimiento.
 func _enrage() -> void:
 	fury = true
+	aware = true
+	suspicion = B.HERO_SUSPICION_START_ON_FURY
 	_fury_run_t = B.HERO_FURY_RUN_TIME
 	attacks.every *= B.HERO_FURY_ATTACK_MULT
 	attacks.unlock_all = true

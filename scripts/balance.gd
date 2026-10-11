@@ -183,6 +183,8 @@ const HERO_AIM_ERROR_DEG := 6.0
 # Furia: al bajar de HERO_FURY_HP por primera vez corre HERO_FURY_RUN_TIME alejándose y
 # después ataca más seguido (espera × HERO_FURY_ATTACK_MULT) con el ataque 3 aunque no tenga nivel.
 const HERO_FURY_HP := 0.3
+# Antes de la furia no te reconoce (sin "?", sospecha ni caza); al enfurecerse arranca acá.
+const HERO_SUSPICION_START_ON_FURY := 50.0
 const HERO_FURY_RUN_TIME := 3.0
 const HERO_FURY_ATTACK_MULT := 0.6
 const HERO_MISTAKE_CHANCE := 0.06

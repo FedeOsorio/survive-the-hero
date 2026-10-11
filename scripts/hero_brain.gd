@@ -2,10 +2,13 @@ extends "res://scripts/hero_combat.gd"
 ## IA del héroe: sospecha y estados de vista (farmear, cazarte, buscarte) y la decisión
 ## de cada momento (a qué tirar, hacia dónde moverse, qué gemas juntar).
 
+## Solo con el reconocimiento encendido (aware, desde la furia).
 ## Sospecha que sube por tamaño y baja lejos; la mirada (cada SUSPICION_GAZE_EVERY) te puede
 ## reconocer antes de 100. Te caza RECOGNIZE_TIME; al vencer, a más de HUNT_LOSE_DIST o
 ## camuflado, te busca HUNT_SEARCH_TIME en tu última posición y vuelve a farmear.
 func _update_sight(delta: float) -> void:
+	if not aware:
+		return
 	var p = world.player
 	if _sees(p):
 		var last := B.CREEP_STAGES.size() - 1
@@ -42,7 +45,7 @@ func _sees(p) -> bool:
 ## Hiciste algo que un creep común no hace (comer, robar una gema, esquivar, matar un
 ## civil, evolucionar): suma "amount" ±SUSPICION_JITTER si te ve. Cazándote, reinicia los 12 s.
 func suspect(amount: float) -> void:
-	if not _sees(world.player):
+	if not aware or not _sees(world.player):
 		return
 	if sight == Sight.HUNT:
 		_hunt_t = B.RECOGNIZE_TIME
@@ -61,6 +64,8 @@ func _add_suspicion(amount: float) -> void:
 
 ## Te reconoció: te caza RECOGNIZE_TIME.
 func recognize() -> void:
+	if not aware:
+		return
 	var p = world.player
 	if sight != Sight.HUNT:
 		world.on_hero_saw_you(self)

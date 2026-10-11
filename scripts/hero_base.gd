@@ -61,6 +61,7 @@ var _last_seen := Vector2.ZERO
 var _search_t := 0.0
 var _hunt_t := 0.0 # cuánto le queda cazándote si no te volvés a delatar
 var suspicion := 0.0 # 0 a 100: a 100 te reconoce
+var aware := false # el reconocimiento se enciende con la furia y no se apaga
 var _gaze_t := 0.0
 var fury := false # bajo HERO_FURY_HP: ataca más seguido
 var _fury_run_t := 0.0

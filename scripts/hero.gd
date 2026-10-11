@@ -2,7 +2,7 @@ extends "res://scripts/hero_brain.gd"
 ## Un héroe controlado por la IA (Arquero, Caballero o Maga: ver heroes.gd).
 ## Farmea la horda, kitea, junta experiencia, sube de nivel, esquiva proyectiles
 ## y con poca vida se enfurece (furia). Casi no se cura.
-## Al jugador lo trata como un creep más mientras no sospeche de él (suspicion, "?").
+## Al jugador lo trata como un creep más hasta enfurecerse; desde ahí sospecha (suspicion, "?").
 ## En cada nivel sube el poder de su tabla fija (ver hero_powers.gd y B.HEROES).
 ## Piezas: hero_base.gd (datos) < hero_combat.gd (combate y nivel) < hero_brain.gd (IA) < este (cada frame y dibujo).
 
@@ -162,6 +162,6 @@ func _draw() -> void:
 	var top := Vector2(0, -radius - 12.0)
 	if hunting_you():
 		draw_string(ThemeDB.fallback_font, top + Vector2(-6, 0), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color(1.0, 0.25, 0.2))
-	else:
+	elif aware:
 		var k := suspicion / B.SUSPICION_MAX
 		draw_string(ThemeDB.fallback_font, top + Vector2(-7, 0), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(0.6, 0.6, 0.6, 0.7).lerp(Color(1.0, 0.85, 0.2), k))
