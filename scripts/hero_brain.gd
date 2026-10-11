@@ -79,7 +79,7 @@ func _think() -> void:
 	var hunting: bool = hunting_you() and not world.player_hidden(self)
 	target = _pick_hunt_target() if hunting else _pick_target()
 	var low_hp := _fury_run_t > 0.0 # la carrera corta al enfurecerse
-	var alarm: bool = aware and world.alarm_t > 0.0 # sin reconocimiento ignora los gritos
+	var alarm: bool = world.alarm_t > 0.0 # un civil gritó o murió: va a defenderlos
 	var mistake := _rng.randf() < B.HERO_MISTAKE_CHANCE
 
 	# 1. alejarse de la horda (kitear). Con poca vida, mucho más fuerte.
@@ -138,8 +138,7 @@ func _think() -> void:
 		else:
 			steer = Vector2.ZERO # quieto encima para abrirlo
 
-	# 2b. si un civil gritó, va hacia ahí a buscar al creep (a los civiles no los toca).
-	#     Solo con el reconocimiento encendido; antes sigue farmeando.
+	# 2b. si un civil gritó, va hacia ahí a buscar al creep (a los civiles no los toca)
 	if alarm and not low_hp and not hunting:
 		var to_alarm: Vector2 = world.alarm_pos - position
 		if to_alarm.length() > 40.0:
