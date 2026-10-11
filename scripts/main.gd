@@ -18,6 +18,7 @@ const Events := preload("res://scripts/events.gd")
 const Infamy := preload("res://scripts/infamy.gd")
 const Arena := preload("res://scripts/arena.gd")
 const Hud := preload("res://scripts/hud.gd")
+const Pause := preload("res://scripts/pause.gd")
 
 const GRID_CELL := 64.0
 
@@ -110,6 +111,9 @@ func _ready() -> void:
 	hud = Hud.new()
 	hud.world = self
 	add_child(hud)
+	var pause := Pause.new()
+	pause.world = self
+	add_child(pause)
 	hud.banner("Sos un creep más. Sobreviví, comé y evolucioná.")
 
 
@@ -475,7 +479,7 @@ func _setup_input() -> void:
 	_add_action("pick_1", [KEY_1, KEY_KP_1], [], [JOY_BUTTON_X])
 	_add_action("pick_2", [KEY_2, KEY_KP_2], [], [JOY_BUTTON_A])
 	_add_action("pick_3", [KEY_3, KEY_KP_3], [], [JOY_BUTTON_B])
-	_add_action("restart", [KEY_R], [], [JOY_BUTTON_START])
+	_add_action("restart", [KEY_R], [], [JOY_BUTTON_BACK]) # Start pausa (Settings)
 
 
 func _add_action(action: String, keys: Array, axes: Array, buttons: Array) -> void:

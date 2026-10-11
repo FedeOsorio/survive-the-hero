@@ -12,7 +12,7 @@ Survivor estilo Vampire Survivors al revés, en Godot 4 (GDScript), pixel art 2D
 
 ## Mapa del repo
 <!-- Completar a medida que crece el proyecto: una línea por carpeta o sistema. -->
-- `project.godot`: configuración (escena principal `scenes/main.tscn`).
+- `project.godot`: configuración (escena principal `scenes/menu.tscn`; la partida es `scenes/main.tscn`; autoload `Settings`).
 - `scripts/balance.gd`: todos los números de balance. Para ajustar balance, tocá solo este archivo.
 - `scripts/main.gd`: raíz de la partida (spawn de la horda, reloj, quién te caza y fin de partida).
 - `scripts/creep.gd`: el jugador (absorber, mutar, evolucionar, ataques automáticos, embestida invulnerable).
@@ -31,6 +31,8 @@ Survivor estilo Vampire Survivors al revés, en Godot 4 (GDScript), pixel art 2D
 - `scripts/mutations.gd`: lista de mutaciones y evoluciones del creep, y sorteo de 3 opciones (evolución garantizada si está disponible; Festín de relleno).
 - Modos de prueba: `-- --sim` (creep invulnerable) y `-- --bot` (bot juega). Federico prueba él mismo: no correr el bot en cada cambio.
 - `scripts/hud.gd`, `arena.gd`: interfaz y fondo.
+- `scripts/menu.gd` (`scenes/menu.tscn`), `pause.gd`, `options_menu.gd`, `ui.gd`: menú principal, pausa y botones de la pantalla final, Opciones y piezas de UI compartidas.
+- `scripts/settings.gd` (autoload `Settings`): opciones en `user://options.cfg`, acción "pause" y contador de FPS. `records.gd`: mejor resultado en `user://records.cfg`.
 - Los `*.gd.uid` los genera Godot: no los leas ni los edites a mano.
 
 ## Comandos
