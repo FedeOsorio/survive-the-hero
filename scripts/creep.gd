@@ -241,7 +241,7 @@ func _closest(list: Array, max_dist: float):
 	return best
 
 
-## Mordida y escupitajo automáticos. Prioridad: héroe, Paladín y civiles (estos solo con la mordida).
+## Mordida y escupitajo automáticos. Prioridad: héroe, Paladín y civiles (con la mordida y, sin héroe a tiro, el escupitajo).
 func _auto_attack() -> void:
 	var hero = world.hero
 	if _bite_cd <= 0.0:
@@ -276,7 +276,9 @@ func _auto_attack() -> void:
 		if hero != null and position.distance_to(hero.position) <= B.SPIT_RANGE:
 			target = hero
 		else:
-			target = _closest(world.infamy.paladins, B.SPIT_RANGE) # a los civiles nunca: mordida o embestida
+			target = _closest(world.infamy.paladins, B.SPIT_RANGE)
+			if target == null:
+				target = _closest(world.civilians, B.SPIT_RANGE) # sin héroe a tiro, al civil más cercano
 		if target != null:
 			_spit_cd = spit_cooldown()
 			world.bushes.reveal()
