@@ -17,6 +17,7 @@ const Chest := preload("res://scripts/chest.gd")
 const Events := preload("res://scripts/events.gd")
 const Infamy := preload("res://scripts/infamy.gd")
 const Arena := preload("res://scripts/arena.gd")
+const Bastion := preload("res://scripts/bastion.gd")
 const Hud := preload("res://scripts/hud.gd")
 const Pause := preload("res://scripts/pause.gd")
 
@@ -29,6 +30,9 @@ var won := false
 var end_reason := ""
 var detected: get = _any_hunting # algún héroe te está cazando (cada uno te caza si te ve)
 var _seen_banner_t := -999.0
+var bastion = null # bastion.gd: el Último Bastión, si ya bajó
+var bastion_fight := false # 1 contra 1: no aparece nada más y el reloj se oculta
+var _bastion_start := 0.0
 var escaping := false # amanecer: los héroes vivos escapan y todo lo demás queda quieto
 var result := "" # derrota, escape, victoria o total
 var kills := 0
@@ -127,6 +131,12 @@ func _process(delta: float) -> void:
 		_next_row = (floorf(elapsed / 60.0) + 1.0) * 60.0
 		stats_rows.append(_stats_row(str(int(elapsed / 60.0))))
 
+	_rebuild_grid()
+	_shake_t = maxf(_shake_t - delta, 0.0)
+	camera.offset = Vector2(rng.randf_range(-1, 1), rng.randf_range(-1, 1)) * B.SHAKE_PX if _shake_t > 0.0 else Vector2.ZERO
+	if bastion_fight:
+		return
+
 	_update_alarm(delta)
 	_elite_t += delta
 	if _elite_t >= B.ELITE_EVERY:
@@ -145,11 +155,6 @@ func _process(delta: float) -> void:
 		_civilian_t = B.CIVILIAN_RESPAWN
 		spawn_civilian_group()
 
-	_rebuild_grid()
-
-	_shake_t = maxf(_shake_t - delta, 0.0)
-	camera.offset = Vector2(rng.randf_range(-1, 1), rng.randf_range(-1, 1)) * B.SHAKE_PX if _shake_t > 0.0 else Vector2.ZERO
-
 	if sim_mode and elapsed >= _next_report:
 		_next_report += 60.0
 		print("[sim] min %d | heroes %s | creep %s biomasa %d | %s | horda %d | muertes %d" % [
@@ -157,6 +162,8 @@ func _process(delta: float) -> void:
 
 
 func _nearest_hero():
+	if bastion != null:
+		return bastion
 	return heroes.nearest(player.position) if heroes != null and player != null else null
 
 
@@ -391,15 +398,58 @@ func lose_aggro() -> void:
 
 ## "result": derrota (te matan), escape (amanece con héroes vivos), victoria (mataste
 ## a los tres y te vence el Último Bastión, desde la tanda 07) o total.
+## Mataste a los tres antes de amanecer: todo desaparece en destellos, se cierra una
+## pared de luz alrededor tuyo y baja el Último Bastión (bastion.gd).
+func start_bastion() -> void:
+	bastion_fight = true
+	_bastion_start = elapsed
+	alarm_t = 0.0
+	hud.banner("El cielo envía a su Último Bastión")
+	var vanished: Array = []
+	for list in [minions, civilians, corpses, gems, infamy.paladins]:
+		for n in list:
+			vanished.append(n.position)
+			n.queue_free()
+		list.clear()
+	raised_count = 0
+	for s in spits.duplicate():
+		if not s.from_player:
+			remove_spit(s)
+	if chest != null:
+		vanished.append(chest.position)
+	events.remove_chest()
+	var center: Vector2 = player.position
+	var dir: Vector2 = B.ARENA_SIZE * 0.5 - center
+	dir = dir.normalized() if dir.length() > 1.0 else Vector2.RIGHT
+	bastion = Bastion.new()
+	bastion.world = self
+	bastion.position = center + dir * B.BASTION_SPAWN_DIST
+	_entities.add_child(bastion)
+	bastion.setup(player.max_hp, center, vanished)
+	shake()
+
+
+func on_bastion_killed() -> void:
+	var t := int(elapsed - _bastion_start)
+	end_game("total", "Venciste al Último Bastión en %d:%02d." % [t / 60, t % 60])
+
+
 func end_game(how: String, reason: String) -> void:
 	if not running:
 		return
+	if bastion_fight and how == "derrota":
+		how = "victoria"
+		reason = "Mataste a los tres, pero el Último Bastión te venció (le quedó %d%% de vida)." % ceili(100.0 * bastion.hp / bastion.max_hp)
 	running = false
 	result = how
 	won = how != "derrota"
 	end_reason = reason
 	var t := int(elapsed)
 	stats_rows.append(_stats_row("%d:%02d" % [t / 60, t % 60]))
+	if bastion_fight:
+		var bt := int(elapsed - _bastion_start)
+		var outcome: String = "vencido en %d:%02d" % [bt / 60, bt % 60] if bastion.hp <= 0.0 else "le quedó %d%%" % ceili(100.0 * bastion.hp / bastion.max_hp)
+		stats_rows.append(["Bastión", "%d / %s" % [player.level, player.stage_name()], outcome, "—"])
 	print(stats_text())
 	if sim_mode:
 		print("[sim] fin (%02d:%02d): %s | héroes muertos %d/%d | vivos %s | mutaciones %s" % [

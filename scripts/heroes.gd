@@ -66,6 +66,13 @@ func arrival_level(i: int) -> int:
 	return maxi(_best_level, roundi(B.curve_at(B.HERO_CURVE, minute)) + cfg.level_bonus + bonus)
 
 
+## Héroes vivos más el Último Bastión: a lo que le pegan tus ataques.
+func targets() -> Array:
+	if world.bastion != null:
+		return list + [world.bastion]
+	return list
+
+
 func nearest(pos: Vector2):
 	var best = null
 	var best_d := INF
@@ -104,7 +111,7 @@ func _process(delta: float) -> void:
 		if t >= at:
 			_portal_open = false
 			_spawn(portal_pos)
-	if not _dawn and t >= B.MATCH_MINUTES * 60.0:
+	if not _dawn and t >= B.MATCH_MINUTES * 60.0 and not world.bastion_fight:
 		_dawn = true
 		if not list.is_empty():
 			world.hud.banner("Amanece: el cielo se lleva a los héroes")
@@ -201,9 +208,7 @@ func on_hero_killed(h) -> void:
 		var at: float = world.elapsed + B.HERO_NEXT_AFTER_KILL
 		_early_at = minf(_early_at, at) if _early_at >= 0.0 else at
 	if killed >= total():
-		var t := int(world.elapsed)
-		# hasta la tanda 07 no hay Último Bastión: matar a los tres es la victoria total
-		world.end_game("total", "Derrotaste a los tres héroes en %02d:%02d. Pronto: el Último Bastión" % [t / 60, t % 60])
+		world.start_bastion() # el cielo manda a su Último Bastión
 	else:
 		world.hud.banner("¡Cayó %s %s!" % [h.article, h.title])
 

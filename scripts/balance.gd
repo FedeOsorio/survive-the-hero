@@ -239,6 +239,28 @@ const HERO_ATTACKS := {
 	"cruz_rayos": {"name": "Cruz de rayos", "shape": "line", "center": "target", "length": 900.0, "width": 40.0, "warn": 1.2, "player_damage": 0.3, "cross": true},
 	"anillo_fuego": {"name": "Anillo de fuego", "shape": "donut", "center": "hero", "radius": 350.0, "width": 40.0, "warn": 1.0, "grow": 0.6, "player_damage": 0.4},
 }
+# Último Bastión (bastion.gd): si matás a los tres antes de amanecer, 1 contra 1.
+const BASTION_HP_MULT := 25.0 # × tu vida máxima al empezar
+const BASTION_SPEED := 140.0
+const BASTION_RADIUS := 30.0
+const BASTION_CHASE_DIST := 150.0 # te persigue hasta esta distancia (para que llegue el Tajo giratorio)
+const BASTION_WALL_RADIUS := 650.0 # pared de luz alrededor tuyo
+const BASTION_SPAWN_DIST := 400.0
+const BASTION_LANDING := 3.0 # invulnerable mientras aterriza
+const BASTION_INTRO_GLOW := 2.0 # la pantalla se aclara en dorado
+# Fases por vida restante: ataques (HERO_ATTACKS, en orden) y cada cuánto.
+const BASTION_PHASES := [
+	{"above": 0.66, "attacks": ["tajo_giratorio", "lluvia_flechas", "embestida"], "every": 3.5},
+	{"above": 0.33, "attacks": ["tajo_giratorio", "lluvia_flechas", "embestida", "cruz_rayos", "terremoto"], "every": 3.0},
+	{"above": 0.0, "attacks": ["tajo_giratorio", "lluvia_flechas", "embestida", "cruz_rayos", "terremoto", "meteoros", "anillo_fuego"], "every": 2.4},
+]
+const BASTION_LAST_PHASE_SPEED := 1.25
+const BASTION_KNEEL_TIME := 2.0 # al cambiar de fase: no ataca y recibe el doble
+const BASTION_KNEEL_DAMAGE_MULT := 2.0
+const BASTION_MEAT := 2 # trozos de carne que suelta al arrodillarse
+const BASTION_MEAT_HEAL := 0.2 # × tu vida máxima cada uno
+const BASTION_MEAT_SCATTER := 90.0
+const BASTION_MEAT_RADIUS := 12.0
 const HERO_ATTACK_THIRD_LEVEL := 8 # el ataque 3 aparece desde este nivel
 const HERO_ATTACK_TARGET_RANGE := 500.0 # sin cazarte, apunta al montón de horda más denso a esta distancia
 const HERO_ATTACK_CLUSTER_RADIUS := 120.0 # "montón": el creep con más vecinos a esta distancia

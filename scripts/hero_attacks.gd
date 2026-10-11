@@ -1,5 +1,6 @@
 extends Node2D
-## Ataques de jefe del héroe (hijo del nodo del héroe). Cada "attack_every" segundos
+## Ataques de jefe del héroe o del Último Bastión (hijo de su nodo; el dueño decide
+## cuándo puede atacar con can_boss_attack()). Cada "attack_every" segundos
 ## elige un blanco (vos si te caza; si no, el montón de horda más denso), marca una zona
 ## roja fija en el piso que se llena durante el aviso y después golpea: los creeps menores
 ## mueren, brutos y élites pierden HERO_ATTACK_BIG_DAMAGE y a vos te saca "player_damage"
@@ -56,11 +57,14 @@ func _process(delta: float) -> void:
 
 
 func _can_attack() -> bool:
-	return hero.shield_t <= 0.0 and hp_ok() and not hero.status.stunned()
+	return hero.can_boss_attack()
 
 
-func hp_ok() -> bool:
-	return hero.hp / hero.max_hp >= B.HERO_RETREAT_HP
+## Corta lo que estaba cargando (el Bastión al arrodillarse).
+func cancel() -> void:
+	_zones.clear()
+	_dash = {}
+	_t = every
 
 
 func _available() -> Array:

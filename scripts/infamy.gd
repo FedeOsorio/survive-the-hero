@@ -25,7 +25,7 @@ func arriving() -> bool:
 
 
 func _process(delta: float) -> void:
-	if not world.running:
+	if not world.running or world.bastion_fight:
 		return
 	queue_redraw()
 	_heal_hero(delta)
