@@ -154,7 +154,7 @@ func _process(delta: float) -> void:
 		spawn_minion("bruto", true)
 		hud.banner("Apareció un élite dorado: robale el corazón al héroe")
 
-	_spawn_accum += B.spawns_per_second(minute) * delta
+	_spawn_accum += B.spawns_per_second(minute, player.stage) * delta
 	while _spawn_accum >= 1.0:
 		_spawn_accum -= 1.0
 		if minions.size() < minion_cap():
@@ -299,7 +299,7 @@ func on_minion_killed(m) -> void:
 
 ## Horda viva máxima: menor si no hay héroes vivos (nadie la mata).
 func minion_cap() -> int:
-	return B.MAX_MINIONS if heroes.list.size() > 0 else B.MAX_MINIONS_NO_HERO
+	return B.MAX_MINIONS_BY_STAGE[player.stage] if heroes.list.size() > 0 else B.MAX_MINIONS_NO_HERO
 
 
 ## Agrega un cadáver; si hay más de MAX_CORPSES se va el más viejo que no sea corazón.

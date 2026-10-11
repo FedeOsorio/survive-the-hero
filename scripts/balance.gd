@@ -151,18 +151,14 @@ const HERO_GEM_PULL_SPEED := 350.0
 const HERO_HEART_PICKUP := 35.0 # los corazones de élite los tiene que pisar (más el radio del corazón)
 const HERO_HEART_PICKUP_PER_LEVEL := 1.0
 const GEM_SCATTER := 30.0 # las gemas saltan un poco al caer, lejos del cadáver
-# Por nivel sobre el 1, lineal: daño de flecha +12%, espera entre disparos −1,5% (mínimo
+# Por nivel sobre el 1, lineal: daño de flecha +6%, espera entre disparos −1,5% (mínimo
 # HERO_MIN_COOLDOWN), y después se divide por el "fire_rate" del héroe.
-const HERO_DAMAGE_PER_LEVEL := 0.12 # 09-f: era 0,06
+const HERO_DAMAGE_PER_LEVEL := 0.06
 const HERO_COOLDOWN_PER_LEVEL := 0.015
 const HERO_MIN_COOLDOWN := 0.30
-const HERO_LEVELS_PER_EXTRA_ARROW := 3 # una flecha más en nivel 4, 7, 10...
-const HERO_MAX_EXTRA_ARROWS := 6 # tope de las que da el nivel
-const HERO_ARROW_SPREAD := 10.0 # grados entre flechas del abanico
-# Cada flecha atraviesa a este número de enemigos extra (Flechas perforantes suma más),
-# más uno cada HERO_PIERCE_PER_LEVELS niveles.
+const HERO_LEVELS_PER_EXTRA_ARROW := 6
+# Cada flecha atraviesa a este número de enemigos extra (Flechas perforantes suma más).
 const HERO_ARROW_PIERCE := 1
-const HERO_PIERCE_PER_LEVELS := 5
 # Dibujo de la flecha: crece por nivel hasta un tope y desde un nivel deja estela.
 const HERO_ARROW_GROW_PER_LEVEL := 0.04
 const HERO_ARROW_GROW_MAX := 1.6
@@ -378,7 +374,7 @@ const MINION_TYPES := {
 		"range": 260.0, "shot_cooldown": 2.2, "shot_damage": 4.0},
 	"bruto": {"hp": 60.0, "speed": 60.0, "dps": 14.0, "radius": 16.0, "xp": 5.0, "biomass": 5.0, "color": Color(0.6, 0.3, 0.3)},
 }
-const MAX_MINIONS := 198 # 09-a: +10%
+const MAX_MINIONS_BY_STAGE := [198, 220, 250, 280] # 09-f: según tu etapa
 const MAX_MINIONS_NO_HERO := 60 # sin héroes vivos no aparecen más (los que están te siguen)
 const MAX_GEMS := 150 # al pasarse, desaparece la más vieja
 const MAX_CORPSES := 120 # al pasarse, desaparece el más viejo (los corazones no)
@@ -396,21 +392,26 @@ static func horde_tier(minute: float) -> float:
 	return floorf(minute / HORDE_TIER_MINUTES)
 
 
-static func minion_hp_mult(minute: float) -> float:
-	return 1.0 + horde_tier(minute) * 0.2
+# 09-f: la horda que nace también escala con tu etapa (Slime, Esqueleto, Cultista, Demonio).
+const HORDE_STAGE_MULT := [1.0, 1.5, 2.2, 3.2] # vida y daño
+const HORDE_STAGE_SPAWN := 0.15 # más apariciones por etapa
+
+
+static func minion_hp_mult(minute: float, stage := 0) -> float:
+	return (1.0 + horde_tier(minute) * 0.2) * HORDE_STAGE_MULT[stage]
 
 
 # Como en Vampire Survivors, tus compañeros se vuelven más fuertes con cada escalón.
-static func minion_dps_mult(minute: float) -> float:
-	return 1.0 + horde_tier(minute) * 0.15
+static func minion_dps_mult(minute: float, stage := 0) -> float:
+	return (1.0 + horde_tier(minute) * 0.15) * HORDE_STAGE_MULT[stage]
 
 
 static func minion_speed_mult(minute: float) -> float:
 	return minf(1.0 + horde_tier(minute) * 0.04, 1.4)
 
 
-static func spawns_per_second(minute: float) -> float:
-	return 2.2 + minute * 0.99 # 09-a: +10%
+static func spawns_per_second(minute: float, stage := 0) -> float:
+	return (2.2 + minute * 0.99) * (1.0 + HORDE_STAGE_SPAWN * stage)
 
 
 static func pick_minion_type(minute: float, rng: RandomNumberGenerator) -> String:
