@@ -1,10 +1,10 @@
 extends CanvasLayer
 ## Interfaz: vida, biomasa, nivel, reloj con la próxima llegada, amenaza,
-## vida y nivel de cada héroe vivo con su flecha, elección de mutaciones y pantalla
+## vida y nivel de cada héroe vivo con su flecha (la elección de mutación es mutation_picker.gd) y pantalla
 ## final (resultado, tabla por minuto y botón Copiar tabla). Corre aunque el juego esté en pausa.
 
 const B := preload("res://scripts/balance.gd")
-const Mutations := preload("res://scripts/mutations.gd")
+const MutationPicker := preload("res://scripts/mutation_picker.gd")
 
 var world
 var _view: Control
@@ -30,6 +30,9 @@ func _ready() -> void:
 	_copy.visible = false
 	_copy.pressed.connect(_on_copy)
 	add_child(_copy)
+	var picker := MutationPicker.new() # elección de mutación (S3)
+	picker.world = world
+	add_child(picker)
 
 
 func _on_copy() -> void:
@@ -47,12 +50,6 @@ func _process(delta: float) -> void:
 		get_tree().paused = false
 		get_tree().reload_current_scene()
 		return
-	var p = world.player
-	if not p.pending_choices.is_empty():
-		for i in 3:
-			if Input.is_action_just_pressed("pick_%d" % (i + 1)):
-				p.choose_mutation(i)
-				break
 	_banner_t = maxf(_banner_t - delta, 0.0)
 	_copied_t = maxf(_copied_t - delta, 0.0)
 	_copy.visible = not world.running
@@ -130,8 +127,6 @@ func _draw_hud() -> void:
 	if _banner_t > 0.0:
 		_text_centered(font, Vector2(size.x * 0.5, size.y * 0.3), _banner_text, 26, Color(1, 1, 1, minf(_banner_t, 1.0)))
 
-	if not p.pending_choices.is_empty():
-		_draw_choices(font, p)
 
 	if not world.running:
 		_draw_end(font, p)
@@ -161,26 +156,6 @@ func _draw_end(font: Font, p) -> void:
 		_text(font, Vector2(size.x * 0.5 - 300, y), lines[i], 13, Color(0.9, 0.9, 0.95) if i > 2 else Color(1, 0.85, 0.5))
 		y += 16.0
 	_text_centered(font, Vector2(size.x * 0.5, size.y - 18), "R para jugar de nuevo", 16, Color(0.8, 0.8, 0.8))
-
-
-func _draw_choices(font: Font, p) -> void:
-	var size := _view.size
-	_view.draw_rect(Rect2(Vector2.ZERO, size), Color(0, 0, 0, 0.55))
-	_text_centered(font, Vector2(size.x * 0.5, size.y * 0.25), "¡Mutación! Elegí una (1, 2, 3)", 30, Color(0.6, 0.9, 1.0))
-	var w := 300.0
-	var gap := 24.0
-	var n: int = p.pending_choices.size()
-	var x0 := size.x * 0.5 - (w * n + gap * (n - 1)) * 0.5
-	for i in n:
-		var id: String = p.pending_choices[i]
-		var m: Dictionary = Mutations.LIST[id]
-		var evo := Mutations.is_evolution(id)
-		var r := Rect2(x0 + i * (w + gap), size.y * 0.33, w, 190)
-		_view.draw_rect(r, Color(0.2, 0.15, 0.05, 0.95) if evo else Color(0.12, 0.1, 0.16, 0.95))
-		_view.draw_rect(r, Color(1.0, 0.8, 0.25) if evo else Color(0.6, 0.9, 1.0, 0.8), false, 3.0 if evo else 2.0)
-		_text(font, r.position + Vector2(14, 30), "%d. %s" % [i + 1, m.name], 20, Color(1.0, 0.85, 0.35) if evo else Color.WHITE)
-		_text(font, r.position + Vector2(14, 56), "EVOLUCIÓN" if evo else ("Rango %d" % (p.rank(id) + 1) if m.max == 0 else "Rango %d/%d" % [p.rank(id) + 1, m.max]), 13, Color(1.0, 0.8, 0.3) if evo else Color(0.7, 0.7, 0.8))
-		_view.draw_multiline_string(font, r.position + Vector2(14, 86), Mutations.desc(id), HORIZONTAL_ALIGNMENT_LEFT, w - 28, 16, -1, Color(0.9, 0.9, 0.95))
 
 
 ## Ala: ícono de la barra de Infamia.

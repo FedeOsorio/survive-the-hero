@@ -534,3 +534,5 @@ const FX_GROUP_EVERY := 0.3 # golpes chicos (horda al héroe, daño a vos) sumad
 const FX_MUTATE_RING := Vector2(0.3, 80.0) # duración, radio
 const FX_EVOLVE_RING := Vector2(0.6, 200.0)
 const FX_LEVEL_COLUMN := 0.4 # columna de luz del héroe al subir de nivel
+const FX_PICK_LOCK := 0.3 # s en que la elección de mutación no acepta nada al abrir
+const FX_PICK_ANIM := 0.15 # s de entrada de las cartas
