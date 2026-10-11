@@ -1,8 +1,8 @@
 extends Node2D
 ## Un héroe controlado por la IA (Arquero, Caballero o Maga: ver heroes.gd).
 ## Farmea la horda, kitea, junta experiencia, sube de nivel, esquiva proyectiles
-## y se retira con poca vida. No se regenera: solo se cura al subir de nivel.
-## Al jugador lo trata como un creep más hasta que lo reconoce por lo que hace.
+## y con poca vida se enfurece (furia). Casi no se cura.
+## Al jugador lo trata como un creep más mientras no sospeche de él (suspicion, "?").
 ## En cada nivel sube el poder de su tabla fija (ver hero_powers.gd y B.HEROES).
 
 const B := preload("res://scripts/balance.gd")
@@ -61,7 +61,10 @@ var sight := Sight.FARM # te caza si te ve; si te pierde, te busca un rato
 var _last_seen := Vector2.ZERO
 var _search_t := 0.0
 var _hunt_t := 0.0 # cuánto le queda cazándote si no te volvés a delatar
-var _alert_fx := 0.0 # "!" al reconocerte
+var suspicion := 0.0 # 0 a 100: a 100 te reconoce
+var _gaze_t := 0.0
+var fury := false # bajo HERO_FURY_HP: ataca más seguido
+var _fury_run_t := 0.0
 
 
 func _ready() -> void:
@@ -106,6 +109,9 @@ func _process(delta: float) -> void:
 	if not world.running:
 		return
 	shield_t = maxf(shield_t - delta, 0.0)
+	_fury_run_t = maxf(_fury_run_t - delta, 0.0)
+	if not fury and hp / max_hp < B.HERO_FURY_HP:
+		_enrage()
 	_pile_t -= delta
 	_update_sight(delta)
 	if status.stunned():
@@ -260,18 +266,30 @@ func _target_valid() -> bool:
 
 # --- Decisiones --------------------------------------------------------------
 
-## Te caza RECOGNIZE_TIME desde la última delación (ver recognize). Al vencer, a más de
-## HUNT_LOSE_DIST o camuflado, te busca HUNT_SEARCH_TIME en tu última posición y vuelve a farmear.
+## Sospecha que sube por tamaño y baja lejos; la mirada (cada SUSPICION_GAZE_EVERY) te puede
+## reconocer antes de 100. Te caza RECOGNIZE_TIME; al vencer, a más de HUNT_LOSE_DIST o
+## camuflado, te busca HUNT_SEARCH_TIME en tu última posición y vuelve a farmear.
 func _update_sight(delta: float) -> void:
 	var p = world.player
-	_alert_fx = maxf(_alert_fx - delta, 0.0)
-	if p.stage == B.CREEP_STAGES.size() - 1:
-		recognize() # un Demonio no pasa desapercibido
+	if _sees(p):
+		var last := B.CREEP_STAGES.size() - 1
+		if p.stage == last:
+			_add_suspicion(B.SUSPICION_DEMON_PER_SECOND * delta)
+		elif p.stage == last - 1:
+			_add_suspicion(B.SUSPICION_CULTIST_PER_SECOND * delta)
+		_gaze_t -= delta
+		if _gaze_t <= 0.0:
+			_gaze_t = B.SUSPICION_GAZE_EVERY
+			if sight != Sight.HUNT and _rng.randf() < suspicion / B.SUSPICION_MAX * B.SUSPICION_GAZE_CHANCE:
+				recognize()
+	else:
+		suspicion = maxf(suspicion - B.SUSPICION_DECAY * delta, 0.0)
 	if sight == Sight.HUNT:
 		_hunt_t -= delta
 		if p.stealth_t > 0.0 or position.distance_to(p.position) > B.HUNT_LOSE_DIST or _hunt_t <= 0.0:
 			sight = Sight.SEARCH
 			_search_t = B.HUNT_SEARCH_TIME
+			suspicion = B.SUSPICION_AFTER_HUNT
 		else:
 			_last_seen = p.position
 	elif sight == Sight.SEARCH:
@@ -281,23 +299,54 @@ func _update_sight(delta: float) -> void:
 			world.hud.banner("Lo perdiste: %s dejó de buscarte" % _the_name())
 
 
-## Te delataste (lo atacaste, esquivaste un ataque, mataste un civil o sos Demonio):
-## si estás a menos de RECOGNIZE_RANGE y sin camuflaje, te caza RECOGNIZE_TIME.
+func _sees(p) -> bool:
+	return p.stealth_t <= 0.0 and position.distance_to(p.position) < B.RECOGNIZE_RANGE
+
+
+## Hiciste algo que un creep común no hace (comer, robar una gema, esquivar, matar un
+## civil, evolucionar): suma "amount" ±SUSPICION_JITTER si te ve. Cazándote, reinicia los 12 s.
+func suspect(amount: float) -> void:
+	if not _sees(world.player):
+		return
+	if sight == Sight.HUNT:
+		_hunt_t = B.RECOGNIZE_TIME
+		return
+	_add_suspicion(amount * _rng.randf_range(1.0 - B.SUSPICION_JITTER, 1.0 + B.SUSPICION_JITTER))
+
+
+func _add_suspicion(amount: float) -> void:
+	if sight == Sight.HUNT:
+		_hunt_t = B.RECOGNIZE_TIME
+		return
+	suspicion = minf(suspicion + amount, B.SUSPICION_MAX)
+	if suspicion >= B.SUSPICION_MAX:
+		recognize()
+
+
+## Te reconoció: te caza RECOGNIZE_TIME.
 func recognize() -> void:
 	var p = world.player
-	if p.stealth_t > 0.0 or position.distance_to(p.position) >= B.RECOGNIZE_RANGE:
-		return
 	if sight != Sight.HUNT:
 		world.on_hero_saw_you(self)
-		_alert_fx = B.RECOGNIZE_ALERT_FX
 	sight = Sight.HUNT
+	suspicion = B.SUSPICION_MAX
 	_hunt_t = B.RECOGNIZE_TIME
 	_last_seen = p.position
 
 
-## Ataques de jefe: no con escudo, retirándose con poca vida ni aturdido.
+## Ataques de jefe: no con escudo, en la carrera de la furia ni aturdido.
 func can_boss_attack() -> bool:
-	return shield_t <= 0.0 and hp / max_hp >= B.HERO_RETREAT_HP and not status.stunned()
+	return shield_t <= 0.0 and _fury_run_t <= 0.0 and not status.stunned()
+
+
+## Bajo HERO_FURY_HP: corre unos segundos alejándose y después ataca más seguido,
+## con el ataque 3 aunque no tenga nivel. No hay más retirada.
+func _enrage() -> void:
+	fury = true
+	_fury_run_t = B.HERO_FURY_RUN_TIME
+	attacks.every *= B.HERO_FURY_ATTACK_MULT
+	attacks.unlock_all = true
+	world.hud.banner("¡%s se enfurece!" % full_name())
 
 
 func hunting_you() -> bool:
@@ -311,7 +360,7 @@ func _the_name() -> String:
 func _think() -> void:
 	var hunting: bool = hunting_you() and world.player.stealth_t <= 0.0
 	target = _pick_hunt_target() if hunting else _pick_target()
-	var low_hp := hp / max_hp < B.HERO_RETREAT_HP
+	var low_hp := _fury_run_t > 0.0 # la carrera corta al enfurecerse
 	var mistake := _rng.randf() < B.HERO_MISTAKE_CHANCE
 
 	# 1. alejarse de la horda (kitear). Con poca vida, mucho más fuerte.
@@ -329,6 +378,9 @@ func _think() -> void:
 		steer *= 0.2 # se distrae y se mete donde no debe
 	elif low_hp:
 		steer *= 2.5
+		var away_p: Vector2 = position - world.player.position
+		if away_p.length() > 0.01:
+			steer += away_p.normalized() * 3.0 # furia: primero toma distancia de vos
 
 	# 2. juntar experiencia: va al montón de gemas que más vale. Cazándote o yendo
 	#    a un grito mira más cerca y tira menos, pero igual se desvía por un montón.
@@ -561,7 +613,6 @@ func take_damage(amount: float, from_player: bool, melee := false, tick := false
 	if hp <= 0.0 or shield_t > 0.0:
 		return
 	if from_player:
-		recognize() # ningún creep común lo ataca así
 		status.log_damage(amount, melee)
 		status.show_damage(amount, tick)
 	damage_taken["jugador" if from_player else "horda"] += amount
@@ -598,6 +649,8 @@ func _draw() -> void:
 		draw_line(Vector2.ZERO, _aim_locked * B.HERO_RANGE, Color(1, 0.25, 0.2, 0.55), 2.0)
 	if _roll_t > 0.0:
 		body = Color(body, 0.45)
+	if fury:
+		body = body.lerp(Color(1.0, 0.15, 0.1), 0.35 + 0.25 * sin(Time.get_ticks_msec() * 0.012))
 	if shield_t > 0.0:
 		var glow := 0.35 + 0.25 * sin(shield_t * 12.0)
 		draw_circle(Vector2.ZERO, radius + 9.0, Color(1.0, 0.85, 0.3, glow))
@@ -607,9 +660,10 @@ func _draw() -> void:
 	draw_line(Vector2.ZERO, _aim * (radius + 10.0), Color(1, 0.95, 0.7), 3.0)
 	if _level_fx > 0.0:
 		draw_arc(Vector2.ZERO, radius + 20.0 * (1.0 - _level_fx), 0.0, TAU, 24, Color(1, 1, 0.5, _level_fx), 2.0)
-	if _alert_fx > 0.0:
-		# "!" al reconocerte
-		var top := Vector2(0, -radius - 34.0)
-		var col := Color(1.0, 0.25, 0.2, minf(_alert_fx * 2.0, 1.0))
-		draw_rect(Rect2(top + Vector2(-3, 0), Vector2(6, 16)), col)
-		draw_rect(Rect2(top + Vector2(-3, 20), Vector2(6, 6)), col)
+	# "!" rojo si te caza; si no, "?" de gris (sin sospecha) a amarillo (a punto de reconocerte)
+	var top := Vector2(0, -radius - 12.0)
+	if hunting_you():
+		draw_string(ThemeDB.fallback_font, top + Vector2(-6, 0), "!", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color(1.0, 0.25, 0.2))
+	else:
+		var k := suspicion / B.SUSPICION_MAX
+		draw_string(ThemeDB.fallback_font, top + Vector2(-7, 0), "?", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(0.6, 0.6, 0.6, 0.7).lerp(Color(1.0, 0.85, 0.2), k))

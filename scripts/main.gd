@@ -236,8 +236,7 @@ func _update_alarm(delta: float) -> void:
 func on_civilian_killed(c) -> void:
 	civilians.erase(c)
 	civilians_eaten += 1
-	for h in heroes.list:
-		h.recognize() # la horda no toca civiles
+	suspect_all(B.SUSPICION_CIVILIAN) # la horda no toca civiles
 	infamy.add(B.INFAMY_PER_CIVILIAN)
 	raise_alarm(c.position)
 	var corpse = Corpse.new()
@@ -381,6 +380,12 @@ func sight_level() -> int:
 		if h.sight == h.Sight.SEARCH:
 			level = 1
 	return level
+
+
+## Hiciste algo que un creep común no hace: suma sospecha a cada héroe que te ve.
+func suspect_all(amount: float) -> void:
+	for h in heroes.list:
+		h.suspect(amount)
 
 
 ## Un héroe te reconoció y empieza a cazarte (banner como mucho cada HUNT_SEEN_BANNER_EVERY).

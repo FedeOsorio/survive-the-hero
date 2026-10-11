@@ -88,13 +88,27 @@ const STEALTH_COOLDOWN := 60.0
 const STEALTH_TIME := 4.0 # segundos en que el héroe no te puede apuntar
 
 # --- Te ve, te caza ----------------------------------------------------------
-# Te reconoce por lo que hacés (a menos de RECOGNIZE_RANGE y sin camuflaje): morderlo,
-# escupirle o embestirlo, esquivar un ataque de jefe, matar un civil o ser Demonio.
-# Te caza RECOGNIZE_TIME (cada delación lo reinicia). Al vencer, a más de HUNT_LOSE_DIST
-# o camuflado, va HUNT_SEARCH_TIME a tu última posición y vuelve a tratarte como horda.
+# Sospecha (0 a 100, una por héroe): sube por lo que ningún creep común hace, solo a menos
+# de RECOGNIZE_RANGE de ese héroe y sin camuflaje. Pegarle no suma (toda la horda le pega).
+# Cada suma varía ±SUSPICION_JITTER. A 100 (o por la mirada) te reconoce y te caza
+# RECOGNIZE_TIME; mientras te caza, cada cosa de la tabla reinicia ese tiempo. Al vencer,
+# a más de HUNT_LOSE_DIST o camuflado, va HUNT_SEARCH_TIME a tu última posición y la
+# sospecha queda en SUSPICION_AFTER_HUNT.
 const RECOGNIZE_RANGE := 500.0
 const RECOGNIZE_TIME := 12.0
-const RECOGNIZE_ALERT_FX := 1.5 # "!" sobre el héroe
+const SUSPICION_MAX := 100.0
+const SUSPICION_EAT := 6.0 # comer un cadáver
+const SUSPICION_GEM := 10.0 # pisarle una gema
+const SUSPICION_DODGE := 35.0 # esquivar un ataque de jefe
+const SUSPICION_CIVILIAN := 40.0
+const SUSPICION_EVOLVE := 50.0
+const SUSPICION_CULTIST_PER_SECOND := 2.0 # estar cerca siendo Cultista
+const SUSPICION_DEMON_PER_SECOND := 6.0
+const SUSPICION_DECAY := 8.0 # por segundo, lejos o camuflado
+const SUSPICION_AFTER_HUNT := 50.0
+const SUSPICION_JITTER := 0.3
+const SUSPICION_GAZE_EVERY := 2.0 # cada tanto, chance sospecha/100 × esto de reconocerte antes de 100
+const SUSPICION_GAZE_CHANCE := 0.25
 const HUNT_LOSE_DIST := 600.0
 const HUNT_SEARCH_TIME := 5.0
 const HUNT_SEARCH_PULL := 3.0
@@ -166,7 +180,11 @@ const HERO_DODGE_LOOKAHEAD := 260.0
 const HERO_REACTION_MIN := 0.15
 const HERO_REACTION_MAX := 0.3
 const HERO_AIM_ERROR_DEG := 6.0
-const HERO_RETREAT_HP := 0.3
+# Furia: al bajar de HERO_FURY_HP por primera vez corre HERO_FURY_RUN_TIME alejándose y
+# después ataca más seguido (espera × HERO_FURY_ATTACK_MULT) con el ataque 3 aunque no tenga nivel.
+const HERO_FURY_HP := 0.3
+const HERO_FURY_RUN_TIME := 3.0
+const HERO_FURY_ATTACK_MULT := 0.6
 const HERO_MISTAKE_CHANCE := 0.06
 const HERO_DETECTED_TARGET_BONUS := 150.0 # chico: si tiene creeps encima, se defiende primero
 # Cacería: con el jugador detectado, el héroe va por vos.
@@ -230,7 +248,7 @@ const HERO_ATTACKS := {
 	"lluvia_flechas": {"name": "Lluvia de flechas", "shape": "circle", "center": "target", "radius": 160.0, "warn": 1.2, "player_damage": 0.3},
 	"disparo_cargado": {"name": "Disparo cargado", "shape": "line", "center": "line", "length": 1400.0, "width": 40.0, "warn": 1.0, "player_damage": 0.3},
 	"abanico": {"name": "Abanico", "shape": "cone", "center": "line", "length": 450.0, "angle": 70.0, "warn": 0.8, "player_damage": 0.4},
-	"tajo_giratorio": {"name": "Tajo giratorio", "shape": "circle", "center": "hero", "radius": 200.0, "warn": 0.8, "player_damage": 0.3},
+	"tajo_giratorio": {"name": "Tajo giratorio", "shape": "circle", "center": "hero", "radius": 200.0, "warn": 1.0, "player_damage": 0.3},
 	"embestida": {"name": "Embestida", "shape": "line", "center": "line", "length": 500.0, "width": 60.0, "warn": 1.0, "player_damage": 0.3, "dash": true},
 	"terremoto": {"name": "Terremoto", "shape": "circle", "center": "line", "radius": 110.0, "warn": 0.8, "player_damage": 0.4,
 		"count": 3, "stagger": 0.6},

@@ -13,6 +13,7 @@ var hero
 var world
 var attacks: Array = [] # ids de B.HERO_ATTACKS, en orden
 var every := 6.0
+var unlock_all := false # furia: el ataque 3 aunque no tenga nivel
 var _t := 0.0
 var _turn := 0
 var _serial := 0
@@ -68,7 +69,7 @@ func cancel() -> void:
 
 
 func _available() -> Array:
-	if hero.level >= B.HERO_ATTACK_THIRD_LEVEL:
+	if unlock_all or hero.level >= B.HERO_ATTACK_THIRD_LEVEL:
 		return attacks
 	return attacks.slice(0, 2)
 
@@ -180,7 +181,7 @@ func _strike(z: Dictionary) -> void:
 	if hit:
 		_hit_you(z)
 	elif z.inside:
-		hero.recognize() # un creep común no esquiva
+		hero.suspect(B.SUSPICION_DODGE) # un creep común no esquiva
 	if z.cfg.get("dash", false):
 		var end: Vector2 = z.pos + z.dir * z.cfg.length
 		_dash = {"from": hero.position, "to": end.clamp(Vector2(hero.radius, hero.radius), B.ARENA_SIZE - Vector2(hero.radius, hero.radius)), "t": 0.0}
@@ -204,7 +205,7 @@ func _grow_donut(z: Dictionary, delta: float) -> void:
 		_hit_you(z)
 	if k >= 1.0:
 		if not z.hit.has(p) and z.inside:
-			hero.recognize()
+			hero.suspect(B.SUSPICION_DODGE)
 		_zones.erase(z)
 
 
