@@ -207,15 +207,19 @@ func spawn_minion(type_name: String, elite := false, at = null):
 
 ## Los civiles aparecen lejos del héroe, para que comer sea una alternativa a robarle.
 ## Un caserío de 3 a 5 civiles en un anillo alrededor del creep, lejos del héroe.
+## Si no hay lugar que cumpla en CIVILIAN_PLACE_TRIES intentos, no aparece.
 func spawn_civilian_group() -> void:
 	var center := Vector2.ZERO
+	var found := false
 	var inner := Rect2(Vector2(60, 60), B.ARENA_SIZE - Vector2(120, 120))
-	for i in 15:
+	for i in B.CIVILIAN_PLACE_TRIES:
 		var dist := rng.randf_range(B.CIVILIAN_RING_MIN, B.CIVILIAN_RING_MAX)
 		center = player.position + Vector2.from_angle(rng.randf() * TAU) * dist
 		if inner.has_point(center) and not heroes.any_within(center, B.CIVILIAN_MIN_HERO_DIST):
+			found = true
 			break
-	center = center.clamp(inner.position, inner.end)
+	if not found:
+		return
 	var n := mini(rng.randi_range(B.CIVILIAN_GROUP_MIN, B.CIVILIAN_GROUP_MAX), B.CIVILIANS_MAX - civilians.size())
 	for i in n:
 		var c = Civilian.new()

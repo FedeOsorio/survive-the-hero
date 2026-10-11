@@ -58,14 +58,15 @@ const LEAD_DAMAGE_PER_RANK := 0.125
 # Civiles: comida que huye de vos, lejos del héroe.
 const CIVILIANS_START := 20
 const CIVILIANS_MAX := 30
-const CIVILIAN_RESPAWN := 3.0 # cada tanto aparece un caserío
+const CIVILIAN_RESPAWN := 6.0 # cada tanto aparece un caserío (S6-c: era 3)
 # Aparecen en grupos, en un anillo alrededor del creep y lejos del héroe.
 const CIVILIAN_GROUP_MIN := 2
 const CIVILIAN_GROUP_MAX := 4
 const CIVILIAN_GROUP_SPREAD := 40.0
-const CIVILIAN_RING_MIN := 350.0 # del creep
-const CIVILIAN_RING_MAX := 800.0
-const CIVILIAN_MIN_HERO_DIST := 300.0
+const CIVILIAN_RING_MIN := 600.0 # del creep (S6-c: era 350)
+const CIVILIAN_RING_MAX := 1000.0 # S6-c: era 800
+const CIVILIAN_MIN_HERO_DIST := 600.0 # lejos de la pelea (S6-c: era 300)
+const CIVILIAN_PLACE_TRIES := 8 # sin lugar que cumpla, ese caserío no aparece
 # Esquivan a la horda (solo visual: la horda no los daña).
 const CIVILIAN_DODGE_RADIUS := 40.0
 const CIVILIAN_DODGE_SPEED := 0.6
