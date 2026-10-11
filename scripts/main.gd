@@ -424,6 +424,7 @@ func start_bastion() -> void:
 			n.queue_free()
 		list.clear()
 	raised_count = 0
+	infamy._arrival_t = 0.0 # sin columna de luz de Paladín a medio llegar
 	for s in spits.duplicate():
 		if not s.from_player:
 			remove_spit(s)

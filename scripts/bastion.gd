@@ -83,6 +83,10 @@ func suspect(_amount: float) -> void:
 	pass
 
 
+func ignores_stealth() -> bool:
+	return true # el camuflaje no sirve contra él
+
+
 func rolling() -> bool:
 	return false
 

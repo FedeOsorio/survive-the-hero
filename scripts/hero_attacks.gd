@@ -80,7 +80,7 @@ func _available() -> Array:
 ## HERO_ATTACK_CLUSTER_RADIUS, a menos de HERO_ATTACK_TARGET_RANGE. null si no hay.
 func _pick_target():
 	var p = world.player
-	if hero.hunting_you() and p.stealth_t <= 0.0:
+	if hero.hunting_you() and (p.stealth_t <= 0.0 or hero.ignores_stealth()):
 		return p.position
 	var best = null
 	var best_n := 0

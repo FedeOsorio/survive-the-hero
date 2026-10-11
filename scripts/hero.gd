@@ -349,6 +349,10 @@ func _enrage() -> void:
 	world.hud.banner("¡%s se enfurece!" % full_name())
 
 
+func ignores_stealth() -> bool:
+	return false
+
+
 func hunting_you() -> bool:
 	return sight == Sight.HUNT
 
