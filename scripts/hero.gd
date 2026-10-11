@@ -9,6 +9,7 @@ const B := preload("res://scripts/balance.gd")
 const HeroPowers := preload("res://scripts/hero_powers.gd")
 const HeroStatus := preload("res://scripts/hero_status.gd")
 const HeroAttacks := preload("res://scripts/hero_attacks.gd")
+const HeroTraits := preload("res://scripts/hero_traits.gd")
 
 var world
 var hp := B.HERO_HP
@@ -47,6 +48,7 @@ var _rng := RandomNumberGenerator.new()
 var powers # hero_powers.gd: orbes, rayo, aura, nova, etc.
 var status # hero_status.gd: sangrado, aturdimiento, lentitud
 var attacks # hero_attacks.gd: ataques de jefe con zona roja
+var traits # hero_traits.gd: trampas, escudo o parpadeo según el héroe
 var damage_taken := {"jugador": 0.0, "horda": 0.0} # para los reportes de --sim
 var title := "Arquero"
 var article := "el"
@@ -74,6 +76,10 @@ func _ready() -> void:
 	powers.hero = self
 	powers.world = world
 	add_child(powers)
+	traits = HeroTraits.new()
+	traits.hero = self
+	traits.world = world
+	add_child(traits)
 	attacks = HeroAttacks.new()
 	attacks.hero = self
 	attacks.world = world
@@ -95,6 +101,7 @@ func setup(cfg: Dictionary, start_level: int) -> void:
 	fire_rate = cfg.fire_rate
 	table = cfg.table
 	attacks.setup(cfg)
+	traits.kind = cfg.name
 	for id in cfg.powers:
 		powers.ranks[id] = 1
 	for i in start_level - 1:
@@ -127,6 +134,8 @@ func _process(delta: float) -> void:
 	if _roll_t > 0.0:
 		_roll_t -= delta
 		position += _roll_dir * B.HERO_ROLL_SPEED * delta
+		if _roll_t <= 0.0:
+			traits.on_roll_end()
 	elif not attacks.busy(): # cargando un ataque de jefe se queda quieto
 		_check_roll()
 		position += _move_dir * speed * status.speed_mult() * delta
@@ -203,7 +212,7 @@ func _check_roll() -> void:
 		if lateral.length() < radius + 14.0:
 			_roll_dir = lateral.normalized() if lateral.length() > 0.5 else s.direction.orthogonal()
 			_roll_t = B.HERO_ROLL_TIME
-			_roll_cd = B.HERO_ROLL_COOLDOWN
+			_roll_cd = traits.roll_cooldown()
 			_aim_windup = 0.0
 			return
 
@@ -260,7 +269,7 @@ func _target_valid() -> bool:
 	if target == null or not is_instance_valid(target):
 		return false
 	if target == world.player:
-		return world.player.stealth_t <= 0.0
+		return not world.player_hidden()
 	return world.minions.has(target)
 
 
@@ -286,7 +295,7 @@ func _update_sight(delta: float) -> void:
 		suspicion = maxf(suspicion - B.SUSPICION_DECAY * delta, 0.0)
 	if sight == Sight.HUNT:
 		_hunt_t -= delta
-		if p.stealth_t > 0.0 or position.distance_to(p.position) > B.HUNT_LOSE_DIST or _hunt_t <= 0.0:
+		if world.player_hidden() or position.distance_to(p.position) > B.HUNT_LOSE_DIST or _hunt_t <= 0.0:
 			sight = Sight.SEARCH
 			_search_t = B.HUNT_SEARCH_TIME
 			suspicion = B.SUSPICION_AFTER_HUNT
@@ -300,7 +309,7 @@ func _update_sight(delta: float) -> void:
 
 
 func _sees(p) -> bool:
-	return p.stealth_t <= 0.0 and position.distance_to(p.position) < B.RECOGNIZE_RANGE
+	return not world.player_hidden() and position.distance_to(p.position) < B.RECOGNIZE_RANGE
 
 
 ## Hiciste algo que un creep común no hace (comer, robar una gema, esquivar, matar un
@@ -349,6 +358,11 @@ func _enrage() -> void:
 	world.hud.banner("¡%s se enfurece!" % full_name())
 
 
+## Caballero: ¿el escudo cubre un golpe que viene desde "from"?
+func blocks_from(from: Vector2) -> bool:
+	return traits.blocks(from)
+
+
 func ignores_stealth() -> bool:
 	return false
 
@@ -362,7 +376,7 @@ func _the_name() -> String:
 
 
 func _think() -> void:
-	var hunting: bool = hunting_you() and world.player.stealth_t <= 0.0
+	var hunting: bool = hunting_you() and not world.player_hidden()
 	target = _pick_hunt_target() if hunting else _pick_target()
 	var low_hp := _fury_run_t > 0.0 # la carrera corta al enfurecerse
 	var mistake := _rng.randf() < B.HERO_MISTAKE_CHANCE
@@ -464,7 +478,7 @@ func _pick_target():
 	var best_score := -INF
 	var reach := B.HERO_RANGE * 1.3
 	var candidates: Array = world.minions.duplicate()
-	if world.player.stealth_t <= 0.0:
+	if not world.player_hidden():
 		candidates.append(world.player)
 	for c in candidates:
 		var d := position.distance_to(c.position)
@@ -617,6 +631,7 @@ func take_damage(amount: float, from_player: bool, melee := false, tick := false
 	if hp <= 0.0 or shield_t > 0.0:
 		return
 	if from_player:
+		amount = traits.filter_damage(amount, melee, tick)
 		status.log_damage(amount, melee)
 		status.show_damage(amount, tick)
 	damage_taken["jugador" if from_player else "horda"] += amount

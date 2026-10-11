@@ -19,6 +19,7 @@ Survivor estilo Vampire Survivors al revés, en Godot 4 (GDScript), pixel art 2D
 - `scripts/heroes.gd`: los tres héroes (Arquero, Caballero, Maga; tabla `HEROES` en balance), llegadas por portal, "el más cercano" (`world.hero`), amanecer a los 15:00 y el paso al Último Bastión.
 - `scripts/hero.gd`: IA de un héroe (farmear, kitear, juntar XP, subir de nivel, retirarse, rodada, aviso de disparo, te reconoce y te caza).
 - `scripts/bastion.gd`: Último Bastión (jefe final 1 contra 1: pared de luz, fases, carne, barra de vida en capa propia; reusa `hero_attacks.gd`).
+- `scripts/hero_traits.gd`: mecánica propia de cada héroe (trampas del Arquero, escudo del Caballero, parpadeo de la Maga).
 - `scripts/hero_attacks.gd`: ataques de jefe del héroe (zona roja, golpe a la horda y a vos, esquive que te delata; tabla `HERO_ATTACKS` en balance).
 - `scripts/hero_status.gd`: estados del héroe (sangrado, aturdido, lento) y registro de daño cuerpo a cuerpo / distancia.
 - `scripts/events.gd`, `chest.gd`: cofres en disputa y eventos de oleada (estampida, asedio, luna de sangre).

@@ -41,6 +41,7 @@ var _flash := 0.0
 var _wave_fx := 0.0
 var stealth_cd := 0.0
 var stealth_t := 0.0 # mientras dura, el héroe no te puede apuntar
+var root_t := 0.0 # trampa del Arquero: no te podés mover
 var _dash_victims: Array = []
 var _rng := RandomNumberGenerator.new()
 
@@ -62,6 +63,11 @@ func evolve_cost() -> float:
 func can_evolve() -> bool:
 	var cost := evolve_cost()
 	return cost > 0.0 and biomass >= cost
+
+
+## Trampa del Arquero: inmovilizado (sin caminar ni embestir) estos segundos.
+func root(time: float) -> void:
+	root_t = maxf(root_t, time)
 
 
 func rank(id: String) -> int:
@@ -151,13 +157,17 @@ func _process(delta: float) -> void:
 		position += _dash_dir * B.DASH_SPEED * delta
 		if not _dash_hit and world.hero != null and _in_reach(world.hero, 0.0):
 			_dash_hit = true
-			world.hero.take_damage(bite * B.DASH_HIT_MULT, true, true)
+			if world.hero.blocks_from(position):
+				# de frente contra el escudo del Caballero: lo empuja pero no lo daña
+				world.hero.position += _dash_dir * B.SHIELD_DASH_PUSH
+			else:
+				world.hero.take_damage(bite * B.DASH_HIT_MULT, true, true)
 			world.shake()
 			world.fx.melee_hit()
 		_dash_through()
 		if _dash_t <= 0.0 and rank("coraza") > 0:
 			_shell_wave()
-	else:
+	elif root_t <= 0.0:
 		position += input * speed * delta
 	position = position.clamp(Vector2(radius, radius), B.ARENA_SIZE - Vector2(radius, radius))
 
@@ -169,13 +179,14 @@ func _process(delta: float) -> void:
 	_wave_fx = maxf(_wave_fx - delta, 0.0)
 	stealth_cd = maxf(stealth_cd - delta, 0.0)
 	stealth_t = maxf(stealth_t - delta, 0.0)
+	root_t = maxf(root_t - delta, 0.0)
 	modulate.a = 0.35 if stealth_t > 0.0 else 1.0
 	_combo_t -= delta
 	if _combo_t <= 0.0:
 		combo = 1.0
 
 	_auto_attack()
-	if want_dash and _dash_cd <= 0.0:
+	if want_dash and _dash_cd <= 0.0 and root_t <= 0.0:
 		_dash_cd = B.DASH_COOLDOWN
 		_dash_t = B.DASH_TIME
 		_dash_dir = _facing

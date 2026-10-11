@@ -389,6 +389,11 @@ func sight_level() -> int:
 	return level
 
 
+## El jugador no se ve: camuflaje (la S5 suma arbustos acá).
+func player_hidden() -> bool:
+	return player.stealth_t > 0.0
+
+
 ## Hiciste algo que un creep común no hace: suma sospecha a cada héroe que te ve.
 func suspect_all(amount: float) -> void:
 	for h in heroes.list:
