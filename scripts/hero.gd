@@ -295,6 +295,11 @@ func recognize() -> void:
 	_last_seen = p.position
 
 
+## Ataques de jefe: no con escudo, retirándose con poca vida ni aturdido.
+func can_boss_attack() -> bool:
+	return shield_t <= 0.0 and hp / max_hp >= B.HERO_RETREAT_HP and not status.stunned()
+
+
 func hunting_you() -> bool:
 	return sight == Sight.HUNT
 

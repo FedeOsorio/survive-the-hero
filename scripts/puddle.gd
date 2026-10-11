@@ -19,7 +19,7 @@ func _process(delta: float) -> void:
 	if t <= 0.0:
 		world.remove_puddle(self)
 		return
-	for hero in world.heroes.list.duplicate():
+	for hero in world.heroes.targets():
 		if position.distance_to(hero.position) < B.ACID_RADIUS + hero.radius:
 			hero.take_damage(dps * delta, true, false, true)
 			hero.status.slow()

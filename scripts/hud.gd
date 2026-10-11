@@ -85,9 +85,10 @@ func _draw_hud() -> void:
 	if p.combo > 1.0:
 		_text(font, Vector2(20, 136), "Combo x%.2f" % p.combo, 18, Color(1, 0.55, 0.3))
 
-	# Reloj: arriba al centro
+	# Reloj: arriba al centro (oculto contra el Último Bastión: ahí va su barra)
 	var t := int(world.elapsed)
-	_text_centered(font, Vector2(size.x * 0.5, 34), "%02d:%02d" % [t / 60, t % 60], 28, Color.WHITE)
+	if not world.bastion_fight:
+		_text_centered(font, Vector2(size.x * 0.5, 34), "%02d:%02d" % [t / 60, t % 60], 28, Color.WHITE)
 	var next: float = world.heroes.next_arrival()
 	var mark := ""
 	if next >= 0.0:
@@ -95,7 +96,7 @@ func _draw_hud() -> void:
 		mark = "%s %02d:%02d" % [world.heroes.next_name(), nt / 60, nt % 60]
 	elif world.elapsed < B.MATCH_MINUTES * 60.0:
 		mark = "Amanece %02d:00" % int(B.MATCH_MINUTES)
-	if mark != "":
+	if mark != "" and not world.bastion_fight:
 		_text(font, Vector2(size.x * 0.5 + 46, 30), mark, 13, Color(0.75, 0.75, 0.85))
 	if world.detected:
 		_text_centered(font, Vector2(size.x * 0.5, 60), "TE CAZA", 16, Color(1, 0.3, 0.3))

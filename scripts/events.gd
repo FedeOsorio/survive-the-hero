@@ -27,7 +27,7 @@ func damage_mult() -> float:
 
 
 func _process(delta: float) -> void:
-	if not world.running:
+	if not world.running or world.bastion_fight:
 		return
 	_update_chest(delta)
 	blood_moon_t = maxf(blood_moon_t - delta, 0.0)

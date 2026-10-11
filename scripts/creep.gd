@@ -264,7 +264,7 @@ func _auto_attack() -> void:
 ## Coraza viva: onda al terminar la embestida. Daña, empuja y aturde al héroe.
 func _shell_wave() -> void:
 	_wave_fx = 0.25
-	for hero in world.heroes.list.duplicate():
+	for hero in world.heroes.targets():
 		var to_h: Vector2 = hero.position - position
 		if to_h.length() < B.SHELL_WAVE_RADIUS + hero.radius and not hero.rolling():
 			hero.take_damage(bite * B.SHELL_WAVE_DAMAGE, true, true)
