@@ -480,8 +480,9 @@ const EVOLVE_FLASH := 0.3 # destello blanco al evolucionar de etapa
 # Infamia: sube cuando el héroe no puede con vos. Al llenarse llega un Paladín.
 const INFAMY_NAME := "Infamia" # nombre visible de la barra (puede cambiar)
 const INFAMY_MAX := 100.0
-const INFAMY_PER_CIVILIAN := 6.0 # civiles que matás vos
-const INFAMY_PER_SECOND_DETECTED := 1.0
+const INFAMY_PER_CIVILIAN_BY_STAGE := [6.0, 10.0, 15.0, 22.0] # por civil que matás, según tu etapa
+const INFAMY_PER_SECOND_DETECTED := 1.0 # en Slime; se multiplica por INFAMY_STAGE_MULT
+const INFAMY_STAGE_MULT := [1.0, 1.6, 2.5, 3.6] # Slime, Esqueleto, Cultista, Demonio
 const INFAMY_HERO_LOW := 15.0 # cada vez que el héroe baja del umbral de retirada
 const INFAMY_HERO_LOW_HP := 0.3
 

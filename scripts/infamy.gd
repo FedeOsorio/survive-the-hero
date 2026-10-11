@@ -37,7 +37,7 @@ func _process(delta: float) -> void:
 			_spawn_paladin()
 		return
 	if world.detected:
-		add(B.INFAMY_PER_SECOND_DETECTED * delta)
+		add(B.INFAMY_PER_SECOND_DETECTED * B.INFAMY_STAGE_MULT[world.player.stage] * delta)
 	for h in world.heroes.list:
 		var low: bool = h.hp / h.max_hp < B.INFAMY_HERO_LOW_HP
 		if low and not h.was_low:
@@ -54,6 +54,11 @@ func _process(delta: float) -> void:
 			world.hud.banner("El cielo envía a un Capitán")
 		else:
 			world.hud.banner("El cielo envía refuerzos" if not paladins.is_empty() else "El cielo envía a un Paladín")
+
+
+## Mataste un civil: pesa más cuanto más grande sos.
+func civilian_killed() -> void:
+	add(B.INFAMY_PER_CIVILIAN_BY_STAGE[world.player.stage])
 
 
 ## Sube aunque haya Paladines vivos; solo se frena mientras uno está llegando.
