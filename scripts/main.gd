@@ -322,8 +322,9 @@ func remove_gem(g) -> void:
 	g.queue_free()
 
 
-func spawn_projectile(from: Vector2, dir: Vector2, damage: float, pierce: int) -> void:
+func spawn_projectile(from: Vector2, dir: Vector2, damage: float, pierce: int, shooter = null) -> void:
 	var p = Projectile.new()
+	p.shooter = shooter
 	p.world = self
 	p.position = from
 	p.direction = dir

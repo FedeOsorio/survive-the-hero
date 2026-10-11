@@ -71,7 +71,7 @@ func summary() -> String:
 
 
 func _power_damage(id: String, base: float, per_rank: float) -> float:
-	return base + per_rank * (rank(id) - 1)
+	return base + per_rank * (maxi(rank(id), 1) - 1)
 
 
 func _process(delta: float) -> void:
@@ -143,6 +143,11 @@ func _hit_area(center: Vector2, r: float, dmg: float, push := 0.0) -> void:
 
 
 # --- Rayo --------------------------------------------------------------------
+
+## Un rayo suelto en "pos" (hechizos de la furia de la Maga).
+func cast_bolt(pos: Vector2) -> void:
+	_bolts.append({"pos": pos, "t": B.BOLT_WARNING})
+
 
 func _update_bolts(delta: float) -> void:
 	_bolt_t -= delta

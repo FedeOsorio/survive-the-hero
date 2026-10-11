@@ -188,6 +188,15 @@ const HERO_FURY_HP := 0.3
 const HERO_SUSPICION_START_ON_FURY := 50.0
 const HERO_FURY_RUN_TIME := 3.0
 const HERO_FURY_ATTACK_MULT := 0.6
+# Furia propia de cada héroe (07-g, hero_fury.gd), desde que termina la carrera.
+const HERO_FURY_ARCHER_FIRE_MULT := 0.5 # Arquero: espera entre flechas
+const HERO_FURY_ARCHER_MIN_COOLDOWN := 0.15
+const HERO_FURY_ARCHER_HEAL_PER_KILL := 0.005 # de su vida máxima por creep que mata
+const HERO_FURY_KNIGHT_LIFESTEAL := 0.15 # Caballero: del daño cuerpo a cuerpo que hace
+const HERO_FURY_MAGE_SHIELD := 0.5 # Maga: escudo de maná, × su vida máxima, no vuelve
+const HERO_FURY_MAGE_SPELL_EVERY := 1.5 # hechizo extra al azar: rayo, bola de fuego o hielo
+const HERO_FURY_MAGE_FIREBALL := {"name": "Bola de fuego", "shape": "circle", "radius": 80.0, "warn": 0.6, "player_damage": 0.2}
+const HERO_FURY_MAGE_ICE := {"name": "Hielo", "shape": "circle", "radius": 140.0, "warn": 0.5, "player_damage": 0.1, "slow": 0.4, "slow_time": 2.0}
 const HERO_MISTAKE_CHANCE := 0.06
 const HERO_DETECTED_TARGET_BONUS := 150.0 # chico: si tiene creeps encima, se defiende primero
 # Cacería: con el jugador detectado, el héroe va por vos.
@@ -251,7 +260,7 @@ const HERO_ATTACKS := {
 	"lluvia_flechas": {"name": "Lluvia de flechas", "shape": "circle", "center": "target", "radius": 160.0, "warn": 1.2, "player_damage": 0.3},
 	"disparo_cargado": {"name": "Disparo cargado", "shape": "line", "center": "line", "length": 1400.0, "width": 40.0, "warn": 1.0, "player_damage": 0.3},
 	"abanico": {"name": "Abanico", "shape": "cone", "center": "line", "length": 450.0, "angle": 70.0, "warn": 0.8, "player_damage": 0.4},
-	"tajo_giratorio": {"name": "Tajo giratorio", "shape": "circle", "center": "hero", "radius": 200.0, "warn": 1.0, "player_damage": 0.3},
+	"tajo_giratorio": {"name": "Tajo giratorio", "shape": "circle", "center": "hero", "radius": 200.0, "warn": 1.0, "player_damage": 0.3, "melee": true},
 	"embestida": {"name": "Embestida", "shape": "line", "center": "line", "length": 500.0, "width": 60.0, "warn": 1.0, "player_damage": 0.3, "dash": true},
 	"terremoto": {"name": "Terremoto", "shape": "circle", "center": "line", "radius": 110.0, "warn": 0.8, "player_damage": 0.4,
 		"count": 3, "stagger": 0.6},

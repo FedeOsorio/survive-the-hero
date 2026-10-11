@@ -7,6 +7,7 @@ const HeroPowers := preload("res://scripts/hero_powers.gd")
 const HeroStatus := preload("res://scripts/hero_status.gd")
 const HeroAttacks := preload("res://scripts/hero_attacks.gd")
 const HeroTraits := preload("res://scripts/hero_traits.gd")
+const HeroFury := preload("res://scripts/hero_fury.gd")
 
 var world
 var hp := B.HERO_HP
@@ -46,6 +47,7 @@ var powers # hero_powers.gd: orbes, rayo, aura, nova, etc.
 var status # hero_status.gd: sangrado, aturdimiento, lentitud
 var attacks # hero_attacks.gd: ataques de jefe con zona roja
 var traits # hero_traits.gd: trampas, escudo o parpadeo según el héroe
+var rage # hero_fury.gd: la furia propia de cada héroe
 var damage_taken := {"jugador": 0.0, "horda": 0.0} # para los reportes de --sim
 var title := "Arquero"
 var article := "el"
@@ -115,6 +117,11 @@ func can_boss_attack() -> bool:
 ## Caballero: ¿el escudo cubre un golpe que viene desde "from"?
 func blocks_from(from: Vector2) -> bool:
 	return traits.blocks(from)
+
+
+## Daño cuerpo a cuerpo que hizo un ataque de jefe (furia del Caballero).
+func on_melee_damage(amount: float) -> void:
+	rage.on_melee_damage(amount)
 
 
 func ignores_stealth() -> bool:

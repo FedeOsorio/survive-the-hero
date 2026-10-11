@@ -17,6 +17,10 @@ func _ready() -> void:
 	traits.hero = self
 	traits.world = world
 	add_child(traits)
+	rage = HeroFury.new()
+	rage.hero = self
+	rage.world = world
+	add_child(rage)
 	attacks = HeroAttacks.new()
 	attacks.hero = self
 	attacks.world = world
@@ -39,6 +43,7 @@ func setup(cfg: Dictionary, start_level: int) -> void:
 	table = cfg.table
 	attacks.setup(cfg)
 	traits.kind = cfg.name
+	rage.kind = cfg.name
 	for id in cfg.powers:
 		powers.ranks[id] = 1
 	for i in start_level - 1:
@@ -98,7 +103,7 @@ func _process(delta: float) -> void:
 	elif _aim_windup > 0.0:
 		_aim_windup -= delta
 		if _aim_windup <= 0.0:
-			_fire_t = cooldown
+			_fire_t = rage.fire_cooldown(cooldown)
 			_fire_dir(_aim_locked, _close_horde())
 	elif _fire_t <= 0.0 and _roll_t <= 0.0 and _target_valid() and position.distance_to(target.position) <= B.HERO_RANGE:
 		var at_you: bool = target == world.player and hunting_you()
@@ -106,7 +111,7 @@ func _process(delta: float) -> void:
 		if _horde_turn and not guard.is_empty():
 			# cazando con creeps cerca, alterna: un disparo a la horda y uno a vos
 			_horde_turn = false
-			_fire_t = cooldown
+			_fire_t = rage.fire_cooldown(cooldown)
 			_fire_dir((guard[0].position - position).normalized(), guard.slice(1) if guard.size() > 1 else guard)
 		elif at_you:
 			# contra el jugador apunta primero y avisa: se puede esquivar
@@ -115,7 +120,7 @@ func _process(delta: float) -> void:
 			_aim_locked = (target.position - position).normalized()
 			_aim = _aim_locked
 		else:
-			_fire_t = cooldown
+			_fire_t = rage.fire_cooldown(cooldown)
 			_fire()
 
 	if B.HERO_SLASH_ENABLED and level >= B.HERO_SLASH_LEVEL and not attacks.busy():

@@ -7,6 +7,7 @@ var world
 var direction := Vector2.RIGHT
 var damage := 10.0
 var pierce := 0
+var shooter # el héroe que la tiró (furia del Arquero: se cura al matar)
 var _hit := []
 var _travelled := 0.0
 
@@ -37,6 +38,8 @@ func _process(delta: float) -> void:
 		if position.distance_to(m.position) < m.radius + 3.0:
 			_hit.append(m)
 			m.take_damage(damage)
+			if m.hp <= 0.0 and is_instance_valid(shooter):
+				shooter.rage.on_kill()
 			if pierce <= 0:
 				queue_free()
 				return

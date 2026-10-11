@@ -189,13 +189,16 @@ func _strike(z: Dictionary) -> void:
 	world.bushes.burn_zone(self, z) # los arbustos que toca se queman
 	world.shake()
 	_fx.append({"zone": z, "t": B.HERO_ATTACK_FLASH})
+	var dealt := 0.0
 	for m in world.minions.duplicate():
 		if _inside(z, m.position, m.radius):
-			_hit_minion(m)
+			dealt += _hit_minion(m)
 	var p = world.player
 	var hit: bool = _inside(z, p.position, p.radius)
 	if hit:
-		_hit_you(z)
+		dealt += _hit_you(z)
+	if z.cfg.get("melee", false):
+		hero.on_melee_damage(dealt) # furia del Caballero: robo de vida
 	elif z.inside:
 		hero.suspect(B.SUSPICION_DODGE) # un creep común no esquiva
 	if z.cfg.get("dash", false):
@@ -225,19 +228,22 @@ func _grow_donut(z: Dictionary, delta: float) -> void:
 		_zones.erase(z)
 
 
-func _hit_minion(m) -> void:
-	if m.elite or m.type_name == "bruto":
-		m.take_damage(m.max_hp * B.HERO_ATTACK_BIG_DAMAGE)
-	else:
-		m.take_damage(m.hp + 1.0)
+func _hit_minion(m) -> float:
+	var dmg: float = m.max_hp * B.HERO_ATTACK_BIG_DAMAGE if m.elite or m.type_name == "bruto" else m.hp + 1.0
+	var dealt := minf(dmg, m.hp)
+	m.take_damage(dmg)
+	return dealt
 
 
-func _hit_you(z: Dictionary) -> void:
+func _hit_you(z: Dictionary) -> float:
 	if _hit_player.has(z.serial):
-		return
+		return 0.0
 	_hit_player[z.serial] = true
 	var p = world.player
 	p.take_damage(p.max_hp * z.cfg.player_damage)
+	if z.cfg.has("slow"):
+		p.slow(z.cfg.slow, z.cfg.slow_time) # Hielo de la Maga
+	return p.max_hp * z.cfg.player_damage
 
 
 func _update_dash(delta: float) -> void:

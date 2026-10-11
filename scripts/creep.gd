@@ -43,6 +43,8 @@ var _wave_fx := 0.0
 var stealth_cd := 0.0
 var stealth_t := 0.0 # mientras dura, el héroe no te puede apuntar
 var root_t := 0.0 # trampa del Arquero: no te podés mover
+var slow_t := 0.0 # Hielo de la Maga: caminás más lento
+var _slow := 0.0
 var _dash_victims: Array = []
 var _rng := RandomNumberGenerator.new()
 var abilities # creep_abilities.gd: habilidades por etapa y mutaciones de arma
@@ -69,6 +71,12 @@ func evolve_cost() -> float:
 func can_evolve() -> bool:
 	var cost := evolve_cost()
 	return cost > 0.0 and biomass >= cost
+
+
+## Hielo de la Maga: "amount" más lento estos segundos.
+func slow(amount: float, time: float) -> void:
+	_slow = amount
+	slow_t = maxf(slow_t, time)
 
 
 ## Trampa del Arquero: inmovilizado (sin caminar ni embestir) estos segundos.
@@ -182,7 +190,7 @@ func _process(delta: float) -> void:
 		if _dash_t <= 0.0 and rank("coraza") > 0:
 			_shell_wave()
 	elif root_t <= 0.0:
-		position += input * speed * delta
+		position += input * speed * (1.0 - _slow if slow_t > 0.0 else 1.0) * delta
 	position = position.clamp(Vector2(radius, radius), B.ARENA_SIZE - Vector2(radius, radius))
 
 	_bite_cd = maxf(_bite_cd - delta, 0.0)
@@ -194,6 +202,7 @@ func _process(delta: float) -> void:
 	stealth_cd = maxf(stealth_cd - delta, 0.0)
 	stealth_t = maxf(stealth_t - delta, 0.0)
 	root_t = maxf(root_t - delta, 0.0)
+	slow_t = maxf(slow_t - delta, 0.0)
 	modulate.a = 0.35 if stealth_t > 0.0 else (0.5 if world.bushes.hiding() else 1.0)
 	_combo_t -= delta
 	if _combo_t <= 0.0:

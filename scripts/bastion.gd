@@ -87,6 +87,10 @@ func blocks_from(_from: Vector2) -> bool:
 	return false
 
 
+func on_melee_damage(_amount: float) -> void:
+	pass # sin furia
+
+
 func ignores_stealth() -> bool:
 	return true # el camuflaje no sirve contra él
 

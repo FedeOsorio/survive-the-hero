@@ -173,6 +173,11 @@ func _hero_died(pos: Vector2, color: Color) -> void:
 		_slow_until = Time.get_ticks_msec() + int(B.FX_SLOWMO_TIME * 1000.0)
 
 
+## Furia del Caballero: número verde chico al curarse.
+func heal_number(pos: Vector2, amount: float) -> void:
+	_number(pos, amount, Color(0.4, 1.0, 0.45), 14)
+
+
 func _number(pos: Vector2, amount: float, color: Color, size: int) -> void:
 	if not Settings.get_option("damage_numbers"):
 		return

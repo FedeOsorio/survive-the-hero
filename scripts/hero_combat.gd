@@ -49,10 +49,15 @@ func _do_slash(r: float) -> void:
 	var dmg := damage * B.HERO_SLASH_DAMAGE_MULT
 	var victims: Array = world.minions.duplicate()
 	victims.append(world.player)
+	var dealt := 0.0
 	for v in victims:
 		var to_v: Vector2 = v.position - position
 		if to_v.length() < r + v.radius and absf(_slash_dir.angle_to(to_v)) <= half:
+			dealt += minf(dmg, v.hp)
 			v.take_damage(dmg)
+			if v != world.player and v.hp <= 0.0:
+				rage.on_kill()
+	rage.on_melee_damage(dealt)
 
 
 func _fire() -> void:
@@ -72,7 +77,7 @@ func _fire_dir(base: Vector2, extra: Array = []) -> void:
 				var m = extra[(i - 1) % extra.size()]
 				if is_instance_valid(m):
 					d = (m.position - position).normalized()
-		world.spawn_projectile(position + dir * radius, d, damage, pierce)
+		world.spawn_projectile(position + dir * radius, d, damage, pierce, self)
 
 
 ## Creeps a menos de HUNT_SHARE_RADIUS, del más cercano al más lejano.
@@ -93,6 +98,7 @@ func take_damage(amount: float, from_player: bool, melee := false, tick := false
 		status.log_damage(amount, melee)
 		status.show_damage(amount, tick)
 	damage_taken["jugador" if from_player else "horda"] += amount
+	amount = rage.absorb(amount) # escudo de maná de la Maga
 	if not from_player:
 		# la horda lo desgasta pero el golpe final solo lo puede dar el jugador
 		hp = maxf(hp - amount, 1.0)
