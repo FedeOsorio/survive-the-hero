@@ -424,8 +424,8 @@ const ADAPT_WINDOW := 30.0
 
 # Golpe con feedback: números de daño, parpadeo y temblor de pantalla.
 const DMG_NUMBER_TIME := 0.6
-const DMG_NUMBER_RISE := 20.0
-const DMG_NUMBER_BIG := 0.08 # % de la vida máxima del héroe para el número grande
+const DMG_NUMBER_RISE := 30.0
+const DMG_NUMBER_BIG := 0.05 # % de la vida máxima para el número grande (amarillo)
 const DMG_TICK_EVERY := 0.5 # charcos y sangrado: un número sumado cada tanto
 const HERO_HIT_FLASH := 0.08
 const SHAKE_PX := 4.0
@@ -474,3 +474,23 @@ const CAPTAIN_RADIUS := 24.0
 const CAPTAIN_WAVE_RADIUS := 90.0 # el martillazo además pega en este radio, con el mismo aviso
 const CAPTAIN_HEART_MUTATIONS := 2
 const HOLY_HEART_BIOMASS := 0.2 # x costo de tu próxima evolución
+
+# --- FX (jugo visual, tanda S2; los maneja el programador de sistemas) ---------
+const FX_MAX_PARTICLES := 400 # tope de partículas vivas; se van las más viejas
+const FX_PARTICLE_TIME := 0.4
+const FX_DEATH_PARTICLES := Vector2i(6, 10) # por creep de la horda que muere
+const FX_DEATH_SPEED := Vector2(60.0, 160.0)
+const FX_BLAST_SPEED := Vector2(320.0, 520.0) # despedidas por un ataque de jefe
+const FX_BLAST_WINDOW := 0.1 # s: una muerte tan cerca del golpe cuenta como del golpe
+const FX_CIVILIAN_PARTICLES := 6
+const FX_HERO_DEATH_PARTICLES := 40
+const FX_HERO_DEATH_RADIUS := 220.0 # anillo de luz al morir un héroe
+const FX_SLOWMO_TIME := 0.5 # s reales de cámara lenta al morir un héroe
+const FX_SLOWMO_SCALE := 0.3
+const FX_HITSTOP_MELEE := 0.05 # mordida o embestida al héroe
+const FX_HITSTOP_BOSS := 0.12 # un ataque de jefe te golpea
+const FX_FLASH := 0.08 # destello blanco al recibir daño
+const FX_GROUP_EVERY := 0.3 # golpes chicos (horda al héroe, daño a vos) sumados en un número
+const FX_MUTATE_RING := Vector2(0.3, 80.0) # duración, radio
+const FX_EVOLVE_RING := Vector2(0.6, 200.0)
+const FX_LEVEL_COLUMN := 0.4 # columna de luz del héroe al subir de nivel

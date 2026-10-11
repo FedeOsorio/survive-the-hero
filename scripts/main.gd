@@ -19,6 +19,7 @@ const Infamy := preload("res://scripts/infamy.gd")
 const Arena := preload("res://scripts/arena.gd")
 const Hud := preload("res://scripts/hud.gd")
 const Pause := preload("res://scripts/pause.gd")
+const Fx := preload("res://scripts/fx.gd")
 
 const GRID_CELL := 64.0
 
@@ -57,6 +58,7 @@ var alarm_t := 0.0
 var _alarm_arrived := false # el héroe ya llegó al lugar del grito
 
 var hud
+var fx # fx.gd: partículas, números de daño, hit-stop
 var _entities: Node2D
 var _spawn_accum := 0.0
 var _grid := {}
@@ -85,6 +87,9 @@ func _ready() -> void:
 	_entities = Node2D.new()
 	_entities.y_sort_enabled = false
 	add_child(_entities)
+	fx = Fx.new()
+	fx.world = self
+	add_child(fx)
 
 	var center := B.ARENA_SIZE * 0.5
 	player = Creep.new()
@@ -228,6 +233,7 @@ func _update_alarm(delta: float) -> void:
 
 func on_civilian_killed(c) -> void:
 	civilians.erase(c)
+	fx.civilian_eaten(c.position)
 	civilians_eaten += 1
 	for h in heroes.list:
 		h.recognize() # la horda no toca civiles
@@ -245,6 +251,7 @@ func on_civilian_killed(c) -> void:
 
 func on_minion_killed(m) -> void:
 	minions.erase(m)
+	fx.minion_died(m)
 	if m.raised:
 		# los levantados no dejan cadáver ni gema: si no, el héroe farmea con ellos
 		raised_count -= 1

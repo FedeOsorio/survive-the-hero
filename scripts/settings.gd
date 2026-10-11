@@ -4,7 +4,7 @@ extends CanvasLayer
 ## y se guardan apenas cambian. También dibuja el contador de FPS.
 
 const PATH := "user://options.cfg"
-const DEFAULTS := {"fullscreen": false, "volume_master": 1.0, "volume_sfx": 1.0, "show_fps": false}
+const DEFAULTS := {"fullscreen": false, "volume_master": 1.0, "volume_sfx": 1.0, "show_fps": false, "damage_numbers": true}
 const SFX_BUS := "Efectos"
 
 var values := DEFAULTS.duplicate()

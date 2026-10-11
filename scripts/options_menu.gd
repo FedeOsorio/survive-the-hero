@@ -19,6 +19,7 @@ func _ready() -> void:
 	_first = _toggle(box, "Pantalla completa", "fullscreen")
 	_slider(box, "Volumen general", "volume_master")
 	_slider(box, "Volumen de efectos", "volume_sfx")
+	_toggle(box, "Números de daño", "damage_numbers")
 	_toggle(box, "Mostrar FPS", "show_fps")
 	box.add_child(UI.button("Volver", _close))
 	_first.grab_focus.call_deferred()

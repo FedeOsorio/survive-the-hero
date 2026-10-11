@@ -153,6 +153,7 @@ func _process(delta: float) -> void:
 			_dash_hit = true
 			world.hero.take_damage(bite * B.DASH_HIT_MULT, true, true)
 			world.shake()
+			world.fx.melee_hit()
 		_dash_through()
 		if _dash_t <= 0.0 and rank("coraza") > 0:
 			_shell_wave()
@@ -233,6 +234,7 @@ func _auto_attack() -> void:
 			if victim == hero:
 				hero.take_damage(bite, true, true)
 				world.shake()
+				world.fx.melee_hit()
 				if rank("mandibula") > 0:
 					hero.status.bleed(bite * B.BLEED_MULT)
 			else:
@@ -284,6 +286,7 @@ func _evolve() -> void:
 	world.hud.banner("Evolucionaste: %s" % stage_name())
 	_flash = B.EVOLVE_FLASH
 	world.shake()
+	world.fx.evolved(position, stage_name())
 
 
 # --- Comer --------------------------------------------------------------------
@@ -353,6 +356,7 @@ func choose_mutation(index: int) -> void:
 	var id: String = pending_choices[index]
 	ranks[id] = rank(id) + 1
 	pending_choices = []
+	world.fx.mutated(position)
 	if id == "caparazon":
 		_recalc_stats()
 		hp = minf(max_hp, hp + max_hp * B.MUT_HP)
@@ -370,7 +374,8 @@ func take_damage(amount: float) -> void:
 	if invulnerable or _dash_t > 0.0: # la embestida te hace invulnerable
 		return
 	hp -= amount
-	_flash = 0.1
+	_flash = B.FX_FLASH
+	world.fx.player_hit(amount)
 	if hp <= 0.0:
 		hp = 0.0
 		world.end_game("derrota", "Te mataron siendo %s nivel %d." % [stage_name(), level])

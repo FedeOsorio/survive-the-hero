@@ -16,6 +16,8 @@ var _drip := 0.0
 var _numbers: Array = [] # {amount, t, big}
 var _tick_sum := 0.0
 var _tick_t := 0.0
+var _horde_seen := 0.0 # damage_taken["horda"] ya mostrado
+var _horde_t := 0.0
 
 
 func _ready() -> void:
@@ -71,8 +73,11 @@ func show_damage(amount: float, tick: bool) -> void:
 	_add_number(amount)
 
 
-func _add_number(amount: float) -> void:
-	_numbers.append({"amount": amount, "t": B.DMG_NUMBER_TIME, "big": amount > hero.max_hp * B.DMG_NUMBER_BIG})
+func _add_number(amount: float, horde := false) -> void:
+	if not Settings.get_option("damage_numbers"):
+		return
+	var big: bool = not horde and amount > hero.max_hp * B.DMG_NUMBER_BIG
+	_numbers.append({"amount": amount, "t": B.DMG_NUMBER_TIME, "big": big, "horde": horde})
 
 
 ## Parte del daño reciente del jugador que fue cuerpo a cuerpo (-1 si no hubo daño).
@@ -105,6 +110,13 @@ func _process(delta: float) -> void:
 		if _tick_sum >= 1.0:
 			_add_number(_tick_sum)
 			_tick_sum = 0.0
+	_horde_t += delta
+	if _horde_t >= B.FX_GROUP_EVERY:
+		_horde_t = 0.0 # la horda pega cada frame: un número gris sumado
+		var horde: float = hero.damage_taken["horda"]
+		if horde - _horde_seen >= 1.0:
+			_add_number(horde - _horde_seen, true)
+		_horde_seen = horde
 	for n in _numbers.duplicate():
 		n.t -= delta
 		if n.t <= 0.0:
@@ -117,8 +129,10 @@ func _draw() -> void:
 	var font := ThemeDB.fallback_font
 	for n in _numbers:
 		var k: float = 1.0 - n.t / B.DMG_NUMBER_TIME
-		var pos := Vector2(-8.0, -28.0 - B.DMG_NUMBER_RISE * k)
+		var pos := Vector2(-8.0 + (14.0 if n.horde else 0.0), -28.0 - B.DMG_NUMBER_RISE * k)
 		var col := Color(1.0, 0.85, 0.2, 1.0 - k * 0.6) if n.big else Color(1, 1, 1, 1.0 - k * 0.6)
+		if n.horde:
+			col = Color(0.65, 0.65, 0.7, 1.0 - k * 0.6)
 		draw_string(font, pos, str(roundi(n.amount)), HORIZONTAL_ALIGNMENT_LEFT, -1, 20 if n.big else 14, col)
 	if bleeding():
 		for i in _bleeds.size():
