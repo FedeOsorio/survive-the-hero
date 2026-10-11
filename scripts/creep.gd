@@ -215,7 +215,7 @@ func _closest(list: Array, max_dist: float):
 	return best
 
 
-## Mordida y escupitajo automáticos. Prioridad: héroe, Paladín y civiles.
+## Mordida y escupitajo automáticos. Prioridad: héroe, Paladín y civiles (estos solo con la mordida).
 func _auto_attack() -> void:
 	var hero = world.hero
 	if _bite_cd <= 0.0:
@@ -249,9 +249,7 @@ func _auto_attack() -> void:
 		if hero != null and position.distance_to(hero.position) <= B.SPIT_RANGE:
 			target = hero
 		else:
-			target = _closest(world.infamy.paladins, B.SPIT_RANGE)
-			if target == null:
-				target = _closest(world.civilians, B.SPIT_RANGE)
+			target = _closest(world.infamy.paladins, B.SPIT_RANGE) # a los civiles nunca: mordida o embestida
 		if target != null:
 			_spit_cd = spit_cooldown()
 			var dir: Vector2 = (target.position - position).normalized()
@@ -284,6 +282,7 @@ func _evolve() -> void:
 	biomass -= evolve_cost()
 	_apply_stage(stage + 1)
 	world.hud.banner("Evolucionaste: %s" % stage_name())
+	world.suspect_all(B.SUSPICION_EVOLVE)
 	_flash = B.EVOLVE_FLASH
 	world.shake()
 	world.fx.evolved(position, stage_name())
@@ -306,6 +305,7 @@ func _absorb(delta: float) -> void:
 				world.hud.banner("¡Corazón de élite! Mutación extra")
 			_eat(c.value)
 			world.remove_corpse(c)
+			world.suspect_all(B.SUSPICION_EAT)
 		elif d < radius + magnet:
 			c.position = c.position.move_toward(position, B.MAGNET_PULL_SPEED * delta)
 	# las gemas son la XP del héroe: pisarlas se las roba y te alimenta (el imán no las atrae)
@@ -313,6 +313,7 @@ func _absorb(delta: float) -> void:
 		if position.distance_to(g.position) < radius + B.GEM_EAT_RANGE:
 			_eat(g.xp * B.GEM_BIOMASS)
 			world.remove_gem(g)
+			world.suspect_all(B.SUSPICION_GEM)
 
 
 func _eat(value: float) -> void:

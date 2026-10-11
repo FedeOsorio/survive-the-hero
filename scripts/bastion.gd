@@ -79,7 +79,7 @@ func hunting_you() -> bool:
 	return true # 1 contra 1: siempre sabe dónde estás
 
 
-func recognize() -> void:
+func suspect(_amount: float) -> void:
 	pass
 
 
