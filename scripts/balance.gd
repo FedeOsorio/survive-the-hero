@@ -74,7 +74,6 @@ const CIVILIAN_HP := 8.0
 const CIVILIAN_SPEED := 85.0
 const CIVILIAN_FLEE_RADIUS := 220.0
 const CIVILIAN_TRAMPLE_MARGIN := 4.0 # tocar un civil (suma de radios + esto) lo come al instante
-const CIVILIAN_FREEZE_RADIUS := 50.0 # con el creep tan cerca se paraliza de miedo
 const CIVILIAN_BIOMASS := 7.0 # 09-d: era 12
 # 09-g: todo lo que comés (civiles, horda, gemas, cadáveres) da esto × su valor; también
 # escala la cura por biomasa y el avance a la próxima mutación. 1.0 = como antes.

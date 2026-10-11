@@ -1,6 +1,6 @@
 extends Node2D
-## Civil que deambula por el mapa. Huye del creep (no si estás escondido) y, con el creep
-## encima, se paraliza de miedo; comerlo da mucha biomasa.
+## Civil que deambula por el mapa. Huye del creep en línea recta (no si estás escondido);
+## comerlo da mucha biomasa.
 ## Al empezar a huir grita y atrae al héroe, que viene a buscarte (a los civiles no los toca).
 
 const B := preload("res://scripts/balance.gd")
@@ -13,7 +13,6 @@ var _wander_t := 0.0
 var _flash := 0.0
 var _fleeing := false
 var _scream_cd := 0.0
-var _frozen := false # el creep está encima: paralizado de miedo
 
 
 func _ready() -> void:
@@ -36,11 +35,8 @@ func _process(delta: float) -> void:
 		_scream_cd = B.CIVILIAN_SCREAM_COOLDOWN
 		world.raise_alarm(position)
 	_fleeing = flee
-	_frozen = d < B.CIVILIAN_FREEZE_RADIUS and not world.player_hidden()
-	var dodge := Vector2.ZERO if flee or _frozen else _dodge_dir()
-	if _frozen:
-		dir = Vector2.ZERO # paralizado: ni huye ni esquiva
-	elif flee:
+	var dodge := Vector2.ZERO if flee else _dodge_dir()
+	if flee:
 		dir = away / d
 	elif dodge != Vector2.ZERO:
 		# esquiva a la horda solo para que se vea: se corre al costado
@@ -81,6 +77,5 @@ func take_damage(amount: float) -> void:
 
 func _draw() -> void:
 	var skin := Color.WHITE if _flash > 0.0 else Color(0.95, 0.8, 0.6)
-	var o := Vector2(randf_range(-1.0, 1.0), 0.0) if _frozen else Vector2.ZERO # tiembla de miedo
-	draw_rect(Rect2(Vector2(-4, -2) + o, Vector2(8, 9)), Color(0.85, 0.75, 0.3))
-	draw_circle(Vector2(0, -5) + o, 4.0, skin)
+	draw_rect(Rect2(Vector2(-4, -2), Vector2(8, 9)), Color(0.85, 0.75, 0.3))
+	draw_circle(Vector2(0, -5), 4.0, skin)
