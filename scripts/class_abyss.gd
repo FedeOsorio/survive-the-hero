@@ -1,9 +1,12 @@
 extends "res://scripts/creep_class.gd"
 ## Abisal: abre grietas con C (hasta 3, duran toda la partida). Cada grieta tiene
 ## tentáculos de Agarre que frenan y lastiman al que pasa cerca, y doble toque de
-## embestida te lleva a la grieta que apuntás. Arma inicial: Azote (un tentáculo
-## golpea el piso en línea hacia el héroe). Desde Esqueleto, Fauces: una grieta se
-## vuelve boca un rato; desde Cultista, al cerrarse aplasta alrededor.
+## embestida te lleva a la grieta que apuntás (eso es la regla de la clase).
+## Poderes acá: Azote (fijo: un tentáculo golpea el piso en línea hacia el héroe),
+## Fauces (una grieta se vuelve boca), Aplastar y Marea negra. Los otros seis
+## (Ancla, Kraken, Remolino, Tinta, Surco, Ojo) están en abyss_powers.gd.
+
+const AbyssPowers := preload("res://scripts/abyss_powers.gd")
 
 var _rifts: Array = [] # {pos, age}
 var _rift_cd := 0.0
@@ -14,14 +17,19 @@ var _lashes: Array = [] # {from, dir, t, hit_fx}
 var _maw_cd := B.ABYSS_MAW_EVERY
 var _maws: Array = [] # {rift, t}
 var _fx: Array = [] # {pos, t} anillos al abrir, viajar o aplastar
+var _slam_cd := B.ABYSS_SLAM_EVERY # Aplastar sin Fauces
+var powers # abyss_powers.gd
 
 
-func replaces_kit() -> bool:
-	return true
+func _ready() -> void:
+	super()
+	powers = AbyssPowers.new()
+	powers.abyss = self
+	add_child(powers)
 
 
-func _deep() -> float:
-	return 1.0 + B.ABYSS_DEEP_PER_RANK * creep.rank("hondo")
+func rifts() -> Array:
+	return _rifts
 
 
 func ability() -> void:
@@ -47,8 +55,14 @@ func _process(delta: float) -> void:
 		_on_dash_pressed()
 	_grab(delta)
 	_update_lash(delta)
-	if creep.stage >= 1:
+	if creep.rank("fauces") > 0:
 		_update_maws(delta)
+	elif creep.rank("aplastar") > 0:
+		_slam_cd -= delta
+		var hero = world.hero
+		if _slam_cd <= 0.0 and hero != null and not _rifts.is_empty():
+			_slam_cd = B.ABYSS_SLAM_EVERY * creep.pcd("aplastar")
+			_slam(_nearest_rift(hero.position).pos)
 	queue_redraw()
 
 
@@ -91,7 +105,7 @@ func _teleport_goal():
 # --- Agarre y Marea negra ---------------------------------------------------------
 
 func _grab(delta: float) -> void:
-	var reach := B.ABYSS_GRAB_RADIUS * _deep()
+	var reach := B.ABYSS_GRAB_RADIUS
 	var tide: bool = creep.rank("marea") > 0
 	for r in _rifts:
 		r.age += delta
@@ -105,7 +119,7 @@ func _grab(delta: float) -> void:
 			slow(t, B.ABYSS_GRAB_SLOW)
 			hurt(t, creep.bite * B.ABYSS_GRAB_DPS * delta, true)
 		elif tide and _on_tide(t):
-			slow(t, B.ABYSS_TIDE_SLOW)
+			slow(t, minf(B.ABYSS_TIDE_SLOW * creep.pmult("marea"), 0.5))
 
 
 func _on_tide(t) -> bool:
@@ -132,7 +146,7 @@ func _update_lash(delta: float) -> void:
 	var t = nearest_target(creep.position, B.ABYSS_LASH_RANGE)
 	if t == null:
 		return
-	_lash_cd = B.ABYSS_LASH_EVERY
+	_lash_cd = B.ABYSS_LASH_EVERY * creep.pcd("azote")
 	var from: Vector2 = creep.position
 	for r in _rifts:
 		if r.pos.distance_to(t.position) < from.distance_to(t.position):
@@ -145,15 +159,13 @@ func _update_lash(delta: float) -> void:
 
 func _lash_hit(l: Dictionary) -> void:
 	var to: Vector2 = l.from + l.dir * B.ABYSS_LASH_LENGTH
-	var half := B.ABYSS_LASH_WIDTH * 0.5 * _deep()
+	var half := B.ABYSS_LASH_WIDTH * 0.5
 	for t in targets():
 		var p := Geometry2D.get_closest_point_to_segment(t.position, l.from, to)
 		if p.distance_to(t.position) > half + t.radius:
 			continue
-		hurt(t, creep.bite * B.ABYSS_LASH_DAMAGE)
-		if creep.rank("ancla") > 0:
-			stun(t, B.ABYSS_ANCHOR_STUN)
-		elif t in world.heroes.list or is_paladin(t):
+		hurt(t, creep.bite * B.ABYSS_LASH_DAMAGE * creep.pmult("azote"))
+		if t in world.heroes.list or is_paladin(t):
 			t.position = (t.position + l.dir * B.ABYSS_LASH_PUSH).clamp(Vector2(20, 20), B.ARENA_SIZE - Vector2(20, 20))
 	world.shake()
 
@@ -161,7 +173,7 @@ func _lash_hit(l: Dictionary) -> void:
 # --- Fauces y Aplastar ------------------------------------------------------------
 
 func _update_maws(delta: float) -> void:
-	var radius := B.ABYSS_RIFT_RADIUS * _deep()
+	var radius := B.ABYSS_RIFT_RADIUS
 	for m in _maws.duplicate():
 		m.t -= delta
 		var pos: Vector2 = m.rift.pos
@@ -173,10 +185,10 @@ func _update_maws(delta: float) -> void:
 		for t in targets():
 			if pos.distance_to(t.position) < radius + t.radius:
 				slow(t, B.ABYSS_MAW_SLOW)
-				hurt(t, creep.bite * B.ABYSS_MAW_DPS * delta, true)
+				hurt(t, creep.bite * B.ABYSS_MAW_DPS * creep.pmult("fauces") * delta, true)
 		if m.t <= 0.0:
 			_maws.erase(m)
-			if creep.stage >= 2:
+			if creep.rank("aplastar") > 0:
 				_slam(pos)
 	_maw_cd -= delta
 	if _maw_cd > 0.0 or _rifts.is_empty() or not _maws.is_empty():
@@ -184,22 +196,26 @@ func _update_maws(delta: float) -> void:
 	var hero = world.hero
 	if hero == null:
 		return
-	_maw_cd = B.ABYSS_MAW_EVERY
+	_maw_cd = B.ABYSS_MAW_EVERY * creep.pcd("fauces")
 	if creep.stage >= 3:
 		for r in _rifts:
 			_maws.append({"rift": r, "t": B.ABYSS_MAW_TIME})
 		return
+	_maws.append({"rift": _nearest_rift(hero.position), "t": B.ABYSS_MAW_TIME})
+
+
+func _nearest_rift(pos: Vector2):
 	var best = _rifts[0]
 	for r in _rifts:
-		if r.pos.distance_to(hero.position) < best.pos.distance_to(hero.position):
+		if r.pos.distance_to(pos) < best.pos.distance_to(pos):
 			best = r
-	_maws.append({"rift": best, "t": B.ABYSS_MAW_TIME})
+	return best
 
 
 func _slam(pos: Vector2) -> void:
 	for t in targets():
 		if pos.distance_to(t.position) < B.ABYSS_SLAM_RADIUS + t.radius:
-			hurt(t, creep.bite * B.ABYSS_SLAM_DAMAGE)
+			hurt(t, creep.bite * B.ABYSS_SLAM_DAMAGE * creep.pmult("aplastar"))
 			stun(t, B.ABYSS_SLAM_STUN)
 	world.fx.explosion(pos, B.ABYSS_SLAM_RADIUS, Color(0.45, 0.2, 0.7))
 	world.shake()
@@ -215,7 +231,7 @@ func _is_maw(r) -> bool:
 # --- Dibujo -----------------------------------------------------------------------
 
 func _draw() -> void:
-	var deep := _deep()
+	var deep := 1.0
 	var pulse: float = 0.5 + 0.5 * sin(world.elapsed * 3.0)
 	if creep.rank("marea") > 0:
 		for i in _rifts.size():

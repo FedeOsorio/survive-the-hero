@@ -1,10 +1,11 @@
 extends CanvasLayer
 ## Interfaz: vida, biomasa, nivel, reloj con la próxima llegada, amenaza,
-## vida y nivel de cada héroe vivo con su flecha (la elección de mutación es mutation_picker.gd) y pantalla
+## fila de poderes (5 casilleros con rango), vida y nivel de cada héroe vivo con su flecha (la elección de mutación es mutation_picker.gd) y pantalla
 ## final (resultado, tabla por minuto y botón Copiar tabla). Corre aunque el juego esté en pausa.
 
 const B := preload("res://scripts/balance.gd")
 const MutationPicker := preload("res://scripts/mutation_picker.gd")
+const Mutations := preload("res://scripts/mutations.gd")
 
 var world
 var _view: Control
@@ -76,6 +77,7 @@ func _draw_hud() -> void:
 		_bar(Rect2(20, 76, 260, 14), p.biomass / cost, Color(0.75, 0.45, 0.9), "Evolución %d/%d" % [int(p.biomass), int(cost)])
 	else:
 		_text(font, Vector2(20, 88), "Forma final", 14, Color(0.9, 0.8, 0.8))
+	_draw_powers(font, p)
 	var st := "Camuflaje (Q): listo" if p.stealth_cd <= 0.0 else "Camuflaje (Q): %ds" % int(ceil(p.stealth_cd))
 	_text(font, Vector2(20, 180), st, 14, Color(0.6, 0.9, 0.7) if p.stealth_cd <= 0.0 else Color(0.6, 0.6, 0.65))
 	if p.hunger() > 1.0:
@@ -175,6 +177,25 @@ func _pointer(h, col: Color) -> void:
 	var edge := Vector2(clampf(screen_pos.x, rect.position.x, rect.end.x), clampf(screen_pos.y, rect.position.y, rect.end.y))
 	var pts := PackedVector2Array([edge + dir * 12.0, edge + dir.orthogonal() * 8.0, edge - dir.orthogonal() * 8.0])
 	_view.draw_colored_polygon(pts, col)
+
+
+## Fila de POWERS_MAX casilleros: color e iniciales del poder y un puntito por rango.
+func _draw_powers(font: Font, p) -> void:
+	var owned := Mutations.owned_powers(p.ranks, p.klass.id)
+	for i in B.POWERS_MAX:
+		var r := Rect2(20 + i * 34, 96, 30, 30)
+		if i >= owned.size():
+			_view.draw_rect(r, Color(0.2, 0.2, 0.25, 0.5))
+			_view.draw_rect(r, Color(0.4, 0.4, 0.45, 0.6), false, 1.0)
+			continue
+		var pw := Mutations.power(owned[i], p.klass.id)
+		var col: Color = pw.color
+		_view.draw_rect(r, col.darkened(0.55))
+		_view.draw_rect(r, col, false, 2.0)
+		_text_centered(font, r.position + Vector2(15, 18), pw.icon, 13, col.lightened(0.4))
+		for k in B.POWER_MAX_RANK:
+			var on: bool = k < p.rank(owned[i])
+			_view.draw_circle(r.position + Vector2(5 + k * 5, 26), 1.6, col.lightened(0.5) if on else Color(0.3, 0.3, 0.3))
 
 
 func _bar(r: Rect2, ratio: float, col: Color, label: String) -> void:

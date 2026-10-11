@@ -2,8 +2,9 @@ extends "res://scripts/creep_class.gd"
 ## Reina del enjambre: no tiene vida normal, su vida son los insectos que la rodean.
 ## Cada golpe mata insectos (vida de etapa / máximo de insectos por insecto) y muere
 ## al quedarse sin ninguno en casa. Comer cadáveres y civiles cría; no come gemas.
-## Arma inicial: manda parte del enjambre a picar al héroe (los que salen no la
-## protegen). Desde Esqueleto, Nube: todo el enjambre envuelve al héroe y lo ciega.
+## Poderes: A picar (fijo: parte del enjambre sale a picar; los que salen no la
+## protegen), Nube (el enjambre envuelve al héroe y lo ciega), Aguijón, Zumbido,
+## Colmena, Avispas de fuego, Escudo de alas, Larvas, Reina madre y Enjambre cazador.
 
 var home := B.SWARM_START
 var _sorties: Array = [] # {target, n, t}: salen cada SWARM_SEND_EVERY y pican STING_TIME (se pueden pisar)
@@ -11,10 +12,9 @@ var _send_cd := 1.0
 var _cloud = null # {target, n, t}
 var _cloud_cd := B.SWARM_CLOUD_EVERY
 var _breed_t := 0.0
-
-
-func replaces_kit() -> bool:
-	return true
+var _wings_cd := 0.0 # Escudo de alas
+var _wings_t := 0.0
+var _larvae: Array = [] # {pos, t}
 
 
 func eats_gems() -> bool:
@@ -22,7 +22,7 @@ func eats_gems() -> bool:
 
 
 func max_insects() -> int:
-	return B.SWARM_MAX[creep.stage]
+	return roundi(B.SWARM_MAX[creep.stage] * (1.0 + B.SWARM_MOTHER_PER_RANK * creep.rank("madre")))
 
 
 func away() -> int:
@@ -42,6 +42,8 @@ func _breed(n: int) -> void:
 
 func on_eat(c) -> void:
 	_breed(B.SWARM_PER_CIVILIAN if c.has_meta("civilian") else B.SWARM_PER_CORPSE)
+	if creep.rank("larvas") > 0:
+		_larvae.append({"pos": c.position, "t": B.SWARM_LARVA_TIME})
 
 
 func take_hit(amount: float) -> bool:
@@ -49,7 +51,12 @@ func take_hit(amount: float) -> bool:
 		home = 0
 		creep.die()
 		return true
-	home -= maxi(ceili(amount / _per_insect()), 1)
+	if _wings_t > 0.0:
+		amount *= 1.0 - B.SWARM_WINGS_REDUCTION
+	var killed := mini(maxi(ceili(amount / _per_insect()), 1), home)
+	home -= killed
+	if creep.rank("avispas") > 0:
+		_fire_wasps(killed)
 	if home <= 0:
 		home = 0
 		_sync()
@@ -70,13 +77,14 @@ func _process(delta: float) -> void:
 	if not world.running:
 		return
 	_breed_t += delta
-	var every := maxf(B.SWARM_BREED_EVERY - B.SWARM_HIVE_PER_RANK * creep.rank("colmena"), 0.5)
+	var every: float = B.SWARM_BREED_EVERY * pow(B.SWARM_HIVE_MULT, creep.rank("colmena"))
 	if _breed_t >= every:
 		_breed_t = 0.0
 		_breed(1)
 	_update_sortie(delta)
-	if creep.stage >= 1:
+	if creep.rank("nube") > 0 or _cloud != null:
 		_update_cloud(delta)
+	_update_extras(delta)
 	_sync()
 	queue_redraw()
 
@@ -98,16 +106,17 @@ func _update_sortie(delta: float) -> void:
 	var t = nearest_target(creep.position, B.SWARM_SEND_RANGE)
 	if t == null:
 		return
-	var n := maxi(ceili(home * B.SWARM_SEND_SHARE), B.SWARM_SEND_MIN)
+	var extra: int = B.SWARM_PICK_EXTRA_PER_RANK * maxi(creep.rank("picar") - 1, 0)
+	var n := maxi(ceili(home * B.SWARM_SEND_SHARE), B.SWARM_SEND_MIN) + extra
 	if home - n < 1:
 		return # sin insectos de sobra no sale nadie
-	_send_cd = B.SWARM_SEND_EVERY
+	_send_cd = maxf(B.SWARM_SEND_EVERY - B.SWARM_PICK_CD_PER_RANK * maxi(creep.rank("picar") - 1, 0), 1.0)
 	home -= n
 	_sorties.append({"target": t, "n": n, "t": B.SWARM_STING_TIME})
 	if creep.rank("aguijon") > 0 and not is_paladin(t):
-		t.status.bleed(n * creep.bite * B.SWARM_STINGER_BLEED * B.SWARM_STINGER_TIME)
+		t.status.bleed(n * creep.bite * B.SWARM_STINGER_BLEED * B.SWARM_STINGER_TIME * creep.pmult("aguijon"))
 	if creep.rank("zumbido") > 0 and is_paladin(t):
-		t.confuse(B.SWARM_BUZZ_CONFUSE)
+		t.confuse(B.SWARM_BUZZ_CONFUSE * creep.pmult("zumbido"))
 
 
 # --- Nube -------------------------------------------------------------------------
@@ -125,11 +134,39 @@ func _update_cloud(delta: float) -> void:
 	var hero = world.hero
 	if hero == null or creep.position.distance_to(hero.position) > B.SWARM_CLOUD_RANGE:
 		return
-	_cloud_cd = B.SWARM_CLOUD_EVERY
-	var time: float = B.SWARM_CLOUD_TIME[creep.stage]
+	_cloud_cd = B.SWARM_CLOUD_EVERY * creep.pcd("nube")
+	var time: float = B.SWARM_CLOUD_TIME[creep.stage] * creep.pmult("nube")
 	_cloud = {"target": hero, "n": home, "t": time}
 	home = 0 # la apuesta: mientras dura, un golpe te mata
 	hero.status.blind(time)
+
+
+# --- Avispas, Escudo de alas, Larvas y Enjambre cazador -----------------------------
+
+func _fire_wasps(killed: int) -> void:
+	var r := B.SWARM_FIRE_WASP_RADIUS
+	for t in targets():
+		if creep.position.distance_to(t.position) < r + t.radius:
+			hurt(t, creep.bite * B.SWARM_FIRE_WASP_DAMAGE * killed * creep.pmult("avispas"))
+	world.fx.explosion(creep.position, r, Color(1.0, 0.5, 0.15))
+
+
+func _update_extras(delta: float) -> void:
+	_wings_t = maxf(_wings_t - delta, 0.0)
+	if creep.rank("alas") > 0:
+		_wings_cd -= delta
+		if _wings_cd <= 0.0 and home >= B.SWARM_WINGS_MIN:
+			_wings_cd = B.SWARM_WINGS_EVERY * creep.pcd("alas")
+			_wings_t = B.SWARM_WINGS_TIME * creep.pmult("alas")
+	for l in _larvae.duplicate():
+		l.t -= delta
+		if l.t <= 0.0:
+			_larvae.erase(l)
+			_breed(roundi(B.SWARM_LARVA_INSECTS * creep.pmult("larvas")))
+	if creep.rank("cazador") > 0 and home > 0:
+		for t in targets():
+			if creep.position.distance_to(t.position) < B.SWARM_HUNTER_RADIUS + t.radius:
+				hurt(t, creep.bite * B.SWARM_HUNTER_DPS * creep.pmult("cazador") * delta, true)
 
 
 # --- Dibujo -----------------------------------------------------------------------
@@ -137,6 +174,12 @@ func _update_cloud(delta: float) -> void:
 func _draw() -> void:
 	var t: float = world.elapsed
 	var col := Color(0.15, 0.12, 0.05)
+	if _wings_t > 0.0:
+		draw_arc(creep.position, creep.radius + 22.0, 0.0, TAU, 32, Color(0.7, 0.85, 0.95, 0.7), 4.0)
+	if creep.rank("cazador") > 0:
+		draw_arc(creep.position, B.SWARM_HUNTER_RADIUS, 0.0, TAU, 40, Color(0.6, 0.5, 0.2, 0.2), 1.5)
+	for l in _larvae:
+		draw_circle(l.pos + Vector2(0, sin(t * 5.0) * 1.5), 3.0, Color(0.95, 0.95, 0.8))
 	for i in mini(home, 60):
 		var a: float = TAU * i / maxf(mini(home, 60), 1.0) + t * (1.5 + (i % 3) * 0.4)
 		var r: float = creep.radius + 8.0 + (i % 4) * 4.0 + 2.0 * sin(t * 7.0 + i)

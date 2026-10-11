@@ -97,7 +97,7 @@ func _process(delta: float) -> void:
 			hp = minf(max_hp, hp + max_hp * B.ELITE_HEART_HERO_HEAL)
 			world.remove_corpse(c)
 
-	_fire_t -= delta
+	_fire_t -= delta / status.fire_slow() # Tinta del Abisal: dispara más lento
 	if attacks.busy():
 		_aim_windup = 0.0
 	elif _aim_windup > 0.0:

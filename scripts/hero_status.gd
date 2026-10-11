@@ -14,6 +14,9 @@ var _stun_immune := 0.0
 var _slow_t := 0.0
 var _slow_amount := 0.0
 var _blind_t := 0.0
+var _ink_t := 0.0 # Tinta del Abisal (cada frame mientras está adentro)
+var _vuln_t := 0.0 # Ojo del abismo (cada frame mientras está cerca de una grieta)
+var _vuln := 0.0
 var _log: Array = [] # {time, amount, melee}
 var _drip := 0.0
 var _numbers: Array = [] # {amount, t, big}
@@ -55,6 +58,25 @@ func blind(time: float) -> void:
 
 func blinded() -> bool:
 	return _blind_t > 0.0
+
+
+## Tinta: mientras lo llaman, dispara más lento.
+func ink() -> void:
+	_ink_t = 0.1
+
+
+func fire_slow() -> float:
+	return 1.0 + B.ABYSS_INK_FIRE_SLOW if _ink_t > 0.0 else 1.0
+
+
+## Ojo del abismo: mientras lo llaman, recibe más daño de todo.
+func expose(amount: float) -> void:
+	_vuln = amount if _vuln_t <= 0.0 else maxf(_vuln, amount)
+	_vuln_t = 0.1
+
+
+func damage_mult() -> float:
+	return 1.0 + _vuln if _vuln_t > 0.0 else 1.0
 
 
 func bleed(total: float) -> void:
@@ -113,6 +135,8 @@ func _process(delta: float) -> void:
 	_stun_immune = maxf(_stun_immune - delta, 0.0)
 	_slow_t = maxf(_slow_t - delta, 0.0)
 	_blind_t = maxf(_blind_t - delta, 0.0)
+	_ink_t = maxf(_ink_t - delta, 0.0)
+	_vuln_t = maxf(_vuln_t - delta, 0.0)
 	for b in _bleeds.duplicate():
 		b.t -= delta
 		hero.take_damage(b.dps * delta, true, true, true)

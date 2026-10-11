@@ -625,17 +625,15 @@ const BREATH_TICK := 0.2
 const BREATH_DAMAGE := 0.6 # x mordida por tick
 # Mutaciones de arma
 const THORNS_DAMAGE := 0.6 # Espinas: x mordida a lo que tocás en la embestida
-const THORNS_PER_RANK := 0.3
 const GOO_EVERY := 3.0 # Pegote: charco pegajoso
 const GOO_RADIUS := 50.0
 const GOO_TIME := 4.0
-const GOO_SLOW := [0.25, 0.35, 0.45] # por rango
+const GOO_SLOW := 0.25 # sube con el rango (POWER_RANK_EFFECT)
 const RALLY_RADIUS := 250.0 # Llamado: la horda a esta distancia corre hacia donde apuntás
 const RALLY_SPEED_MULT := 1.8
 const RALLY_TIME := 3.0
-const RALLY_COOLDOWN := [12.0, 10.0, 8.0] # por rango
+const RALLY_COOLDOWN := 12.0 # baja con el rango (POWER_RANK_COOLDOWN)
 const RALLY_AIM_DIST := 250.0 # con stick, el punto queda a esta distancia
-const ARM_WEIGHT := 3 # en el sorteo, las mutaciones de arma pesan esto contra las de +%
 
 # --- Arbustos (tanda S5; los maneja el programador de sistemas) ---------------
 const BUSH_COUNT := 14
@@ -670,7 +668,6 @@ const ABYSS_RIFT_RADIUS := 60.0
 const ABYSS_GRAB_RADIUS := 100.0 # Agarre: héroe o Paladín a esta distancia de una grieta
 const ABYSS_GRAB_SLOW := 0.35
 const ABYSS_GRAB_DPS := 0.25 # × mordida por segundo
-const ABYSS_DEEP_PER_RANK := 0.25 # Abismo hondo: +radio de grietas y tentáculos
 const ABYSS_TIDE_SLOW := 0.25 # Marea negra: líneas entre grietas
 const ABYSS_TIDE_WIDTH := 24.0
 const ABYSS_TELEPORT_COOLDOWN := 5.0
@@ -682,7 +679,6 @@ const ABYSS_LASH_WIDTH := 36.0
 const ABYSS_LASH_WARN := 0.5
 const ABYSS_LASH_DAMAGE := 1.4
 const ABYSS_LASH_PUSH := 40.0
-const ABYSS_ANCHOR_STUN := 0.6 # Ancla: aturde en vez de empujar
 const ABYSS_MAW_EVERY := 14.0 # Fauces (desde Esqueleto)
 const ABYSS_MAW_TIME := 4.0
 const ABYSS_MAW_DPS := 2.0 # × mordida por segundo
@@ -697,7 +693,7 @@ const SWARM_MAX := [20, 35, 55, 80] # por etapa
 const SWARM_PER_CORPSE := 1
 const SWARM_PER_CIVILIAN := 3
 const SWARM_BREED_EVERY := 4.0 # cría pasiva (Colmena: -1 s por rango)
-const SWARM_HIVE_PER_RANK := 1.0
+const SWARM_HIVE_MULT := 0.8 # Colmena: la cría pasiva tarda x esto por rango
 const SWARM_SEND_SHARE := 0.25 # arma inicial: parte del enjambre que sale a picar
 const SWARM_SEND_MIN := 3
 const SWARM_SEND_RANGE := 320.0
@@ -710,3 +706,95 @@ const SWARM_BUZZ_CONFUSE := 1.0 # Zumbido: el Paladín picado pierde el objetivo
 const SWARM_CLOUD_EVERY := 15.0 # Nube (desde Esqueleto)
 const SWARM_CLOUD_RANGE := 300.0
 const SWARM_CLOUD_TIME := [3.0, 3.0, 3.5, 4.0] # por etapa
+
+
+# --- Poderes por clase (tanda S8, estilo HoloCure) ------------------------------
+# Cada clase tiene 10 poderes; el primero es fijo (lo tenés desde el arranque).
+# Máximo POWERS_MAX distintos, POWER_MAX_RANK rangos cada uno. Cada rango arriba del 1:
+# +POWER_RANK_EFFECT de daño o efecto y -POWER_RANK_COOLDOWN de recarga (salvo excepciones).
+
+const POWERS_MAX := 5
+const POWER_MAX_RANK := 5
+const POWER_RANK_EFFECT := 0.2
+const POWER_RANK_COOLDOWN := 0.08
+const PICK_WEIGHT_NEW := 4 # en el sorteo de cartas: poder nuevo
+const PICK_WEIGHT_RANK := 4 # subir de rango un poder tuyo
+const PICK_WEIGHT_STAT := 2 # Colmillos, Patas, Caparazón...
+const SPIT_EXTRA_AT := [3, 5] # Escupitajo: +1 escupitajo en estos rangos
+
+const CLASS_POWERS := {
+	"engendro": [
+		{"id": "escupitajo", "name": "Escupitajo", "icon": "Es", "color": Color(0.55, 0.95, 0.2), "desc": "Escupís ácido al héroe. Rangos 3 y 5: +1 escupitajo."},
+		{"id": "huesos", "name": "Huesos", "icon": "Hu", "color": Color(0.95, 0.93, 0.85), "desc": "Cada 2,5 s tirás 3 huesos que rebotan entre blancos."},
+		{"id": "detonar", "name": "Detonar cadáver", "icon": "De", "color": Color(0.75, 0.3, 0.9), "desc": "Cada 4 s explota un cadáver cerca del héroe."},
+		{"id": "aliento", "name": "Aliento", "icon": "Al", "color": Color(1.0, 0.45, 0.1), "desc": "Cada 5 s echás fuego en cono 1,2 s."},
+		{"id": "espinas", "name": "Espinas", "icon": "Ep", "color": Color(0.6, 0.85, 0.4), "desc": "Durante la embestida, todo lo que tocás recibe mordida x0,6."},
+		{"id": "pegote", "name": "Pegote", "icon": "Pg", "color": Color(0.95, 0.85, 0.35), "desc": "Cada 3 s dejás un charco que frena al héroe 25%."},
+		{"id": "llamado", "name": "Llamado", "icon": "Ll", "color": Color(1.0, 0.9, 0.4), "desc": "C o RT: la horda cercana corre hacia donde apuntás (recarga 12 s)."},
+		{"id": "lluvia", "name": "Lluvia ácida", "icon": "Lu", "color": Color(0.4, 0.9, 0.3), "desc": "Cada escupitajo deja un charco que quema y frena."},
+		{"id": "coraza", "name": "Coraza viva", "icon": "Co", "color": Color(0.9, 0.85, 0.6), "desc": "Al terminar la embestida sale una onda que daña, empuja y aturde."},
+		{"id": "carronia", "name": "Señor de la carroña", "icon": "Ca", "color": Color(0.45, 0.9, 0.5), "desc": "Los compañeros que mueren cerca se levantan 8 s como zombis."},
+	],
+	"abisal": [
+		{"id": "azote", "name": "Azote", "icon": "Az", "color": Color(0.6, 0.3, 0.9), "desc": "Cada 1,5 s un tentáculo golpea el piso en línea hacia el héroe y lo empuja."},
+		{"id": "fauces", "name": "Fauces", "icon": "Fa", "color": Color(0.85, 0.2, 0.3), "desc": "Cada 14 s una grieta se vuelve boca 4 s: come civiles y muerde al héroe."},
+		{"id": "aplastar", "name": "Aplastar", "icon": "Ap", "color": Color(0.5, 0.25, 0.75), "desc": "Al cerrarse Fauces (o cada 8 s sin Fauces) golpea alrededor de la grieta y aturde."},
+		{"id": "marea", "name": "Marea negra", "icon": "Ma", "color": Color(0.3, 0.1, 0.45), "desc": "Las grietas se unen con líneas que frenan al héroe 25%."},
+		{"id": "ancla", "name": "Ancla", "icon": "An", "color": Color(0.4, 0.15, 0.55), "desc": "Cada 6 s un tentáculo agarra al héroe y lo deja quieto 0,8 s."},
+		{"id": "kraken", "name": "Kraken", "icon": "Kr", "color": Color(0.25, 0.5, 0.6), "desc": "Cada 18 s un tentáculo gigante sale bajo el héroe (aviso 1 s, mordida x4)."},
+		{"id": "remolino", "name": "Remolino", "icon": "Re", "color": Color(0.35, 0.35, 0.7), "desc": "Las grietas chupan cadáveres cercanos y te los mandan."},
+		{"id": "tinta", "name": "Tinta", "icon": "Ti", "color": Color(0.1, 0.1, 0.15), "desc": "Cada 8 s una nube de tinta alrededor tuyo 3 s: adentro, el héroe dispara 50% más lento."},
+		{"id": "surco", "name": "Surco", "icon": "Su", "color": Color(0.45, 0.2, 0.6), "desc": "La embestida deja una franja 2 s que frena al héroe 40% y lo lastima."},
+		{"id": "ojo", "name": "Ojo del abismo", "icon": "Oj", "color": Color(0.9, 0.3, 0.6), "desc": "Cerca de una grieta, el héroe recibe +15% de daño de todo."},
+	],
+	"reina": [
+		{"id": "picar", "name": "A picar", "icon": "Pi", "color": Color(0.85, 0.7, 0.2), "desc": "Mandás parte del enjambre a picar. Cada rango: +1 insecto y -0,3 s."},
+		{"id": "nube", "name": "Nube", "icon": "Nu", "color": Color(0.3, 0.25, 0.1), "desc": "Cada 15 s el enjambre envuelve al héroe y lo ciega. Mientras, quedás sin insectos."},
+		{"id": "aguijon", "name": "Aguijón", "icon": "Ag", "color": Color(0.85, 0.2, 0.2), "desc": "Cada salida a picar hace sangrar al héroe."},
+		{"id": "zumbido", "name": "Zumbido", "icon": "Zu", "color": Color(0.7, 0.7, 0.5), "desc": "Los Paladines picados pierden el objetivo 1 s."},
+		{"id": "colmena", "name": "Colmena", "icon": "Cm", "color": Color(0.95, 0.75, 0.3), "desc": "Criás insectos más rápido."},
+		{"id": "avispas", "name": "Avispas de fuego", "icon": "Av", "color": Color(1.0, 0.5, 0.15), "desc": "Los insectos que te matan explotan alrededor tuyo."},
+		{"id": "alas", "name": "Escudo de alas", "icon": "Es", "color": Color(0.7, 0.85, 0.95), "desc": "Con 10+ insectos, cada 10 s recibís 50% menos daño por 2 s."},
+		{"id": "larvas", "name": "Larvas", "icon": "La", "color": Color(0.95, 0.95, 0.8), "desc": "Cada cadáver que comés deja una larva: en 4 s, +2 insectos."},
+		{"id": "madre", "name": "Reina madre", "icon": "Rm", "color": Color(0.8, 0.5, 0.9), "desc": "+15% de máximo de insectos por rango."},
+		{"id": "cazador", "name": "Enjambre cazador", "icon": "Ec", "color": Color(0.6, 0.5, 0.2), "desc": "El héroe cerca tuyo recibe picaduras de los insectos en casa."},
+	],
+}
+
+# Abisal (S8)
+const ABYSS_SLAM_EVERY := 8.0 # Aplastar sin Fauces
+const ABYSS_ANCHOR_EVERY := 6.0
+const ABYSS_ANCHOR_RANGE := 400.0
+const ABYSS_ANCHOR_TIME := 0.8
+const ABYSS_KRAKEN_EVERY := 18.0
+const ABYSS_KRAKEN_RANGE := 450.0
+const ABYSS_KRAKEN_WARN := 1.0
+const ABYSS_KRAKEN_RADIUS := 90.0
+const ABYSS_KRAKEN_DAMAGE := 4.0
+const ABYSS_WHIRL_RADIUS := 200.0 # Remolino
+const ABYSS_WHIRL_PULL := 160.0 # velocidad a la que vienen los cadáveres
+const ABYSS_INK_EVERY := 8.0
+const ABYSS_INK_RADIUS := 120.0
+const ABYSS_INK_TIME := 3.0
+const ABYSS_INK_FIRE_SLOW := 0.5 # el héroe dispara x(1 + esto) más lento
+const ABYSS_FURROW_TIME := 2.0 # Surco
+const ABYSS_FURROW_WIDTH := 30.0
+const ABYSS_FURROW_SLOW := 0.4
+const ABYSS_FURROW_DPS := 0.5
+const ABYSS_EYE_RADIUS := 200.0 # Ojo del abismo
+const ABYSS_EYE_VULN := 0.15
+
+# Reina del enjambre (S8)
+const SWARM_PICK_EXTRA_PER_RANK := 1 # A picar: +1 insecto por salida por rango
+const SWARM_PICK_CD_PER_RANK := 0.3
+const SWARM_FIRE_WASP_RADIUS := 50.0 # Avispas de fuego
+const SWARM_FIRE_WASP_DAMAGE := 0.3 # x mordida por insecto muerto
+const SWARM_WINGS_MIN := 10 # Escudo de alas
+const SWARM_WINGS_EVERY := 10.0
+const SWARM_WINGS_TIME := 2.0
+const SWARM_WINGS_REDUCTION := 0.5
+const SWARM_LARVA_TIME := 4.0
+const SWARM_LARVA_INSECTS := 2
+const SWARM_MOTHER_PER_RANK := 0.15
+const SWARM_HUNTER_RADIUS := 130.0 # Enjambre cazador
+const SWARM_HUNTER_DPS := 0.2 # x mordida por segundo

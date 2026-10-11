@@ -96,6 +96,7 @@ func _close_horde() -> Array:
 func take_damage(amount: float, from_player: bool, melee := false, tick := false) -> void:
 	if hp <= 0.0 or shield_t > 0.0:
 		return
+	amount *= status.damage_mult() # Ojo del abismo
 	if from_player:
 		amount = traits.filter_damage(amount, melee, tick)
 		status.log_damage(amount, melee)

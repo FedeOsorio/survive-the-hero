@@ -47,7 +47,7 @@ func _process(delta: float) -> void:
 ## Termina el escupitajo; con Lluvia ácida deja un charco donde cae.
 func _land() -> void:
 	if from_player and world.player.rank("lluvia") > 0:
-		world.spawn_puddle(position, world.player.bite * B.ACID_DPS_MULT)
+		world.spawn_puddle(position, world.player.bite * B.ACID_DPS_MULT * world.player.pmult("lluvia"))
 	world.remove_spit(self)
 
 

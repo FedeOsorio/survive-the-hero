@@ -15,7 +15,7 @@ Survivor estilo Vampire Survivors al revés, en Godot 4 (GDScript), pixel art 2D
 - `project.godot`: configuración (escena principal `scenes/menu.tscn`; la partida es `scenes/main.tscn`; autoload `Settings`).
 - `scripts/balance.gd`: todos los números de balance. Para ajustar balance, tocá solo este archivo.
 - `scripts/main.gd`: raíz de la partida (spawn de la horda, reloj, quién te caza y fin de partida).
-- `scripts/creep.gd`: el jugador (absorber, mutar, evolucionar, ataques automáticos, embestida invulnerable).
+- `scripts/creep.gd`: el jugador, en cadena de herencia: `creep_base.gd` (variables, rangos, stats, `pmult`/`pcd` de los poderes) → `creep_growth.gd` (comer, mutar, evolucionar) → `creep.gd` (moverse, mordida, embestida invulnerable, daño, dibujo; es el que se instancia).
 - `scripts/heroes.gd`: los tres héroes (Arquero, Caballero, Maga; tabla `HEROES` en balance), llegadas por portal, "el más cercano" (`world.hero`), amanecer a los 15:00 y el paso al Último Bastión.
 - `scripts/hero.gd`: un héroe, en cadena de herencia (cada pieza extiende la anterior):
   - `hero_base.gd`: todas las variables y consultas chicas (rolling, hunting_you, blocks_from, nombres).
@@ -35,12 +35,12 @@ Survivor estilo Vampire Survivors al revés, en Godot 4 (GDScript), pixel art 2D
 - `scripts/minion.gd`, `corpse.gd`, `gem.gd`, `projectile.gd`: horda, cadáveres, gemas de XP y flechas.
 - `scripts/spit.gd`: escupitajos del creep y disparos de los arqueros de la horda.
 - `scripts/civilian.gd`: civiles que huyen del creep (comida extra).
-- `scripts/mutations.gd`: lista de mutaciones y evoluciones del creep, y sorteo de 3 opciones (evolución garantizada si está disponible; Festín de relleno).
+- `scripts/mutations.gd`: mejoras al subir de nivel estilo HoloCure: stats (`LIST`), poderes de la clase (`CLASS_POWERS` en balance: 10 por clase, el primero fijo, hasta 5 con 5 rangos) y sorteo de 3 cartas (poder nuevo / rango / stat; Mandíbula sangrienta como única evolución; Festín de relleno).
 - Modos de prueba: `-- --sim` (creep invulnerable) y `-- --bot` (bot juega); como la escena principal es el menú, hay que pasar `res://scenes/main.tscn` antes del `--`. Federico prueba él mismo: no correr el bot en cada cambio.
 - `scripts/hud.gd`, `arena.gd`: interfaz y fondo.
 - `scripts/menu.gd` (`scenes/menu.tscn`), `pause.gd`, `options_menu.gd`, `ui.gd`: menú principal, pausa y botones de la pantalla final, Opciones y piezas de UI compartidas.
-- `scripts/creep_abilities.gd` (`player.abilities`): habilidades por etapa (Huesos, Detonar cadáver, Aliento) y mutaciones de arma (Espinas, Pegote, Llamado). Números en la sección "Habilidades del creep" al final de `balance.gd`.
-- `scripts/creep_class.gd` (`player.klass`): clase del Anti Hero elegida en el menú; la base es el Engendro (kit de siempre) y expone ganchos (`replaces_kit`, `on_eat`, `take_hit`, `ability` en C, `hp_text`). Clases: `class_abyss.gd` (Abisal: grietas, tentáculos, Azote, Fauces) y `class_swarm.gd` (Reina del enjambre: los insectos son la vida). Cartas del menú en `class_select.gd`; números en la sección "Clases del Anti Hero" al final de `balance.gd`; para probar una clase: `-- --class=abisal`.
+- `scripts/creep_abilities.gd` (`player.abilities`): poderes del Engendro (Escupitajo, Huesos, Detonar, Aliento, Espinas, Pegote, Llamado, Coraza; Lluvia ácida en `spit.gd`, Señor de la carroña en `main.gd`) y la tecla C hacia la clase. Números en "Habilidades del creep" al final de `balance.gd`.
+- `scripts/creep_class.gd` (`player.klass`): clase del Anti Hero elegida en el menú; la base es el Engendro y expone ganchos (`on_eat`, `take_hit`, `ability` en C, `hp_text`). Clases: `class_abyss.gd` (Abisal: grietas y Agarre, Azote, Fauces, Aplastar, Marea; el resto de sus poderes en `abyss_powers.gd`) y `class_swarm.gd` (Reina del enjambre: los insectos son la vida, y sus 10 poderes). El HUD muestra la fila de poderes. Cartas del menú en `class_select.gd`; números en la sección "Clases del Anti Hero" al final de `balance.gd`; para probar una clase: `-- --class=abisal`.
 - `scripts/bushes.gd` (`world.bushes`): arbustos para esconderte; `world.player_hidden(h)` junta camuflaje y arbustos (cazándote, el arbusto solo te esconde lejos de "h").
 - `scripts/mutation_picker.gd`: elección de mutación (hijo del HUD): cartas con clic, stick/flechas + A/Enter, 1/2/3 y X/A/B, bloqueo de 0,3 s al abrir.
 - `scripts/fx.gd` (`world.fx`): jugo visual (partículas al morir, números de daño que recibís, hit-stop, cámara lenta, anillos al mutar/evolucionar, columna al subir el héroe). Números en la sección FX al final de `balance.gd`.

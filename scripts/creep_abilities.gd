@@ -1,9 +1,10 @@
 extends Node2D
-## Habilidades del creep (hijo del creep, dibuja en coordenadas del mundo):
-## las de cada etapa, automáticas con recarga (Huesos del Esqueleto, Detonar cadáver
-## del Cultista, Aliento del Demonio; se suman al evolucionar) y las mutaciones de arma
-## Espinas (embestida), Pegote (charcos que frenan) y Llamado (C o RT: la horda
-## corre hacia donde apuntás).
+## Poderes del Engendro (hijo del creep, dibuja en coordenadas del mundo): Escupitajo
+## (fijo), Huesos, Detonar cadáver, Aliento, Espinas (embestida), Pegote (charcos que
+## frenan), Llamado (C o RT: la horda corre hacia donde apuntás) y Coraza viva (onda al
+## terminar la embestida). Lluvia ácida vive en spit.gd y Señor de la carroña en main.gd.
+## Cada uno corre si tenés rango; el rango sube daño (creep.pmult) y baja recarga (creep.pcd).
+## También manda C a la habilidad de la clase (las grietas del Abisal).
 
 const B := preload("res://scripts/balance.gd")
 
@@ -24,6 +25,8 @@ var rally_cd := 0.0
 var _rally_fx := 0.0
 var _rally_at := Vector2.ZERO
 var _aim_mouse := true # el último que usaste para apuntar: mouse o joystick
+var _spit_cd := 0.0
+var _wave_fx := 0.0
 
 
 func _ready() -> void:
@@ -43,17 +46,20 @@ func _process(delta: float) -> void:
 		return
 	_update_bones(delta)
 	_update_goo(delta)
-	var kit: bool = not creep.klass.replaces_kit() # Huesos, Detonar y Aliento son del Engendro
-	if kit and creep.stage >= 1:
+	_spit_cd -= delta
+	if creep.rank("escupitajo") > 0 and _spit_cd <= 0.0 and _spit():
+		_spit_cd = B.SPIT_COOLDOWN * creep.pcd("escupitajo")
+	if creep.rank("huesos") > 0:
 		_bones_cd -= delta
 		if _bones_cd <= 0.0 and _throw_bones():
-			_bones_cd = B.BONES_EVERY
-	if kit and creep.stage >= 2:
+			_bones_cd = B.BONES_EVERY * creep.pcd("huesos")
+	if creep.rank("detonar") > 0:
 		_blast_cd -= delta
 		if _blast_cd <= 0.0 and _corpse_blast():
-			_blast_cd = B.CORPSE_BLAST_EVERY
-	if kit and creep.stage >= 3:
+			_blast_cd = B.CORPSE_BLAST_EVERY * creep.pcd("detonar")
+	if creep.rank("aliento") > 0:
 		_update_breath(delta)
+	_wave_fx = maxf(_wave_fx - delta, 0.0)
 	_thorns()
 	rally_cd = maxf(rally_cd - delta, 0.0)
 	_rally_fx = maxf(_rally_fx - delta, 0.0)
@@ -92,7 +98,44 @@ func _nearest_target(from: Vector2, max_dist: float, skip = null):
 	return best
 
 
-# --- Esqueleto: huesos que rebotan ---------------------------------------------
+# --- Escupitajo (fijo del Engendro) ----------------------------------------------
+
+## Al héroe a tiro; si no, al Paladín o al civil más cercano. Rangos 3 y 5: +1 escupitajo.
+func _spit() -> bool:
+	var hero = world.hero
+	var target = null
+	if hero != null and creep.position.distance_to(hero.position) <= B.SPIT_RANGE:
+		target = hero
+	else:
+		target = _nearest_in(world.infamy.paladins, B.SPIT_RANGE)
+		if target == null:
+			target = _nearest_in(world.civilians, B.SPIT_RANGE)
+	if target == null:
+		return false
+	world.bushes.reveal()
+	var dir: Vector2 = (target.position - creep.position).normalized()
+	var shots := 1
+	for at in B.SPIT_EXTRA_AT:
+		if creep.rank("escupitajo") >= at:
+			shots += 1
+	for i in shots:
+		var offset := (i - (shots - 1) * 0.5) * deg_to_rad(10.0)
+		world.spawn_spit(creep.position + dir * creep.radius, dir.rotated(offset), creep.bite * B.SPIT_DAMAGE_MULT * creep.pmult("escupitajo"), true)
+	return true
+
+
+func _nearest_in(list: Array, max_dist: float):
+	var best = null
+	var best_d := max_dist
+	for n in list:
+		var d: float = creep.position.distance_to(n.position) - n.radius
+		if d < best_d:
+			best_d = d
+			best = n
+	return best
+
+
+# --- Huesos: rebotan entre blancos ------------------------------------------------
 
 func _throw_bones() -> bool:
 	var target = _nearest_target(creep.position, B.BONES_RANGE)
@@ -117,12 +160,12 @@ func _update_bones(delta: float) -> void:
 		b.vel = b.vel.lerp(to_t.normalized() * B.BONES_SPEED, minf(8.0 * delta, 1.0))
 		b.pos += b.vel * delta
 		if to_t.length() < t.radius + 6.0:
-			_hurt(t, creep.bite * B.BONES_DAMAGE)
+			_hurt(t, creep.bite * B.BONES_DAMAGE * creep.pmult("huesos"))
 			b.bounces -= 1
 			b.target = _nearest_target(b.pos, B.BONES_BOUNCE_RANGE, t) if b.bounces >= 0 else null
 
 
-# --- Cultista: detonar cadáver --------------------------------------------------
+# --- Detonar cadáver ------------------------------------------------------------
 
 func _corpse_blast() -> bool:
 	var best = null
@@ -141,13 +184,13 @@ func _corpse_blast() -> bool:
 	world.remove_corpse(best)
 	for t in _targets():
 		if pos.distance_to(t.position) < B.CORPSE_BLAST_RADIUS + t.radius:
-			_hurt(t, creep.bite * B.CORPSE_BLAST_DAMAGE)
+			_hurt(t, creep.bite * B.CORPSE_BLAST_DAMAGE * creep.pmult("detonar"))
 	world.fx.explosion(pos, B.CORPSE_BLAST_RADIUS, Color(0.75, 0.3, 0.9))
 	world.shake()
 	return true
 
 
-# --- Demonio: aliento en cono ---------------------------------------------------
+# --- Aliento en cono --------------------------------------------------------------
 
 func _update_breath(delta: float) -> void:
 	if _breath_t > 0.0:
@@ -162,31 +205,33 @@ func _update_breath(delta: float) -> void:
 			for t in _targets():
 				var to_t: Vector2 = t.position - creep.position
 				if to_t.length() < B.BREATH_LENGTH + t.radius and absf(_breath_dir.angle_to(to_t)) <= half:
-					_hurt(t, creep.bite * B.BREATH_DAMAGE)
+					_hurt(t, creep.bite * B.BREATH_DAMAGE * creep.pmult("aliento"))
 		return
 	_breath_cd -= delta
 	if _breath_cd > 0.0:
 		return
 	var target = _nearest_target(creep.position, B.BREATH_LENGTH)
 	if target != null:
-		_breath_cd = B.BREATH_EVERY
+		_breath_cd = B.BREATH_EVERY * creep.pcd("aliento")
 		_breath_t = B.BREATH_TIME
 		_breath_tick = 0.0
 		_breath_dir = (target.position - creep.position).normalized()
 
 
-# --- Mutaciones de arma ---------------------------------------------------------
+# --- Embestida: Espinas y Coraza viva --------------------------------------------
 
 ## Espinas: durante la embestida, cada cosa que tocás recibe daño una vez.
+## Coraza viva: al terminar la embestida sale la onda.
 func _thorns() -> void:
 	var dashing: bool = creep.dashing()
 	if dashing and not _was_dashing:
 		_thorn_victims.clear()
+	if _was_dashing and not dashing and creep.rank("coraza") > 0:
+		_shell_wave()
 	_was_dashing = dashing
-	var r: int = creep.rank("espinas")
-	if not dashing or r == 0:
+	if not dashing or creep.rank("espinas") == 0:
 		return
-	var dmg: float = creep.bite * (B.THORNS_DAMAGE + B.THORNS_PER_RANK * (r - 1))
+	var dmg: float = creep.bite * B.THORNS_DAMAGE * creep.pmult("espinas")
 	for v in _targets() + world.civilians:
 		if not _thorn_victims.has(v) and creep.position.distance_to(v.position) <= creep.radius + v.radius:
 			_thorn_victims.append(v)
@@ -196,15 +241,36 @@ func _thorns() -> void:
 				_hurt(v, dmg)
 
 
+## Coraza viva: daña, empuja y aturde al héroe; empuja a la horda.
+func _shell_wave() -> void:
+	_wave_fx = 0.25
+	var pos: Vector2 = creep.position
+	for hero in world.heroes.targets():
+		var to_h: Vector2 = hero.position - pos
+		if to_h.length() < B.SHELL_WAVE_RADIUS + hero.radius and not hero.rolling():
+			hero.take_damage(creep.bite * B.SHELL_WAVE_DAMAGE * creep.pmult("coraza"), true, true)
+			world.shake()
+			hero.position = (hero.position + to_h.normalized() * B.SHELL_WAVE_PUSH).clamp(Vector2(20, 20), B.ARENA_SIZE - Vector2(20, 20))
+			hero.status.stun(B.HERO_STUN_TIME)
+	for h in world.infamy.paladins:
+		if pos.distance_to(h.position) < B.SHELL_WAVE_RADIUS + h.radius:
+			h.take_damage(creep.bite * B.SHELL_WAVE_DAMAGE * creep.pmult("coraza"))
+	for m in world.minions_near(pos):
+		var to_m: Vector2 = m.position - pos
+		if to_m.length() < B.SHELL_WAVE_RADIUS and to_m.length() > 0.01:
+			m.position += to_m.normalized() * B.SHELL_WAVE_MINION_PUSH
+
+
+# --- Pegote y Llamado ---------------------------------------------------------------
+
 ## Pegote: un charco cada GOO_EVERY que frena a los héroes que lo pisan.
 func _update_goo(delta: float) -> void:
-	var r: int = creep.rank("pegote")
-	if r > 0:
+	if creep.rank("pegote") > 0:
 		_goo_cd -= delta
 		if _goo_cd <= 0.0:
-			_goo_cd = B.GOO_EVERY
+			_goo_cd = B.GOO_EVERY * creep.pcd("pegote")
 			_goo.append({"pos": creep.position, "t": B.GOO_TIME})
-	var slow: float = B.GOO_SLOW[clampi(r - 1, 0, B.GOO_SLOW.size() - 1)]
+	var slow: float = minf(B.GOO_SLOW * creep.pmult("pegote"), 0.6)
 	for g in _goo.duplicate():
 		g.t -= delta
 		if g.t <= 0.0:
@@ -217,8 +283,7 @@ func _update_goo(delta: float) -> void:
 
 ## Llamado: la horda cercana corre hacia donde apuntás.
 func _rally() -> void:
-	var r: int = creep.rank("llamado")
-	rally_cd = B.RALLY_COOLDOWN[clampi(r - 1, 0, B.RALLY_COOLDOWN.size() - 1)]
+	rally_cd = B.RALLY_COOLDOWN * creep.pcd("llamado")
 	_rally_at = _aim_point()
 	_rally_fx = 0.6
 	for m in world.minions:
@@ -242,6 +307,8 @@ func _aim_point() -> Vector2:
 # --- Dibujo ---------------------------------------------------------------------
 
 func _draw() -> void:
+	if _wave_fx > 0.0:
+		draw_arc(creep.position, B.SHELL_WAVE_RADIUS * (1.0 - _wave_fx * 2.0), 0.0, TAU, 32, Color(0.9, 0.85, 0.6, 0.9), 5.0)
 	for g in _goo:
 		var a := clampf(g.t / B.GOO_TIME, 0.2, 1.0)
 		draw_circle(g.pos, B.GOO_RADIUS, Color(0.85, 0.75, 0.3, 0.22 * a))
@@ -260,7 +327,7 @@ func _draw() -> void:
 		var flicker := 0.25 + 0.1 * sin(world.elapsed * 40.0)
 		draw_colored_polygon(pts, Color(1.0, 0.45, 0.1, flicker))
 	if creep.rank("llamado") > 0 and rally_cd > 0.0:
-		var k: float = rally_cd / B.RALLY_COOLDOWN[clampi(creep.rank("llamado") - 1, 0, 2)]
+		var k: float = rally_cd / (B.RALLY_COOLDOWN * creep.pcd("llamado"))
 		draw_arc(creep.position, creep.radius + 6.0, -PI * 0.5, -PI * 0.5 + TAU * (1.0 - k), 24, Color(1.0, 0.9, 0.4, 0.5), 2.0)
 	if _rally_fx > 0.0:
 		var k := _rally_fx / 0.6

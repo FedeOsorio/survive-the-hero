@@ -107,10 +107,11 @@ func _draw() -> void:
 	var slide := (1.0 - k) * 40.0
 	draw_rect(Rect2(Vector2(0, size.y * 0.48), Vector2(size.x, size.y * 0.52)), Color(0, 0, 0, 0.45 * k))
 	_centered(font, Vector2(size.x * 0.5, size.y * 0.53 + slide), "¡Mutación! Elegí una", 26, Color(0.6, 0.9, 1.0, k))
+	var klass: String = p.klass.id
 	for i in n:
 		var id: String = choices[i]
-		var m: Dictionary = Mutations.LIST[id]
-		var evo := Mutations.is_evolution(id)
+		var kind := Mutations.kind(id, p.ranks, klass)
+		var evo := kind == "evolucion" or kind == "nuevo" # tarjetas doradas
 		var sel := i == _selected and not locked
 		var r := _card_rect(i, n)
 		r.position.y += slide - (6.0 if sel else 0.0)
@@ -126,10 +127,31 @@ func _draw() -> void:
 		edge.a *= a
 		draw_rect(r, edge, false, 4.0 if sel else (3.0 if evo else 2.0))
 		var title_col := Color(1.0, 0.85, 0.35, a) if evo else Color(1, 1, 1, a)
-		draw_string(font, r.position + Vector2(14, 30), "%d. %s" % [i + 1, m.name], HORIZONTAL_ALIGNMENT_LEFT, -1, 20, title_col)
-		var rank_text := "EVOLUCIÓN" if evo else ("Rango %d" % (p.rank(id) + 1) if m.max == 0 else "Rango %d/%d" % [p.rank(id) + 1, m.max])
-		draw_string(font, r.position + Vector2(14, 56), rank_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(1.0, 0.8, 0.3, a) if evo else Color(0.7, 0.7, 0.8, a))
-		draw_multiline_string(font, r.position + Vector2(14, 86), Mutations.desc(id), HORIZONTAL_ALIGNMENT_LEFT, CARD.x - 28, 16, -1, Color(0.9, 0.9, 0.95, a))
+		draw_string(font, r.position + Vector2(14, 30), "%d. %s" % [i + 1, Mutations.title(id, klass)], HORIZONTAL_ALIGNMENT_LEFT, -1, 20, title_col)
+		draw_string(font, r.position + Vector2(14, 56), _tag(id, kind, p), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, _tag_color(kind, a))
+		draw_multiline_string(font, r.position + Vector2(14, 86), Mutations.desc(id, p.ranks, klass), HORIZONTAL_ALIGNMENT_LEFT, CARD.x - 28, 16, -1, Color(0.9, 0.9, 0.95, a))
+
+
+func _tag(id: String, kind: String, p) -> String:
+	match kind:
+		"evolucion":
+			return "EVOLUCIÓN"
+		"nuevo":
+			return "PODER NUEVO (%d/%d)" % [Mutations.owned_powers(p.ranks, p.klass.id).size() + 1, B.POWERS_MAX]
+		"rango":
+			return "PODER · RANGO %d/%d" % [p.rank(id) + 1, B.POWER_MAX_RANK]
+		"relleno":
+			return "STAT"
+	return "STAT · RANGO %d/%d" % [p.rank(id) + 1, Mutations.LIST[id].max]
+
+
+func _tag_color(kind: String, a: float) -> Color:
+	match kind:
+		"evolucion", "nuevo":
+			return Color(1.0, 0.8, 0.3, a)
+		"rango":
+			return Color(0.5, 0.85, 1.0, a)
+	return Color(0.7, 0.7, 0.8, a)
 
 
 func _centered(font: Font, pos: Vector2, s: String, fsize: int, col: Color) -> void:

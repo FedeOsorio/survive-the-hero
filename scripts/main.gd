@@ -282,6 +282,7 @@ func on_minion_killed(m) -> void:
 		var z = spawn_minion(m.type_name, false, m.position)
 		z.max_hp = m.max_hp
 		z.make_raised()
+		z.raise_t *= player.pmult("carronia") # más rangos, duran más
 		raised_count += 1
 	var c = Corpse.new()
 	c.world = self

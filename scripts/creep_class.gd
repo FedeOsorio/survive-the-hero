@@ -45,11 +45,6 @@ func hp_mult() -> float:
 	return B.CLASSES[id].hp
 
 
-## El escupitajo y Huesos / Detonar / Aliento son del Engendro; las demás traen su arma.
-func replaces_kit() -> bool:
-	return false
-
-
 func eats_gems() -> bool:
 	return true
 
