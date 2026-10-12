@@ -155,7 +155,7 @@ const GEM_SCATTER := 30.0 # las gemas saltan un poco al caer, lejos del cadáver
 # HERO_MIN_COOLDOWN), y después se divide por el "fire_rate" del héroe.
 const HERO_DAMAGE_PER_LEVEL := 0.06
 const HERO_COOLDOWN_PER_LEVEL := 0.025
-const HERO_MIN_COOLDOWN := 0.30
+const HERO_MIN_COOLDOWN := 0.15 # 09-j: era 0,30 (el Arquero sigue mejorando hasta nivel ~40)
 const HERO_LEVELS_PER_EXTRA_ARROW := 6
 # Cada flecha atraviesa a este número de enemigos extra (Flechas perforantes suma más).
 const HERO_ARROW_PIERCE := 1
@@ -369,8 +369,8 @@ static func xp_for_level(level: int) -> float:
 const MINION_TYPES := {
 	"rata": {"hp": 6.0, "speed": 120.0, "dps": 4.0, "radius": 7.0, "xp": 1.0, "biomass": 0.8, "color": Color(0.6, 0.5, 0.4)},
 	"zombi": {"hp": 16.0, "speed": 80.0, "dps": 7.0, "radius": 10.0, "xp": 2.0, "biomass": 1.5, "color": Color(0.4, 0.6, 0.45)},
-	"arquero": {"hp": 10.0, "speed": 70.0, "dps": 0.0, "radius": 9.0, "xp": 2.0, "biomass": 1.5, "color": Color(0.55, 0.4, 0.75),
-		"range": 260.0, "shot_cooldown": 2.2, "shot_damage": 4.0},
+	"arquero": {"hp": 10.0, "speed": 85.0, "dps": 0.0, "radius": 9.0, "xp": 2.0, "biomass": 1.5, "color": Color(0.55, 0.4, 0.75),
+		"range": 300.0, "shot_cooldown": 1.6, "shot_damage": 6.0}, # 09-j: antes 260 / 2,2 / 4 / vel. 70
 	"bruto": {"hp": 60.0, "speed": 60.0, "dps": 14.0, "radius": 16.0, "xp": 5.0, "biomass": 5.0, "color": Color(0.6, 0.3, 0.3)},
 }
 const MAX_MINIONS_BY_STAGE := [198, 220, 220, 220] # 09-f: según tu etapa (280 pasaba los 16,6 ms)
@@ -379,8 +379,12 @@ const MAX_GEMS := 225 # 09-h: era 150, con gemas más largas el tope las borraba
 const MAX_CORPSES := 120 # al pasarse, desaparece el más viejo (los corazones no)
 const CORPSE_LIFETIME := 20.0
 const GEM_LIFETIME := 37.5 # 09-h: era 25
-const SPAWN_MIN_DIST := 650.0
-const SPAWN_MAX_DIST := 900.0
+# 09-j: más cerca del héroe para que lleguen (antes 650-900). Nunca dentro de la pantalla:
+# si cae en SPAWN_VIEW_HALF alrededor del creep, prueba otro ángulo (hasta SPAWN_TRIES).
+const SPAWN_MIN_DIST := 500.0
+const SPAWN_MAX_DIST := 750.0
+const SPAWN_VIEW_HALF := Vector2(680.0, 400.0) # media pantalla 1280×720 y un margen
+const SPAWN_TRIES := 8
 
 
 # La horda mejora por escalones: uno cada HORDE_TIER_MINUTES.
@@ -409,17 +413,23 @@ static func minion_speed_mult(minute: float) -> float:
 	return minf(1.0 + horde_tier(minute) * 0.04, 1.4)
 
 
+# 09-j: además, cada HORDE_WAVE_SECONDS las apariciones suben HORDE_WAVE_STEP (× 1 + 0,08 · escalones).
+const HORDE_WAVE_SECONDS := 30.0
+const HORDE_WAVE_STEP := 0.08
+
+
 static func spawns_per_second(minute: float, stage := 0) -> float:
-	return (2.2 + minute * 0.99) * (1.0 + HORDE_STAGE_SPAWN * stage)
+	var waves := floorf(minute * 60.0 / HORDE_WAVE_SECONDS)
+	return (2.2 + minute * 0.99) * (1.0 + HORDE_STAGE_SPAWN * stage) * (1.0 + HORDE_WAVE_STEP * waves)
 
 
 static func pick_minion_type(minute: float, rng: RandomNumberGenerator) -> String:
 	var r := rng.randf()
 	if minute > 2.0 and r < minf(0.05 + minute * 0.025, 0.3):
 		return "bruto"
-	if minute > 1.0 and r < 0.4 and r >= 0.25:
+	if minute > 0.5 and r >= 0.3 and r < 0.5: # 09-j: 20% desde el minuto 0,5 (el bruto llega hasta 0,3)
 		return "arquero"
-	if r < 0.55:
+	if r < 0.6:
 		return "rata"
 	return "zombi"
 

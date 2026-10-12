@@ -190,11 +190,14 @@ func _heroes_report() -> String:
 # --- Spawning ----------------------------------------------------------------
 
 func spawn_minion(type_name: String, elite := false, at = null):
-	var angle := rng.randf() * TAU
-	var dist := rng.randf_range(B.SPAWN_MIN_DIST, B.SPAWN_MAX_DIST)
 	var h = hero
 	var base: Vector2 = h.position if h != null else player.position
-	var pos: Vector2 = base + Vector2.from_angle(angle) * dist
+	var pos := base
+	for i in B.SPAWN_TRIES: # fuera de la pantalla (centrada en el creep)
+		pos = base + Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(B.SPAWN_MIN_DIST, B.SPAWN_MAX_DIST)
+		var off: Vector2 = (pos - player.position).abs()
+		if off.x > B.SPAWN_VIEW_HALF.x or off.y > B.SPAWN_VIEW_HALF.y:
+			break
 	if at != null:
 		pos = at
 	pos = pos.clamp(Vector2(20, 20), B.ARENA_SIZE - Vector2(20, 20))
