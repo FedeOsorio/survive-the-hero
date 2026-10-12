@@ -65,12 +65,12 @@ func take_hit(amount: float) -> bool:
 		home = 0
 		creep.die()
 		return true
+	amount *= 1.0 - B.SWARM_DEFENSE
 	var extra := 0
 	if _shield_t > 0.0:
 		amount *= 1.0 - B.SWARM_SHIELD_REDUCTION
 		extra = B.SWARM_SHIELD_EXTRA_KILL
-	var cap := maxi(floori(max_insects() * B.SWARM_HIT_CAP), 1) # ningún golpe solo te borra
-	var killed := mini(clampi(ceili(amount / _per_insect()), 1, cap) + extra, home)
+	var killed := mini(maxi(ceili(amount / _per_insect()), 1) + extra, home)
 	home -= killed
 	if creep.rank("avispas") > 0:
 		_fire_wasps(killed)

@@ -803,7 +803,7 @@ const SWARM_SHIELD_COOLDOWN := 10.0
 const SWARM_SHIELD_REDUCTION := 0.5 # golpe con escudo: -50% daño...
 const SWARM_SHIELD_EXTRA_KILL := 1 # ...pero mata 1 insecto más
 const SWARM_STEEL_WINGS_PER_RANK := 1.0 # Alas de acero: +1 s de escudo por rango
-const SWARM_HIT_CAP := 0.2 # S8-c: un golpe mata como mucho 20% del máximo de insectos (mínimo 1; el escudo suma el suyo después)
+const SWARM_DEFENSE := 0.6 # S8-c': la Reina recibe el 40% del daño (Federico: defensa, no tope por golpe)
 const SWARM_HIT_GRACE := 0.4 # S8-c: invulnerable después de cada golpe
 const SWARM_SHELL_INSECTS := 4 # S8-b: Caparazón de la Reina = +4 insectos máximos por rango
 const SWARM_LARVA_TIME := 4.0
