@@ -652,7 +652,7 @@ const CLASSES := {
 		"weapon": "Escupitajo, y Huesos, Detonar cadáver y Aliento por etapa."},
 	"abisal": {"name": "Abisal", "hp": 1.0, "rule": "Abrí grietas (C): sus tentáculos frenan, y viajás entre ellas (doble embestida).",
 		"weapon": "Azote: un tentáculo golpea el piso en línea hacia el héroe."},
-	"reina": {"name": "Reina del enjambre", "hp": 1.0, "rule": "Tu vida es tu enjambre: los golpes matan insectos y comer cría más.",
+	"reina": {"name": "Reina del enjambre", "hp": 1.0, "rule": "Tu vida es tu enjambre: los golpes matan insectos y comer cría más. C: Escudo de insectos.",
 		"weapon": "Manda parte del enjambre a picar al héroe."},
 }
 
@@ -674,6 +674,9 @@ const ABYSS_LASH_WIDTH := 36.0
 const ABYSS_LASH_WARN := 0.5
 const ABYSS_LASH_DAMAGE := 1.4
 const ABYSS_LASH_PUSH := 40.0
+const ABYSS_RIFT_LASH_RANGE := 160.0 # S8-b: el tentáculo de cada grieta le pega a lo que tenga cerca
+const ABYSS_RIFT_LASH_EVERY := 2.0
+const ABYSS_RIFT_LASH_DAMAGE := 0.6 # x mordida, escala con el rango de Azote
 const ABYSS_MAW_EVERY := 14.0 # Fauces (desde Esqueleto)
 const ABYSS_MAW_TIME := 4.0
 const ABYSS_MAW_DPS := 2.0 # × mordida por segundo
@@ -749,7 +752,7 @@ const CLASS_POWERS := {
 		{"id": "zumbido", "name": "Zumbido", "icon": "Zu", "color": Color(0.7, 0.7, 0.5), "desc": "Los Paladines picados pierden el objetivo 1 s."},
 		{"id": "colmena", "name": "Colmena", "icon": "Cm", "color": Color(0.95, 0.75, 0.3), "desc": "Criás insectos más rápido."},
 		{"id": "avispas", "name": "Avispas de fuego", "icon": "Av", "color": Color(1.0, 0.5, 0.15), "desc": "Los insectos que te matan explotan alrededor tuyo."},
-		{"id": "alas", "name": "Escudo de alas", "icon": "Es", "color": Color(0.7, 0.85, 0.95), "desc": "Con 10+ insectos, cada 10 s recibís 50% menos daño por 2 s."},
+		{"id": "alas", "name": "Alas de acero", "icon": "Aa", "color": Color(0.7, 0.85, 0.95), "desc": "El Escudo de insectos (C) dura +1 s por rango."},
 		{"id": "larvas", "name": "Larvas", "icon": "La", "color": Color(0.95, 0.95, 0.8), "desc": "Cada cadáver que comés deja una larva: en 4 s, +2 insectos."},
 		{"id": "madre", "name": "Reina madre", "icon": "Rm", "color": Color(0.8, 0.5, 0.9), "desc": "+15% de máximo de insectos por rango."},
 		{"id": "cazador", "name": "Enjambre cazador", "icon": "Ec", "color": Color(0.6, 0.5, 0.2), "desc": "El héroe cerca tuyo recibe picaduras de los insectos en casa."},
@@ -762,6 +765,7 @@ const ABYSS_ANCHOR_EVERY := 6.0
 const ABYSS_ANCHOR_RANGE := 400.0
 const ABYSS_ANCHOR_TIME := 0.8
 const ABYSS_KRAKEN_EVERY := 18.0
+const ABYSS_KRAKEN_FIRST := 3.0 # S8-b: primer golpe a los 3 s de elegirlo
 const ABYSS_KRAKEN_RANGE := 450.0
 const ABYSS_KRAKEN_WARN := 1.0
 const ABYSS_KRAKEN_RADIUS := 90.0
@@ -784,10 +788,12 @@ const SWARM_PICK_EXTRA_PER_RANK := 1 # A picar: +1 insecto por salida por rango
 const SWARM_PICK_CD_PER_RANK := 0.3
 const SWARM_FIRE_WASP_RADIUS := 50.0 # Avispas de fuego
 const SWARM_FIRE_WASP_DAMAGE := 0.3 # x mordida por insecto muerto
-const SWARM_WINGS_MIN := 10 # Escudo de alas
-const SWARM_WINGS_EVERY := 10.0
-const SWARM_WINGS_TIME := 2.0
-const SWARM_WINGS_REDUCTION := 0.5
+const SWARM_SHIELD_TIME := 4.0 # S8-b: C de la Reina, Escudo de insectos
+const SWARM_SHIELD_COOLDOWN := 10.0
+const SWARM_SHIELD_REDUCTION := 0.5 # golpe con escudo: -50% daño...
+const SWARM_SHIELD_EXTRA_KILL := 1 # ...pero mata 1 insecto más
+const SWARM_STEEL_WINGS_PER_RANK := 1.0 # Alas de acero: +1 s de escudo por rango
+const SWARM_SHELL_INSECTS := 4 # S8-b: Caparazón de la Reina = +4 insectos máximos por rango
 const SWARM_LARVA_TIME := 4.0
 const SWARM_LARVA_INSECTS := 2
 const SWARM_MOTHER_PER_RANK := 0.15

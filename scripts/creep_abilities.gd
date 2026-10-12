@@ -1,12 +1,13 @@
 extends Node2D
 ## Poderes del Engendro (hijo del creep, dibuja en coordenadas del mundo): Escupitajo
-## (fijo), Huesos, Detonar cadáver, Aliento, Espinas (embestida), Pegote (charcos que
-## frenan), Llamado (C o RT: la horda corre hacia donde apuntás) y Coraza viva (onda al
-## terminar la embestida). Lluvia ácida vive en spit.gd y Señor de la carroña en main.gd.
+## (fijo), Huesos, Detonar cadáver, Aliento y Llamado (C o RT: la horda corre hacia donde
+## apuntás). Espinas, Coraza viva y Pegote viven en engendro_body.gd; Lluvia ácida en
+## spit.gd y Señor de la carroña en main.gd.
 ## Cada uno corre si tenés rango; el rango sube daño (creep.pmult) y baja recarga (creep.pcd).
 ## También manda C a la habilidad de la clase (las grietas del Abisal).
 
 const B := preload("res://scripts/balance.gd")
+const EngendroBody := preload("res://scripts/engendro_body.gd")
 
 var creep
 var world
@@ -17,21 +18,19 @@ var _breath_t := 0.0 # > 0: echando fuego
 var _breath_tick := 0.0
 var _breath_dir := Vector2.RIGHT
 var _bones: Array = [] # {pos, vel, target, bounces, hit, t}
-var _goo: Array = [] # {pos, t}
-var _goo_cd := B.GOO_EVERY
-var _thorn_victims: Array = []
-var _was_dashing := false
 var rally_cd := 0.0
 var _rally_fx := 0.0
 var _rally_at := Vector2.ZERO
 var _aim_mouse := true # el último que usaste para apuntar: mouse o joystick
 var _spit_cd := 0.0
-var _wave_fx := 0.0
 
 
 func _ready() -> void:
 	top_level = true # dibuja en el mundo, no relativo al creep
 	z_index = 3
+	var dash = EngendroBody.new()
+	dash.abilities = self
+	add_child(dash)
 
 
 func _input(event: InputEvent) -> void:
@@ -45,7 +44,6 @@ func _process(delta: float) -> void:
 	if not world.running:
 		return
 	_update_bones(delta)
-	_update_goo(delta)
 	_spit_cd -= delta
 	if creep.rank("escupitajo") > 0 and _spit_cd <= 0.0 and _spit():
 		_spit_cd = B.SPIT_COOLDOWN * creep.pcd("escupitajo")
@@ -59,8 +57,6 @@ func _process(delta: float) -> void:
 			_blast_cd = B.CORPSE_BLAST_EVERY * creep.pcd("detonar")
 	if creep.rank("aliento") > 0:
 		_update_breath(delta)
-	_wave_fx = maxf(_wave_fx - delta, 0.0)
-	_thorns()
 	rally_cd = maxf(rally_cd - delta, 0.0)
 	_rally_fx = maxf(_rally_fx - delta, 0.0)
 	# C o RT: Llamado y la habilidad de la clase (las grietas del Abisal) salen juntos
@@ -218,68 +214,7 @@ func _update_breath(delta: float) -> void:
 		_breath_dir = (target.position - creep.position).normalized()
 
 
-# --- Embestida: Espinas y Coraza viva --------------------------------------------
-
-## Espinas: durante la embestida, cada cosa que tocás recibe daño una vez.
-## Coraza viva: al terminar la embestida sale la onda.
-func _thorns() -> void:
-	var dashing: bool = creep.dashing()
-	if dashing and not _was_dashing:
-		_thorn_victims.clear()
-	if _was_dashing and not dashing and creep.rank("coraza") > 0:
-		_shell_wave()
-	_was_dashing = dashing
-	if not dashing or creep.rank("espinas") == 0:
-		return
-	var dmg: float = creep.bite * B.THORNS_DAMAGE * creep.pmult("espinas")
-	for v in _targets() + world.civilians:
-		if not _thorn_victims.has(v) and creep.position.distance_to(v.position) <= creep.radius + v.radius:
-			_thorn_victims.append(v)
-			if v in world.civilians:
-				v.take_damage(dmg)
-			else:
-				_hurt(v, dmg)
-
-
-## Coraza viva: daña, empuja y aturde al héroe; empuja a la horda.
-func _shell_wave() -> void:
-	_wave_fx = 0.25
-	var pos: Vector2 = creep.position
-	for hero in world.heroes.targets():
-		var to_h: Vector2 = hero.position - pos
-		if to_h.length() < B.SHELL_WAVE_RADIUS + hero.radius and not hero.rolling():
-			hero.take_damage(creep.bite * B.SHELL_WAVE_DAMAGE * creep.pmult("coraza"), true, true)
-			world.shake()
-			hero.position = (hero.position + to_h.normalized() * B.SHELL_WAVE_PUSH).clamp(Vector2(20, 20), B.ARENA_SIZE - Vector2(20, 20))
-			hero.status.stun(B.HERO_STUN_TIME)
-	for h in world.infamy.paladins:
-		if pos.distance_to(h.position) < B.SHELL_WAVE_RADIUS + h.radius:
-			h.take_damage(creep.bite * B.SHELL_WAVE_DAMAGE * creep.pmult("coraza"))
-	for m in world.minions_near(pos):
-		var to_m: Vector2 = m.position - pos
-		if to_m.length() < B.SHELL_WAVE_RADIUS and to_m.length() > 0.01:
-			m.position += to_m.normalized() * B.SHELL_WAVE_MINION_PUSH
-
-
-# --- Pegote y Llamado ---------------------------------------------------------------
-
-## Pegote: un charco cada GOO_EVERY que frena a los héroes que lo pisan.
-func _update_goo(delta: float) -> void:
-	if creep.rank("pegote") > 0:
-		_goo_cd -= delta
-		if _goo_cd <= 0.0:
-			_goo_cd = B.GOO_EVERY * creep.pcd("pegote")
-			_goo.append({"pos": creep.position, "t": B.GOO_TIME})
-	var slow: float = minf(B.GOO_SLOW * creep.pmult("pegote"), 0.6)
-	for g in _goo.duplicate():
-		g.t -= delta
-		if g.t <= 0.0:
-			_goo.erase(g)
-			continue
-		for h in world.heroes.targets():
-			if g.pos.distance_to(h.position) < B.GOO_RADIUS + h.radius:
-				h.status.slow(slow)
-
+# --- Llamado ---------------------------------------------------------------------
 
 ## Llamado: la horda cercana corre hacia donde apuntás.
 func _rally() -> void:
@@ -307,12 +242,6 @@ func _aim_point() -> Vector2:
 # --- Dibujo ---------------------------------------------------------------------
 
 func _draw() -> void:
-	if _wave_fx > 0.0:
-		draw_arc(creep.position, B.SHELL_WAVE_RADIUS * (1.0 - _wave_fx * 2.0), 0.0, TAU, 32, Color(0.9, 0.85, 0.6, 0.9), 5.0)
-	for g in _goo:
-		var a := clampf(g.t / B.GOO_TIME, 0.2, 1.0)
-		draw_circle(g.pos, B.GOO_RADIUS, Color(0.85, 0.75, 0.3, 0.22 * a))
-		draw_arc(g.pos, B.GOO_RADIUS, 0.0, TAU, 28, Color(0.95, 0.85, 0.35, 0.5 * a), 1.5)
 	for b in _bones:
 		var side: Vector2 = b.vel.normalized().orthogonal() * 2.0
 		var along: Vector2 = b.vel.normalized() * 6.0

@@ -3,7 +3,8 @@ extends Node2D
 ## mundo): Ancla (agarra al héroe y lo deja quieto), Kraken (tentáculo gigante bajo
 ## el héroe), Remolino (las grietas te mandan cadáveres), Tinta (nube alrededor tuyo:
 ## el héroe dispara más lento), Surco (franja de la embestida que frena y lastima) y
-## Ojo del abismo (cerca de una grieta, el héroe recibe más daño).
+## Ojo del abismo (cerca de una grieta, el héroe recibe más daño). Además, cada grieta
+## tiene su tentáculo propio (siempre, escala con Azote).
 ## Cada uno corre si tenés rango (creep.pmult / creep.pcd).
 
 const B := preload("res://scripts/balance.gd")
@@ -11,11 +12,12 @@ const B := preload("res://scripts/balance.gd")
 var abyss # class_abyss.gd
 var _anchor_cd := B.ABYSS_ANCHOR_EVERY
 var _anchors: Array = [] # {target, t}
-var _kraken_cd := B.ABYSS_KRAKEN_EVERY
+var _kraken_cd := B.ABYSS_KRAKEN_FIRST
 var _krakens: Array = [] # {pos, t}
 var _ink_cd := B.ABYSS_INK_EVERY
 var _ink_t := 0.0
 var _furrow: Array = [] # {pos, t}
+var _rift_hits: Array = [] # {from, to, t}: dibujo del tentáculo de grieta
 
 
 func _ready() -> void:
@@ -28,6 +30,7 @@ func _process(delta: float) -> void:
 	if not world.running:
 		return
 	var creep = abyss.creep
+	_rift_lashes(delta, creep)
 	if creep.rank("ancla") > 0:
 		_update_anchor(delta, creep)
 	if creep.rank("kraken") > 0 or not _krakens.is_empty():
@@ -89,6 +92,23 @@ func _update_kraken(delta: float, creep) -> void:
 	_krakens.append({"pos": t.position, "t": B.ABYSS_KRAKEN_WARN})
 
 
+## Tentáculo de grieta: le pega a lo más cercano a menos de ABYSS_RIFT_LASH_RANGE.
+func _rift_lashes(delta: float, creep) -> void:
+	for h in _rift_hits:
+		h.t -= delta
+	_rift_hits = _rift_hits.filter(func(h): return h.t > 0.0)
+	for r in abyss.rifts():
+		r.lash = r.get("lash", 0.0) - delta
+		if r.lash > 0.0:
+			continue
+		var t = abyss.nearest_target(r.pos, B.ABYSS_RIFT_LASH_RANGE)
+		if t == null:
+			continue
+		r.lash = B.ABYSS_RIFT_LASH_EVERY
+		abyss.hurt(t, creep.bite * B.ABYSS_RIFT_LASH_DAMAGE * creep.pmult("azote"))
+		_rift_hits.append({"from": r.pos, "to": t.position, "t": 0.25})
+
+
 ## Remolino: los cadáveres cerca de una grieta van hacia ella y, al llegar, te llegan a vos.
 func _whirl(delta: float, creep, world) -> void:
 	var reach: float = B.ABYSS_WHIRL_RADIUS * creep.pmult("remolino")
@@ -144,6 +164,10 @@ func _draw() -> void:
 		for i in 8:
 			var a := TAU * i / 8.0 + t
 			draw_circle(creep.position + Vector2.from_angle(a) * B.ABYSS_INK_RADIUS * 0.7, 18.0, Color(0.05, 0.05, 0.1, 0.3))
+	for h in _rift_hits:
+		var a: float = h.t / 0.25
+		draw_line(h.from, h.to, Color(0.55, 0.2, 0.8, a), 8.0)
+		draw_line(h.from, h.to, Color(0.9, 0.7, 1.0, a), 2.0)
 	for k in _krakens:
 		var p: float = 1.0 - k.t / B.ABYSS_KRAKEN_WARN
 		draw_circle(k.pos, B.ABYSS_KRAKEN_RADIUS, Color(0.05, 0.1, 0.15, 0.2 + 0.4 * p))

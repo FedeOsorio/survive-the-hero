@@ -3,8 +3,8 @@ extends RefCounted
 ## Las cartas mezclan poderes de la clase (CLASS_POWERS en balance.gd: poder nuevo o
 ## subir de rango uno tuyo) y stats (LIST). Hasta POWERS_MAX poderes distintos con
 ## POWER_MAX_RANK rangos cada uno; el primero de cada clase es fijo y arranca en rango 1.
-## Mandíbula sangrienta (Colmillos al máximo + Mordida vampírica) es la única evolución:
-## cuando está disponible viene garantizada. Festín es el relleno si no queda nada.
+## Mandíbula sangrienta (Colmillos al máximo + Mordida vampírica) es la única evolución,
+## solo del Engendro: cuando está disponible viene garantizada. Festín es el relleno si no queda nada.
 ## Todo vive en player.ranks (id -> rango).
 
 const B := preload("res://scripts/balance.gd")
@@ -12,7 +12,8 @@ const B := preload("res://scripts/balance.gd")
 const LIST := {
 	"colmillos": {"name": "Colmillos", "desc": "+12,5% daño", "max": 10},
 	"patas": {"name": "Patas ágiles", "desc": "+5% velocidad", "max": 8},
-	"caparazon": {"name": "Caparazón", "desc": "+12,5% vida máxima y te cura", "max": 10},
+	"caparazon": {"name": "Caparazón", "desc": "+12,5% vida máxima y te cura", "max": 10,
+		"desc_reina": "+%d insectos máximos" % B.SWARM_SHELL_INSECTS},
 	"iman": {"name": "Imán de carne", "desc": "Los cadáveres cercanos vuelan hacia vos (+30 de radio)", "max": 6},
 	"frenesi": {"name": "Frenesí", "desc": "Comer seguido arma un combo que multiplica la biomasa", "max": 2},
 	"rey": {"name": "Rey de la horda", "desc": "Los compañeros cerca tuyo van más rápido y pegan más (cada rango agranda el aura)", "max": 6, "min_stage": 1},
@@ -69,8 +70,8 @@ static func title(id: String, klass: String) -> String:
 ## Texto de la carta: el poder nuevo dice qué hace; subir de rango, qué gana.
 static func desc(id: String, ranks: Dictionary, klass: String) -> String:
 	if not is_power(id, klass):
-		var text: String = LIST[id].desc
-		for evo in LIST:
+		var text: String = LIST[id].get("desc_" + klass, LIST[id].desc)
+		for evo in (LIST if klass == "engendro" else {}):
 			if is_evolution(evo) and (LIST[evo].weapon == id or LIST[evo].passive == id):
 				var other: String = LIST[evo].passive if LIST[evo].weapon == id else LIST[evo].weapon
 				text += "\nEvoluciona con %s" % LIST[other].name
@@ -82,8 +83,10 @@ static func desc(id: String, ranks: Dictionary, klass: String) -> String:
 		roundi(B.POWER_RANK_EFFECT * 100.0), roundi(B.POWER_RANK_COOLDOWN * 100.0)]
 
 
-static func available_evolutions(ranks: Dictionary) -> Array:
+static func available_evolutions(ranks: Dictionary, klass := "engendro") -> Array:
 	var out: Array = []
+	if klass != "engendro":
+		return out
 	for id in LIST:
 		if not is_evolution(id) or ranks.get(id, 0) > 0:
 			continue
@@ -95,7 +98,7 @@ static func available_evolutions(ranks: Dictionary) -> Array:
 
 static func roll(ranks: Dictionary, stage: int, rng: RandomNumberGenerator, count: int = 3, klass := "engendro") -> Array:
 	var out: Array = []
-	var evos := available_evolutions(ranks)
+	var evos := available_evolutions(ranks, klass)
 	if not evos.is_empty():
 		out.append(evos[rng.randi_range(0, evos.size() - 1)])
 	var pool: Array = [] # [id, peso]
