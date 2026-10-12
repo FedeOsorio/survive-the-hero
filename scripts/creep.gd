@@ -142,7 +142,7 @@ func _auto_attack() -> void:
 
 
 func take_damage(amount: float) -> void:
-	if invulnerable or _dash_t > 0.0 or klass.immune(): # la embestida te hace invulnerable
+	if invulnerable or _dash_t > 0.0: # la embestida te hace invulnerable
 		return
 	_flash = B.FX_FLASH
 	world.fx.player_hit(amount)

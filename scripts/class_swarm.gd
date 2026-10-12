@@ -16,7 +16,6 @@ var _cloud_cd := B.SWARM_CLOUD_EVERY
 var _breed_t := 0.0
 var _shield_cd := 0.0 # C: Escudo de insectos
 var _shield_t := 0.0
-var _grace_t := 0.0 # invulnerable un ratito después de cada golpe
 var _larvae: Array = [] # {pos, t}
 
 
@@ -55,12 +54,7 @@ func on_eat(c) -> void:
 		_larvae.append({"pos": c.position, "t": B.SWARM_LARVA_TIME})
 
 
-func immune() -> bool:
-	return _grace_t > 0.0
-
-
 func take_hit(amount: float) -> bool:
-	_grace_t = B.SWARM_HIT_GRACE
 	if home <= 0:
 		home = 0
 		creep.die()
@@ -171,7 +165,6 @@ func _fire_wasps(killed: int) -> void:
 
 func _update_extras(delta: float) -> void:
 	_shield_t = maxf(_shield_t - delta, 0.0)
-	_grace_t = maxf(_grace_t - delta, 0.0)
 	_shield_cd = maxf(_shield_cd - delta, 0.0)
 	for l in _larvae.duplicate():
 		l.t -= delta
