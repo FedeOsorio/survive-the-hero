@@ -662,7 +662,7 @@ const CLASSES := {
 		"weapon": "Escupitajo, y Huesos, Detonar cadáver y Aliento por etapa."},
 	"abisal": {"name": "Abisal", "hp": 1.0, "rule": "Abrí grietas (C): sus tentáculos frenan, y viajás entre ellas (doble embestida).",
 		"weapon": "Azote: un tentáculo golpea el piso en línea hacia el héroe."},
-	"reina": {"name": "Reina del enjambre", "hp": 1.0, "rule": "Tu vida es tu enjambre: los golpes matan insectos y comer cría más. Un escudo de insectos frena el primer golpe y vuelve solo.",
+	"reina": {"name": "Reina del enjambre", "hp": 1.0, "rule": "Tu vida es tu enjambre: los golpes matan insectos y comer cría más. Un escudo de 4 insectos frena el primer golpe y se rearma solo.",
 		"weapon": "Manda parte del enjambre a picar al héroe."},
 }
 
@@ -762,8 +762,8 @@ const CLASS_POWERS := {
 		{"id": "zumbido", "name": "Zumbido", "icon": "Zu", "color": Color(0.7, 0.7, 0.5), "desc": "Los Paladines picados pierden el objetivo 1 s."},
 		{"id": "colmena", "name": "Colmena", "icon": "Cm", "color": Color(0.95, 0.75, 0.3), "desc": "Criás insectos más rápido."},
 		{"id": "avispas", "name": "Avispas de fuego", "icon": "Av", "color": Color(1.0, 0.5, 0.15), "desc": "Los insectos que te matan explotan alrededor tuyo."},
-		{"id": "alas", "name": "Alas de acero", "icon": "Aa", "color": Color(0.7, 0.85, 0.95), "desc": "El Escudo de insectos se recarga 1 s más rápido por rango (mínimo 2 s)."},
-		{"id": "larvas", "name": "Larvas", "icon": "La", "color": Color(0.95, 0.95, 0.8), "desc": "Cada cadáver que comés deja una larva: en 4 s, +2 insectos."},
+		{"id": "alas", "name": "Alas de acero", "icon": "Aa", "color": Color(0.7, 0.85, 0.95), "desc": "El Escudo de insectos se rearma 1 s más rápido por rango (mínimo 2 s)."},
+		{"id": "puas", "name": "Espinas de la Reina", "icon": "Ep", "color": Color(0.65, 0.35, 0.85), "desc": "Dos espinas de tu espalda apuñalan al enemigo más cercano (héroe, Paladín o civil). Cada rango: +20% daño y -10% de espera."},
 		{"id": "madre", "name": "Reina madre", "icon": "Rm", "color": Color(0.8, 0.5, 0.9), "desc": "+15% de máximo de insectos por rango."},
 		{"id": "cazador", "name": "Enjambre cazador", "icon": "Ec", "color": Color(0.6, 0.5, 0.2), "desc": "El héroe cerca tuyo recibe picaduras de los insectos en casa."},
 	],
@@ -798,13 +798,18 @@ const SWARM_PICK_EXTRA_PER_RANK := 1 # A picar: +1 insecto por salida por rango
 const SWARM_PICK_CD_PER_RANK := 0.3
 const SWARM_FIRE_WASP_RADIUS := 50.0 # Avispas de fuego
 const SWARM_FIRE_WASP_DAMAGE := 0.3 # x mordida por insecto muerto
-const SWARM_SHIELD_RECHARGE := 6.0 # S8-d: Escudo de insectos automático; el primer golpe lo rompe (sin daño, 1 insecto)
+const SWARM_SHIELD_RECHARGE := 6.0 # S8-d: Escudo de insectos automático; el primer golpe lo rompe (sin daño, mueren sus insectos)
+const SWARM_SHIELD_INSECTS := 4 # insectos de casa que forman el escudo
 const SWARM_SHIELD_MIN_RECHARGE := 2.0
 const SWARM_STEEL_WINGS_PER_RANK := 1.0 # Alas de acero: -1 s de recarga por rango
 const SWARM_DEFENSE := 0.6 # S8-c': la Reina recibe el 40% del daño (Federico: defensa, no tope por golpe)
 const SWARM_SHELL_INSECTS := 4 # S8-b: Caparazón de la Reina = +4 insectos máximos por rango
-const SWARM_LARVA_TIME := 4.0
-const SWARM_LARVA_INSECTS := 2
+const SWARM_SPINES_RANGE := 140.0 # Espinas de la Reina (S8-d, reemplaza a Larvas)
+const SWARM_SPINES_EVERY := 1.2
+const SWARM_SPINES_CD_PER_RANK := 0.1 # -10% de espera por rango
+const SWARM_SPINES_GAP := 0.1 # entre la estocada de cada espina
+const SWARM_SPINES_DAMAGE := 0.9 # x mordida por estocada
+const SWARM_SPINES_STAB_TIME := 0.15 # dibujo: la espina sale y vuelve
 const SWARM_MOTHER_PER_RANK := 0.15
 const SWARM_HUNTER_RADIUS := 130.0 # Enjambre cazador
 const SWARM_HUNTER_DPS := 0.2 # x mordida por segundo

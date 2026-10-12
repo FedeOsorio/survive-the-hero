@@ -4,9 +4,10 @@ extends "res://scripts/creep_class.gd"
 ## al quedarse sin ninguno en casa. Comer cadáveres y civiles cría.
 ## Poderes: A picar (fijo: parte del enjambre sale a picar; los que salen no la
 ## protegen), Nube (el enjambre envuelve al héroe y lo ciega), Aguijón, Zumbido,
-## Colmena, Avispas de fuego, Alas de acero, Larvas, Reina madre y Enjambre cazador.
-## Escudo de insectos automático: el primer golpe lo rompe (sin daño, muere 1 insecto)
-## y se recarga solo. La C no hace nada por ahora.
+## Colmena, Avispas de fuego, Alas de acero, Espinas de la Reina, Reina madre y Enjambre
+## cazador. Escudo de insectos automático: SWARM_SHIELD_INSECTS insectos de casa hacen un
+## anillo; el primer golpe lo rompe (sin daño, mueren esos insectos) y se rearma solo.
+## La C no hace nada por ahora.
 ## Caparazón le suma insectos máximos.
 
 var home := B.SWARM_START
@@ -15,8 +16,10 @@ var _send_cd := 1.0
 var _cloud = null # {target, n, t}
 var _cloud_cd := B.SWARM_CLOUD_EVERY
 var _breed_t := 0.0
-var _shield_cd := 0.0 # Escudo de insectos: activo cuando llega a 0
-var _larvae: Array = [] # {pos, t}
+var _shield := 0 # insectos en el escudo (0: roto o esperando)
+var _shield_cd := 0.0 # se rearma cuando llega a 0 y hay insectos en casa
+var _spines_cd := 0.0 # Espinas de la Reina
+var _stabs: Array = [] # {target, side, delay, t}: estocadas pendientes o en curso
 
 
 func max_insects() -> int:
@@ -30,7 +33,7 @@ func _shield_recharge() -> float:
 
 
 func away() -> int:
-	var n: int = _cloud.n if _cloud != null else 0
+	var n: int = (_cloud.n if _cloud != null else 0) + _shield
 	for s in _sorties:
 		n += s.n
 	return n
@@ -47,21 +50,22 @@ func _breed(n: int) -> void:
 
 func on_eat(c) -> void:
 	_breed(B.SWARM_PER_CIVILIAN if c.has_meta("civilian") else B.SWARM_PER_CORPSE)
-	if creep.rank("larvas") > 0:
-		_larvae.append({"pos": c.position, "t": B.SWARM_LARVA_TIME})
 
 
 func take_hit(amount: float) -> bool:
+	if _shield > 0: # el escudo se rompe: el golpe no hace daño y mueren sus insectos
+		var lost := _shield
+		_shield = 0
+		_shield_cd = _shield_recharge()
+		if creep.rank("avispas") > 0:
+			_fire_wasps(lost)
+		return true
 	if home <= 0:
 		home = 0
 		creep.die()
 		return true
-	var killed := 1 # el escudo se rompe: el golpe no hace daño y muere 1 insecto
-	if _shield_cd <= 0.0:
-		_shield_cd = _shield_recharge()
-	else:
-		amount *= 1.0 - B.SWARM_DEFENSE
-		killed = mini(maxi(ceili(amount / _per_insect()), 1), home)
+	amount *= 1.0 - B.SWARM_DEFENSE
+	var killed := mini(maxi(ceili(amount / _per_insect()), 1), home)
 	home -= killed
 	if creep.rank("avispas") > 0:
 		_fire_wasps(killed)
@@ -74,7 +78,7 @@ func take_hit(amount: float) -> bool:
 
 func hp_text() -> String:
 	var out := away()
-	var shield := "Escudo listo" if _shield_cd <= 0.0 else "Escudo %ds" % ceili(_shield_cd)
+	var shield := "Escudo listo" if _shield > 0 else ("Escudo %ds" % ceili(_shield_cd) if _shield_cd > 0.0 else "Escudo: faltan insectos")
 	return "Enjambre %d/%d" % [home, max_insects()] + (" (+%d afuera)" % out if out > 0 else "") + " · " + shield
 
 
@@ -162,15 +166,78 @@ func _fire_wasps(killed: int) -> void:
 
 func _update_extras(delta: float) -> void:
 	_shield_cd = maxf(_shield_cd - delta, 0.0)
-	for l in _larvae.duplicate():
-		l.t -= delta
-		if l.t <= 0.0:
-			_larvae.erase(l)
-			_breed(roundi(B.SWARM_LARVA_INSECTS * creep.pmult("larvas")))
+	if _shield == 0 and _shield_cd <= 0.0 and home >= B.SWARM_SHIELD_INSECTS:
+		home -= B.SWARM_SHIELD_INSECTS
+		_shield = B.SWARM_SHIELD_INSECTS
+	if creep.rank("puas") > 0 or not _stabs.is_empty():
+		_update_spines(delta)
 	if creep.rank("cazador") > 0 and home > 0:
 		for t in targets():
 			if creep.position.distance_to(t.position) < B.SWARM_HUNTER_RADIUS + t.radius:
 				hurt(t, creep.bite * B.SWARM_HUNTER_DPS * creep.pmult("cazador") * delta, true)
+
+
+# --- Espinas de la Reina: dos espinas de la espalda apuñalan al más cercano ------
+
+func _update_spines(delta: float) -> void:
+	for s in _stabs:
+		if s.delay > 0.0:
+			s.delay -= delta
+			if s.delay <= 0.0 and is_instance_valid(s.target):
+				var dmg: float = creep.bite * B.SWARM_SPINES_DAMAGE * creep.pmult("puas")
+				if s.target in world.civilians:
+					s.target.take_damage(dmg)
+				else:
+					hurt(s.target, dmg)
+		else:
+			s.t -= delta
+	_stabs = _stabs.filter(func(s): return s.t > 0.0 and is_instance_valid(s.target))
+	if creep.rank("puas") == 0:
+		return
+	_spines_cd -= delta
+	if _spines_cd > 0.0:
+		return
+	var t = _spine_target()
+	if t == null:
+		return
+	_spines_cd = B.SWARM_SPINES_EVERY * pow(1.0 - B.SWARM_SPINES_CD_PER_RANK, creep.rank("puas") - 1)
+	for i in 2: # una estocada por espina
+		_stabs.append({"target": t, "side": 1.0 if i == 0 else -1.0, "delay": 0.001 + i * B.SWARM_SPINES_GAP, "t": B.SWARM_SPINES_STAB_TIME})
+
+
+## Héroe > Paladín > civil, el más cercano de cada grupo a menos de SWARM_SPINES_RANGE.
+func _spine_target():
+	for group in [world.heroes.targets(), world.infamy.paladins, world.civilians]:
+		var best = null
+		var best_d := B.SWARM_SPINES_RANGE
+		for t in group:
+			var d: float = creep.position.distance_to(t.position) - t.radius
+			if d < best_d:
+				best_d = d
+				best = t
+		if best != null:
+			return best
+	return null
+
+
+## Dos espinas quitinosas violetas: dobladas en la espalda, o estiradas hasta el blanco.
+func _draw_spines() -> void:
+	var back: Vector2 = -creep.facing()
+	var side: Vector2 = back.orthogonal()
+	for k in [1.0, -1.0]:
+		var base: Vector2 = creep.position + back * creep.radius * 0.6 + side * k * creep.radius * 0.5
+		var tip: Vector2 = base + back * 16.0 + side * k * 10.0
+		var elbow: Vector2 = base + back * 10.0 + side * k * 14.0
+		for s in _stabs:
+			if s.side == k and s.delay <= 0.0:
+				var reach: float = sin(PI * (1.0 - s.t / B.SWARM_SPINES_STAB_TIME)) # sale y vuelve
+				var goal: Vector2 = s.target.position
+				elbow = base.lerp(base + back * 8.0 + side * k * 28.0, reach)
+				tip = (base + back * 16.0 + side * k * 10.0).lerp(goal, reach)
+		var pts := PackedVector2Array([base, elbow, tip])
+		draw_polyline(pts, Color(0.3, 0.1, 0.4), 5.0)
+		draw_polyline(pts, Color(0.65, 0.35, 0.85), 2.0)
+		draw_circle(tip, 2.0, Color(0.9, 0.75, 1.0))
 
 
 # --- Dibujo -----------------------------------------------------------------------
@@ -178,17 +245,17 @@ func _update_extras(delta: float) -> void:
 func _draw() -> void:
 	var t: float = world.elapsed
 	var col := Color(0.15, 0.12, 0.05)
-	if _shield_cd <= 0.0 and home > 0: # el enjambre en casa hace un anillo cerrado
-		draw_arc(creep.position, creep.radius + 20.0, 0.0, TAU, 40, Color(0.7, 0.85, 0.95, 0.35 + 0.15 * sin(t * 8.0)), 6.0)
-		for i in mini(home, 40):
-			draw_circle(creep.position + Vector2.from_angle(TAU * i / mini(home, 40) + t * 3.0) * (creep.radius + 20.0), 2.2, col)
+	if _shield > 0: # los insectos del escudo dan vueltas en un anillo cerrado
+		draw_arc(creep.position, creep.radius + 20.0, 0.0, TAU, 40, Color(0.7, 0.85, 0.95, 0.35 + 0.15 * sin(t * 8.0)), 4.0)
+		for i in _shield:
+			draw_circle(creep.position + Vector2.from_angle(TAU * i / _shield + t * 3.0) * (creep.radius + 20.0), 3.0, col)
 	elif _shield_cd > 0.0:
 		var k: float = _shield_cd / _shield_recharge()
 		draw_arc(creep.position, creep.radius + 6.0, -PI * 0.5, -PI * 0.5 + TAU * (1.0 - k), 24, Color(0.7, 0.85, 0.95, 0.5), 2.0)
 	if creep.rank("cazador") > 0:
 		draw_arc(creep.position, B.SWARM_HUNTER_RADIUS, 0.0, TAU, 40, Color(0.6, 0.5, 0.2, 0.2), 1.5)
-	for l in _larvae:
-		draw_circle(l.pos + Vector2(0, sin(t * 5.0) * 1.5), 3.0, Color(0.95, 0.95, 0.8))
+	if creep.rank("puas") > 0:
+		_draw_spines()
 	for i in mini(home, 60):
 		var a: float = TAU * i / maxf(mini(home, 60), 1.0) + t * (1.5 + (i % 3) * 0.4)
 		var r: float = creep.radius + 8.0 + (i % 4) * 4.0 + 2.0 * sin(t * 7.0 + i)
