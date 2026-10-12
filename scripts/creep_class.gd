@@ -59,6 +59,11 @@ func take_hit(_amount: float) -> bool:
 	return false
 
 
+## true: ignora el golpe (la Reina, justo después de recibir uno).
+func immune() -> bool:
+	return false
+
+
 ## C o RT (la misma tecla que Llamado).
 func ability() -> void:
 	pass
