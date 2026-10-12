@@ -5,7 +5,8 @@ extends "res://scripts/creep_class.gd"
 ## Poderes: A picar (fijo: parte del enjambre sale a picar; los que salen no la
 ## protegen), Nube (el enjambre envuelve al héroe y lo ciega), Aguijón, Zumbido,
 ## Colmena, Avispas de fuego, Alas de acero, Larvas, Reina madre y Enjambre cazador.
-## C: Escudo de insectos (menos daño por golpe, pero muere un insecto más).
+## Escudo de insectos automático: el primer golpe lo rompe (sin daño, muere 1 insecto)
+## y se recarga solo. La C no hace nada por ahora.
 ## Caparazón le suma insectos máximos.
 
 var home := B.SWARM_START
@@ -14,8 +15,7 @@ var _send_cd := 1.0
 var _cloud = null # {target, n, t}
 var _cloud_cd := B.SWARM_CLOUD_EVERY
 var _breed_t := 0.0
-var _shield_cd := 0.0 # C: Escudo de insectos
-var _shield_t := 0.0
+var _shield_cd := 0.0 # Escudo de insectos: activo cuando llega a 0
 var _larvae: Array = [] # {pos, t}
 
 
@@ -24,12 +24,9 @@ func max_insects() -> int:
 	return roundi(base * (1.0 + B.SWARM_MOTHER_PER_RANK * creep.rank("madre")))
 
 
-## C: Escudo de insectos. Alas de acero lo alarga.
-func ability() -> void:
-	if _shield_cd > 0.0 or home <= 0:
-		return
-	_shield_cd = B.SWARM_SHIELD_COOLDOWN
-	_shield_t = B.SWARM_SHIELD_TIME + B.SWARM_STEEL_WINGS_PER_RANK * creep.rank("alas")
+## Recarga del escudo; Alas de acero la acorta.
+func _shield_recharge() -> float:
+	return maxf(B.SWARM_SHIELD_RECHARGE - B.SWARM_STEEL_WINGS_PER_RANK * creep.rank("alas"), B.SWARM_SHIELD_MIN_RECHARGE)
 
 
 func away() -> int:
@@ -59,12 +56,12 @@ func take_hit(amount: float) -> bool:
 		home = 0
 		creep.die()
 		return true
-	amount *= 1.0 - B.SWARM_DEFENSE
-	var extra := 0
-	if _shield_t > 0.0:
-		amount *= 1.0 - B.SWARM_SHIELD_REDUCTION
-		extra = B.SWARM_SHIELD_EXTRA_KILL
-	var killed := mini(maxi(ceili(amount / _per_insect()), 1) + extra, home)
+	var killed := 1 # el escudo se rompe: el golpe no hace daño y muere 1 insecto
+	if _shield_cd <= 0.0:
+		_shield_cd = _shield_recharge()
+	else:
+		amount *= 1.0 - B.SWARM_DEFENSE
+		killed = mini(maxi(ceili(amount / _per_insect()), 1), home)
 	home -= killed
 	if creep.rank("avispas") > 0:
 		_fire_wasps(killed)
@@ -77,7 +74,7 @@ func take_hit(amount: float) -> bool:
 
 func hp_text() -> String:
 	var out := away()
-	var shield := "Escudo (C) listo" if _shield_cd <= 0.0 else "Escudo (C) %ds" % ceili(_shield_cd)
+	var shield := "Escudo listo" if _shield_cd <= 0.0 else "Escudo %ds" % ceili(_shield_cd)
 	return "Enjambre %d/%d" % [home, max_insects()] + (" (+%d afuera)" % out if out > 0 else "") + " · " + shield
 
 
@@ -164,7 +161,6 @@ func _fire_wasps(killed: int) -> void:
 
 
 func _update_extras(delta: float) -> void:
-	_shield_t = maxf(_shield_t - delta, 0.0)
 	_shield_cd = maxf(_shield_cd - delta, 0.0)
 	for l in _larvae.duplicate():
 		l.t -= delta
@@ -182,12 +178,12 @@ func _update_extras(delta: float) -> void:
 func _draw() -> void:
 	var t: float = world.elapsed
 	var col := Color(0.15, 0.12, 0.05)
-	if _shield_t > 0.0: # el enjambre en casa hace un anillo cerrado
+	if _shield_cd <= 0.0 and home > 0: # el enjambre en casa hace un anillo cerrado
 		draw_arc(creep.position, creep.radius + 20.0, 0.0, TAU, 40, Color(0.7, 0.85, 0.95, 0.35 + 0.15 * sin(t * 8.0)), 6.0)
 		for i in mini(home, 40):
 			draw_circle(creep.position + Vector2.from_angle(TAU * i / mini(home, 40) + t * 3.0) * (creep.radius + 20.0), 2.2, col)
 	elif _shield_cd > 0.0:
-		var k: float = _shield_cd / B.SWARM_SHIELD_COOLDOWN
+		var k: float = _shield_cd / _shield_recharge()
 		draw_arc(creep.position, creep.radius + 6.0, -PI * 0.5, -PI * 0.5 + TAU * (1.0 - k), 24, Color(0.7, 0.85, 0.95, 0.5), 2.0)
 	if creep.rank("cazador") > 0:
 		draw_arc(creep.position, B.SWARM_HUNTER_RADIUS, 0.0, TAU, 40, Color(0.6, 0.5, 0.2, 0.2), 1.5)
