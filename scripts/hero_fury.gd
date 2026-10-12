@@ -39,7 +39,7 @@ func fire_cooldown(base: float) -> float:
 ## Una flecha o un tajo suyo mató a un creep.
 func on_kill() -> void:
 	if kind == "Arquero" and active():
-		hero.hp = minf(hero.max_hp, hero.hp + hero.max_hp * B.HERO_FURY_ARCHER_HEAL_PER_KILL)
+		hero.hp = minf(hero.max_hp, hero.hp + B.HERO_FURY_ARCHER_HEAL_PER_KILL)
 
 
 # --- Caballero ---------------------------------------------------------------------
